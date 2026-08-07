@@ -1,0 +1,19 @@
+{
+    "name": "@nextcoding/auth",
+    "version": "1.0.0",
+    "private": "true",
+    "main": "index.js",
+    "scripts": {
+        "db:generate": "dotenv -e ../../.env -- pnpm dlx auth generate --config=./src/server.ts",
+        "db:migrate": "dotenv -e ../../.env -- pnpm dlx drizzle-kit migrate"
+    },
+    "type": "module",
+    "dependencies": {
+        "better-auth": "^1.6.26",
+        "drizzle-orm": "^0.45.2",
+        "@nextcoding/db": "workspace:*"
+    },
+    "devDependencies": {
+        "drizzle-kit": "^0.31.10"
+    }
+}

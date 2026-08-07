@@ -55,3 +55,6 @@ coverage/
 .pnpm-store/
 
 **/tsconfig.tsbuildinfo
+
+*.sqlite
+*.db
