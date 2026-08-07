@@ -1,0 +1,24 @@
+{
+    "name": "@nextcoding/db",
+    "version": "1.0.0",
+    "description": "",
+    "private": true,
+    "main": "./src/index.ts",
+    "types": "./src/index.ts",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "db:generate": "drizzle-kit generate:pg --config=drizzle.config.ts",
+        "db:migrate": "drizzle-kit migrate:pg --config=drizzle.config.ts",
+        "db:push": "drizzle-kit push:pg --config=drizzle.config.ts"
+    },
+    "type": "module",
+    "dependencies": {
+        "@libsql/client": "^0.17.4",
+        "dotenv": "^17.4.2",
+        "drizzle-orm": "^0.45.2"
+    },
+    "devDependencies": {
+        "drizzle-kit": "^0.31.10",
+        "tsx": "^4.23.10"
+    }
+}
