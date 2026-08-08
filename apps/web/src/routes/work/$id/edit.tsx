@@ -1,10 +1,10 @@
-import { Button, Chip, Input, Spinner } from "@heroui/react";
+import { AlertDialog, Button, Chip, Input, Spinner } from "@heroui/react";
 import { createFileRoute, useParams } from "@tanstack/react-router";
 import { GitCompareArrows, RotateCcw, Upload, X } from "lucide-react";
-import type * as Monaco from "monaco-editor";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR from "swr";
+import type * as Monaco from "monaco-editor";
 
 import { MonacoWrapper } from "~/components/editor/MonacoWrapper";
 import { useMonacoModel } from "~/hooks/useWorkspace";
@@ -57,6 +57,8 @@ function EditorPage() {
 
     const versionMapRef = useRef(new Map<string, number>());
     const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const activeKeyRef = useRef(activeKey);
+    activeKeyRef.current = activeKey;
 
     const {
         data: filesData,
@@ -149,15 +151,16 @@ function EditorPage() {
     );
 
     const handleContentChange = useCallback(() => {
-        if (!activeKey) return;
+        const key = activeKeyRef.current;
+        if (!key) return;
         setDirtyKeys((prev) => {
             const next = new Set(prev);
-            next.add(activeKey);
+            next.add(key);
             return next;
         });
         if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-        saveTimerRef.current = setTimeout(() => saveFile(activeKey), 1000);
-    }, [activeKey, saveFile]);
+        saveTimerRef.current = setTimeout(() => saveFile(key), 1000);
+    }, [saveFile]);
 
     const handleEditorReady = useCallback(
         (e: Monaco.editor.IStandaloneCodeEditor) => {
@@ -166,6 +169,10 @@ function EditorPage() {
         },
         [handleContentChange],
     );
+
+    const handleEditorDispose = useCallback(() => {
+        setEditor(null);
+    }, []);
 
     useEffect(
         () => () => {
@@ -209,9 +216,6 @@ function EditorPage() {
     };
 
     const restoreVersion = async (version: number) => {
-        if (!window.confirm(`确定回滚到 v${version} 吗？当前草稿将被覆盖`)) {
-            return;
-        }
         const res = await fetch(
             `/api/works/${id}/versions/${version}/restore`,
             { method: "POST" },
@@ -255,6 +259,17 @@ function EditorPage() {
                     <span className="text-xs text-foreground/50">保存中…</span>
                 )}
                 <div className="flex-1" />
+                {diff && (
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        onPress={() => setDiff(null)}
+                        className="gap-1.5"
+                    >
+                        <X className="size-3.5" />
+                        退出对比
+                    </Button>
+                )}
                 <Input
                     className="w-56"
                     placeholder="版本说明（可选）"
@@ -269,7 +284,6 @@ function EditorPage() {
             </header>
 
             <div className="flex-1 flex min-h-0">
-                {/* 文件树 */}
                 <aside className="w-52 border-r border-default-200 overflow-y-auto p-2 flex flex-col gap-1 shrink-0">
                     <div className="flex items-center justify-between px-1 pb-1">
                         <span className="text-xs font-medium text-foreground/60">
@@ -298,7 +312,6 @@ function EditorPage() {
                     ))}
                 </aside>
 
-                {/* 编辑区 */}
                 <div className="flex-1 flex flex-col min-w-0">
                     <div className="flex items-center gap-1 border-b border-default-200 px-2 h-9 overflow-x-auto shrink-0">
                         {files.map((f) => (
@@ -333,12 +346,12 @@ function EditorPage() {
                                 monaco={monaco}
                                 theme={theme}
                                 onReady={handleEditorReady}
+                                onDispose={handleEditorDispose}
                             />
                         )}
                     </div>
                 </div>
 
-                {/* 版本历史 */}
                 <aside className="w-64 border-l border-default-200 overflow-y-auto p-3 flex flex-col gap-2 shrink-0">
                     <div className="text-xs font-medium text-foreground/60">
                         版本历史
@@ -360,15 +373,54 @@ function EditorPage() {
                                     >
                                         <GitCompareArrows className="size-3.5" />
                                     </button>
-                                    <button
-                                        title="回滚到此版本"
-                                        onClick={() =>
-                                            restoreVersion(v.version)
-                                        }
-                                        className="p-1 rounded-md hover:bg-default-100 text-foreground/60"
-                                    >
-                                        <RotateCcw className="size-3.5" />
-                                    </button>
+                                    <AlertDialog>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            isIconOnly
+                                        >
+                                            <RotateCcw className="size-3.5" />
+                                        </Button>
+                                        <AlertDialog.Backdrop>
+                                            <AlertDialog.Container>
+                                                <AlertDialog.Dialog className="sm:max-w-[400px]">
+                                                    <AlertDialog.CloseTrigger />
+                                                    <AlertDialog.Header>
+                                                        <AlertDialog.Icon status="danger" />
+                                                        <AlertDialog.Heading>
+                                                            回滚到 v{v.version}？
+                                                        </AlertDialog.Heading>
+                                                    </AlertDialog.Header>
+                                                    <AlertDialog.Body>
+                                                        <p>
+                                                            将用 v{v.version}{" "}
+                                                            的内容覆盖当前草稿，
+                                                            当前未发布的修改会丢失。历史版本不会被删除。
+                                                        </p>
+                                                    </AlertDialog.Body>
+                                                    <AlertDialog.Footer>
+                                                        <Button
+                                                            slot="close"
+                                                            variant="tertiary"
+                                                        >
+                                                            取消
+                                                        </Button>
+                                                        <Button
+                                                            slot="close"
+                                                            variant="danger"
+                                                            onPress={() =>
+                                                                restoreVersion(
+                                                                    v.version,
+                                                                )
+                                                            }
+                                                        >
+                                                            确认回滚
+                                                        </Button>
+                                                    </AlertDialog.Footer>
+                                                </AlertDialog.Dialog>
+                                            </AlertDialog.Container>
+                                        </AlertDialog.Backdrop>
+                                    </AlertDialog>
                                 </div>
                             </div>
                             <span className="text-xs text-foreground/60 truncate">
@@ -432,14 +484,14 @@ function DiffView({
     return (
         <div className="relative h-full w-full">
             <div ref={ref} className="h-full w-full" />
-            <div className="absolute top-2 left-2 flex items-center gap-1.5">
+            <div className="absolute top-2 left-2 z-50 flex items-center gap-1.5">
                 <Chip size="sm" variant="soft">
                     {label}
                 </Chip>
             </div>
             <button
                 onClick={onClose}
-                className="absolute top-2 right-2 p-1.5 rounded-md bg-background border border-default-200 hover:bg-default-100"
+                className="absolute top-2 right-2 z-50 p-1.5 rounded-md bg-background border border-default-200 hover:bg-default-100"
                 title="关闭对比"
             >
                 <X className="size-4" />

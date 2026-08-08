@@ -5,13 +5,21 @@ interface MonacoWrapperProps {
     monaco: typeof Monaco | null;
     theme: "light" | "dark";
     onReady: (editor: Monaco.editor.IStandaloneCodeEditor) => void;
+    onDispose?: () => void;
 }
 
-export function MonacoWrapper({ monaco, theme, onReady }: MonacoWrapperProps) {
+export function MonacoWrapper({
+    monaco,
+    theme,
+    onReady,
+    onDispose,
+}: MonacoWrapperProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
     const onReadyRef = useRef(onReady);
     onReadyRef.current = onReady;
+    const onDisposeRef = useRef(onDispose);
+    onDisposeRef.current = onDispose;
 
     useEffect(() => {
         if (!monaco || !containerRef.current) return;
@@ -35,6 +43,7 @@ export function MonacoWrapper({ monaco, theme, onReady }: MonacoWrapperProps) {
         return () => {
             editor.dispose();
             editorRef.current = null;
+            onDisposeRef.current?.();
         };
     }, [monaco]);
 

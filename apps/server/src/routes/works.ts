@@ -417,6 +417,15 @@ works.post("/:id/versions/:version/restore", async (c) => {
     return c.json({ ok: true, restoredVersion: version, files: files.length });
 });
 
+works.post("/:id/publish", async (c) => {
+    const id = c.req.param("id");
+    const authz = await requireAuthor(c, id);
+    if ("error" in authz) return jsonError(c, authz.error, authz.status);
+
+    await db.update(work).set({ status: "published" }).where(eq(work.id, id));
+    return c.json({ ok: true, id, status: "published" });
+});
+
 works.post("/", async (c) => {
     const session = await auth.api.getSession({
         headers: c.req.raw.headers,
@@ -429,6 +438,7 @@ works.post("/", async (c) => {
 
     const description = form.description ? String(form.description) : null;
     const tags = form.tags ? String(form.tags) : "[]";
+    const status = form.status === "draft" ? "draft" : "published";
     const uploaded = Array.isArray(form.files)
         ? form.files
         : form.files
@@ -445,7 +455,7 @@ works.post("/", async (c) => {
         title,
         description,
         tags,
-        status: "published",
+        status,
     });
 
     for (const file of files) {

@@ -14,7 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as WorkIdEditRouteImport } from './routes/work.$id.edit'
+import { Route as WorkIdEditRouteImport } from './routes/work/$id/edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
