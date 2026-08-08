@@ -7,6 +7,14 @@ import { Hono } from "hono";
 export const works = new Hono();
 
 works.get("/", async (c) => {
+    const sort = c.req.query("sort") === "popular" ? "popular" : "latest";
+    const limit = Math.min(Number(c.req.query("limit") ?? 20) || 20, 100);
+
+    const orderBy =
+        sort === "popular"
+            ? [desc(work.likes), desc(work.views), desc(work.createdAt)]
+            : [desc(work.createdAt)];
+
     const rows = await db
         .select({
             id: work.id,
@@ -23,8 +31,8 @@ works.get("/", async (c) => {
         .from(work)
         .leftJoin(user, eq(work.userId, user.id))
         .where(eq(work.status, "published"))
-        .orderBy(desc(work.createdAt))
-        .limit(20);
+        .orderBy(...orderBy)
+        .limit(limit);
 
     return c.json(
         rows.map((row) => ({
