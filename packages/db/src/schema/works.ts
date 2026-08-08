@@ -39,11 +39,29 @@ export const workFile = sqliteTable(
         name: text("name").notNull(),
         size: integer("size").notNull(),
         contentType: text("content_type"),
+        version: integer("version").default(1).notNull(),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
             .notNull(),
     },
     (table) => [index("work_file_workId_idx").on(table.workId)],
+);
+
+export const workVersion = sqliteTable(
+    "work_version",
+    {
+        id: text("id").primaryKey(),
+        workId: text("work_id")
+            .notNull()
+            .references(() => work.id, { onDelete: "cascade" }),
+        version: integer("version").notNull(),
+        snapshotKey: text("snapshot_key").notNull(),
+        message: text("message"),
+        createdAt: integer("created_at", { mode: "timestamp_ms" })
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+            .notNull(),
+    },
+    (table) => [index("work_version_workId_idx").on(table.workId)],
 );
 
 export const workRelations = relations(work, ({ many, one }) => ({
@@ -52,11 +70,19 @@ export const workRelations = relations(work, ({ many, one }) => ({
         references: [user.id],
     }),
     files: many(workFile),
+    versions: many(workVersion),
 }));
 
 export const workFileRelations = relations(workFile, ({ one }) => ({
     work: one(work, {
         fields: [workFile.workId],
+        references: [work.id],
+    }),
+}));
+
+export const workVersionRelations = relations(workVersion, ({ one }) => ({
+    work: one(work, {
+        fields: [workVersion.workId],
         references: [work.id],
     }),
 }));
