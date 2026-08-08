@@ -1,12 +1,4 @@
-import {
-    Avatar,
-    Button,
-    Description,
-    Dropdown,
-    Header,
-    Label,
-    Separator,
-} from "@heroui/react";
+import { Avatar, Description, Dropdown, Label } from "@heroui/react";
 
 export function UserInfo() {
     return (

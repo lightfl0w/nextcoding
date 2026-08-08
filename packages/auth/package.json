@@ -2,7 +2,7 @@
     "name": "@nextcoding/auth",
     "version": "1.0.0",
     "private": "true",
-    "main": "index.js",
+    "main": "src/server.ts",
     "scripts": {
         "db:generate": "dotenv -e ../../.env -- pnpm dlx auth generate --config=./src/server.ts",
         "db:migrate": "dotenv -e ../../.env -- pnpm dlx drizzle-kit migrate"

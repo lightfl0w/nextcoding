@@ -1,4 +1,4 @@
-import { Nav } from "./Sidebar/nav";
+import { Nav } from "./Sidebar/Nav";
 import { UserInfo } from "./Sidebar/UserInfo";
 
 export function Sidebar() {

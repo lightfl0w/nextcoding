@@ -12,12 +12,14 @@ export const Route = createRootRoute({
 
 function RootComponent() {
     return (
-        <div className="h-screen">
+        <div className="h-screen bg-background">
             <main className="h-full flex">
                 <Providers>
-                    <Sidebar />
+                    <div className="relative z-10 flex h-full w-full">
+                        <Sidebar />
 
-                    <Outlet />
+                        <Outlet />
+                    </div>
                 </Providers>
             </main>
 

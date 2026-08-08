@@ -1,15 +1,17 @@
 {
     "name": "nextcoding-server",
     "type": "module",
+    "private": true,
     "scripts": {
-        "dev": "tsx watch src/index.ts",
+        "dev": "dotenv -e ../../.env tsx watch src/index.ts",
         "build": "tsc",
-        "start": "node dist/index.js"
+        "start": "dotenv -e ../../.env node dist/index.js"
     },
     "dependencies": {
         "@hono/node-server": "^2.1.0",
         "hono": "^4.13.0",
-        "@nextcoding/db": "workspace:*"
+        "@nextcoding/db": "workspace:*",
+        "@nextcoding/auth": "workspace:*"
     },
     "devDependencies": {
         "@types/node": "^26.1.1",

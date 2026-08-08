@@ -26,7 +26,7 @@ export function Nav() {
                 const active = isActive(nav.href);
 
                 return (
-                    <Link key={nav.label} to={nav.href}>
+                    <Link key={nav.label} to={nav.href} preload="intent">
                         <Button
                             variant={active ? "tertiary" : "ghost"}
                             fullWidth
