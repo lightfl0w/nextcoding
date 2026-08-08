@@ -1,0 +1,48 @@
+import type * as Monaco from "monaco-editor";
+import { useEffect, useRef } from "react";
+
+interface MonacoWrapperProps {
+    monaco: typeof Monaco | null;
+    theme: "light" | "dark";
+    onReady: (editor: Monaco.editor.IStandaloneCodeEditor) => void;
+}
+
+export function MonacoWrapper({ monaco, theme, onReady }: MonacoWrapperProps) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
+    const onReadyRef = useRef(onReady);
+    onReadyRef.current = onReady;
+
+    useEffect(() => {
+        if (!monaco || !containerRef.current) return;
+
+        const editor = monaco.editor.create(containerRef.current, {
+            theme: theme === "dark" ? "vs-dark" : "vs",
+            automaticLayout: true,
+            fontSize: 13,
+            lineHeight: 20,
+            tabSize: 2,
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            renderWhitespace: "selection",
+            padding: { top: 12, bottom: 12 },
+            glyphMargin: false,
+            folding: true,
+        });
+        editorRef.current = editor;
+        onReadyRef.current(editor);
+
+        return () => {
+            editor.dispose();
+            editorRef.current = null;
+        };
+    }, [monaco]);
+
+    useEffect(() => {
+        editorRef.current?.updateOptions({
+            theme: theme === "dark" ? "vs-dark" : "vs",
+        });
+    }, [theme]);
+
+    return <div ref={containerRef} className="h-full w-full" />;
+}

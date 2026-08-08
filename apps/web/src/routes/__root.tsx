@@ -14,11 +14,13 @@ function RootComponent() {
     const { pathname } = useLocation();
     const isAuthPage =
         pathname.startsWith("/auth") || pathname.startsWith("/reset-password");
+    const isEditor = /^\/work\/[^/]+\/edit$/.test(pathname);
+    const fullscreen = isAuthPage || isEditor;
 
     return (
         <div className="min-h-screen">
             <Providers>
-                {isAuthPage ? (
+                {fullscreen ? (
                     <div className="relative z-10 w-full">
                         <Outlet />
                     </div>

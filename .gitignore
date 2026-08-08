@@ -58,3 +58,6 @@ coverage/
 
 *.sqlite
 *.db
+
+data/
+apps/server/data/
