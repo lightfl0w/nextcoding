@@ -1,5 +1,5 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { createRootRoute, Outlet, useLocation } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
 import "~/styles.css";
@@ -11,19 +11,29 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
+    const { pathname } = useLocation();
+    const isAuthPage =
+        pathname.startsWith("/auth") || pathname.startsWith("/reset-password");
+
     return (
         <div className="min-h-screen">
-            <main className="flex min-h-screen">
-                <Providers>
-                    <div className="relative z-10 flex w-full">
-                        <Sidebar />
-
-                        <div className="flex-1 min-w-0">
-                            <Outlet />
-                        </div>
+            <Providers>
+                {isAuthPage ? (
+                    <div className="relative z-10 w-full">
+                        <Outlet />
                     </div>
-                </Providers>
-            </main>
+                ) : (
+                    <main className="flex min-h-screen">
+                        <div className="relative z-10 flex w-full">
+                            <Sidebar />
+
+                            <div className="flex-1 min-w-0">
+                                <Outlet />
+                            </div>
+                        </div>
+                    </main>
+                )}
+            </Providers>
 
             <TanStackDevtools
                 config={{

@@ -1,9 +1,11 @@
 import { Avatar, Button, Description, Dropdown, Label } from "@heroui/react";
 import { authClient } from "@nextcoding/auth/client";
+import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "~/hooks/useAuth";
 
 export function UserInfo() {
     const { user, isPending } = useAuth();
+    const navigate = useNavigate();
 
     if (isPending) {
         return <div className="h-10" aria-hidden />;
@@ -11,7 +13,16 @@ export function UserInfo() {
 
     if (!user) {
         return (
-            <Button variant="secondary" fullWidth>
+            <Button
+                variant="secondary"
+                fullWidth
+                onPress={() =>
+                    navigate({
+                        to: "/auth",
+                        search: { mode: "login", redirect: "/" },
+                    })
+                }
+            >
                 登录
             </Button>
         );
