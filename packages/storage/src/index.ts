@@ -13,7 +13,6 @@ export interface StorageAdapter {
     getUrl(key: string): Promise<string>;
 }
 
-// 按 STORAGE_DRIVER 选择存储后端：local（默认）| s3 | vercel-blob
 export function createStorage(): StorageAdapter {
     switch (process.env.STORAGE_DRIVER) {
         case "s3":

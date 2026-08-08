@@ -1,23 +1,7 @@
 @import "tailwindcss";
 @import "@heroui/styles";
 
-/* 背景光点动画 */
-@keyframes glow-drift {
-    0%,
-    100% {
-        transform: translate3d(0, 0, 0);
-    }
-    50% {
-        transform: translate3d(12px, -28px, 0);
-    }
-}
-
-@keyframes glow-twinkle {
-    0%,
-    100% {
-        opacity: 0.35;
-    }
-    50% {
-        opacity: 0.9;
-    }
+html,
+body {
+    background: var(--background);
 }
