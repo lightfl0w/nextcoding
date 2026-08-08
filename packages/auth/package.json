@@ -3,15 +3,18 @@
     "version": "1.0.0",
     "private": "true",
     "main": "src/server.ts",
+    "exports": {
+        ".": "./src/server.ts",
+        "./client": "./src/client.ts"
+    },
     "scripts": {
         "db:generate": "dotenv -e ../../.env -- pnpm dlx auth generate --config=./src/server.ts",
         "db:migrate": "dotenv -e ../../.env -- pnpm dlx drizzle-kit migrate"
     },
     "type": "module",
     "dependencies": {
-        "better-auth": "^1.6.26",
-        "drizzle-orm": "^0.45.2",
-        "@nextcoding/db": "workspace:*"
+        "@nextcoding/db": "workspace:*",
+        "better-auth": "^1.6.26"
     },
     "devDependencies": {
         "drizzle-kit": "^0.31.10"

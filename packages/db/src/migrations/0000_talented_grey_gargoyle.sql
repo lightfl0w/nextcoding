@@ -55,4 +55,32 @@ CREATE TABLE `verification` (
 	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX `verification_identifier_idx` ON `verification` (`identifier`);
+CREATE INDEX `verification_identifier_idx` ON `verification` (`identifier`);--> statement-breakpoint
+CREATE TABLE `work` (
+	`id` text PRIMARY KEY NOT NULL,
+	`user_id` text NOT NULL,
+	`title` text NOT NULL,
+	`description` text,
+	`cover_url` text,
+	`tags` text DEFAULT '[]' NOT NULL,
+	`status` text DEFAULT 'draft' NOT NULL,
+	`views` integer DEFAULT 0 NOT NULL,
+	`likes` integer DEFAULT 0 NOT NULL,
+	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	`updated_at` integer NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `work_userId_idx` ON `work` (`user_id`);--> statement-breakpoint
+CREATE TABLE `work_file` (
+	`id` text PRIMARY KEY NOT NULL,
+	`work_id` text NOT NULL,
+	`key` text NOT NULL,
+	`name` text NOT NULL,
+	`size` integer NOT NULL,
+	`content_type` text,
+	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	FOREIGN KEY (`work_id`) REFERENCES `work`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `work_file_workId_idx` ON `work_file` (`work_id`);

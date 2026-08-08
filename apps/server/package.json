@@ -9,9 +9,11 @@
     },
     "dependencies": {
         "@hono/node-server": "^2.1.0",
-        "hono": "^4.13.0",
+        "@nextcoding/auth": "workspace:*",
         "@nextcoding/db": "workspace:*",
-        "@nextcoding/auth": "workspace:*"
+        "@nextcoding/storage": "workspace:*",
+        "hono": "^4.13.0",
+        "swr": "^2.5.0"
     },
     "devDependencies": {
         "@types/node": "^26.1.1",

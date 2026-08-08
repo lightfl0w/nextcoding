@@ -1,7 +1,7 @@
 import type { Config } from "drizzle-kit";
 
 export default {
-    schema: ["./src/schema/auth.ts", "./src/schema/work.ts"],
+    schema: ["./src/schema/auth.ts", "./src/schema/works.ts"],
     out: "./src/migrations",
     dialect: "sqlite",
     dbCredentials: {

@@ -13,10 +13,10 @@
     "type": "module",
     "dependencies": {
         "@libsql/client": "^0.17.4",
-        "dotenv": "^17.4.2",
-        "drizzle-orm": "^0.45.2"
+        "dotenv": "^17.4.2"
     },
     "devDependencies": {
+        "@types/node": "^26.2.0",
         "drizzle-kit": "^0.31.10",
         "tsx": "^4.23.10"
     }

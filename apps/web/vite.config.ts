@@ -9,8 +9,15 @@ import { defineConfig } from "vite";
 const config = defineConfig({
     resolve: {
         tsconfigPaths: true,
-        // 防止 react 被重复打包（dev 增量预打包会把 react 打进 deps bundle，导致双实例）
         dedupe: ["react", "react-dom"],
+    },
+    server: {
+        proxy: {
+            "/api": {
+                target: "http://localhost:3000",
+                changeOrigin: true,
+            },
+        },
     },
     plugins: [
         devtools(),
