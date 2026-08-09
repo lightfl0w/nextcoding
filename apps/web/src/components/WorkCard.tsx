@@ -26,7 +26,7 @@ export function formatDate(timestamp: number) {
 export function WorkCard({ work }: { work: Work }) {
     return (
         <Card className="w-full p-0 shadow-none rounded-2xl overflow-hidden">
-            <div className="p-4 flex flex-col gap-2.5">
+            <div className="p-4 flex flex-col gap-2.5 h-full">
                 <Card.Header className="gap-1">
                     <Card.Title className="text-sm">{work.title}</Card.Title>
                     <Card.Description className="text-xs leading-relaxed line-clamp-2">
@@ -34,15 +34,17 @@ export function WorkCard({ work }: { work: Work }) {
                     </Card.Description>
                 </Card.Header>
 
-                <div className="flex flex-wrap gap-1">
-                    {work.tags.map((tag) => (
-                        <Chip key={tag} size="sm" variant="soft">
-                            <Chip.Label>{tag}</Chip.Label>
-                        </Chip>
-                    ))}
-                </div>
+                {Array.isArray(work.tags) && work.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                        {work.tags.map((tag) => (
+                            <Chip key={tag} size="sm" variant="soft">
+                                <Chip.Label>{tag}</Chip.Label>
+                            </Chip>
+                        ))}
+                    </div>
+                )}
 
-                <Card.Footer className="justify-between">
+                <Card.Footer className="justify-between mt-auto">
                     <div className="flex items-center gap-1.5">
                         <Avatar size="sm">
                             <Avatar.Fallback>
