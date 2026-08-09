@@ -1,10 +1,10 @@
 import { AlertDialog, Button, Chip, Input, Spinner } from "@heroui/react";
 import { createFileRoute, useParams } from "@tanstack/react-router";
 import { GitCompareArrows, RotateCcw, Upload, X } from "lucide-react";
+import type * as Monaco from "monaco-editor";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR from "swr";
-import type * as Monaco from "monaco-editor";
 
 import { MonacoWrapper } from "~/components/editor/MonacoWrapper";
 import { useMonacoModel } from "~/hooks/useWorkspace";
@@ -388,7 +388,8 @@ function EditorPage() {
                                                     <AlertDialog.Header>
                                                         <AlertDialog.Icon status="danger" />
                                                         <AlertDialog.Heading>
-                                                            回滚到 v{v.version}？
+                                                            回滚到 v{v.version}
+                                                            ？
                                                         </AlertDialog.Heading>
                                                     </AlertDialog.Header>
                                                     <AlertDialog.Body>

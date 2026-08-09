@@ -1,5 +1,12 @@
 import { auth } from "@nextcoding/auth";
-import { db, user, work, workFile, workVersion } from "@nextcoding/db";
+import {
+    db,
+    user,
+    work,
+    workComment,
+    workFile,
+    workVersion,
+} from "@nextcoding/db";
 import { createStorage } from "@nextcoding/storage";
 import { and, desc, eq, sql } from "drizzle-orm";
 import type { Context } from "hono";
@@ -104,7 +111,25 @@ works.get("/", async (c) => {
 works.get("/:id", async (c) => {
     const id = c.req.param("id");
 
-    const [row] = await db.select().from(work).where(eq(work.id, id));
+    const [row] = await db
+        .select({
+            id: work.id,
+            userId: work.userId,
+            title: work.title,
+            description: work.description,
+            coverUrl: work.coverUrl,
+            tags: work.tags,
+            status: work.status,
+            views: work.views,
+            likes: work.likes,
+            createdAt: work.createdAt,
+            updatedAt: work.updatedAt,
+            authorId: user.id,
+            authorName: user.name,
+        })
+        .from(work)
+        .leftJoin(user, eq(work.userId, user.id))
+        .where(eq(work.id, id));
     if (!row) return jsonError(c, "作品不存在", 404);
 
     const files = await db
@@ -112,7 +137,106 @@ works.get("/:id", async (c) => {
         .from(workFile)
         .where(eq(workFile.workId, id));
 
-    return c.json({ ...row, tags: parseTags(row.tags), files });
+    return c.json({
+        id: row.id,
+        userId: row.userId,
+        title: row.title,
+        description: row.description,
+        coverUrl: row.coverUrl,
+        tags: parseTags(row.tags),
+        status: row.status,
+        views: row.views,
+        likes: row.likes,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        author: { id: row.authorId, name: row.authorName },
+        files,
+    });
+});
+
+works.get("/:id/comments", async (c) => {
+    const id = c.req.param("id");
+
+    const rows = await db
+        .select({
+            id: workComment.id,
+            content: workComment.content,
+            parentId: workComment.parentId,
+            createdAt: workComment.createdAt,
+            authorId: user.id,
+            authorName: user.name,
+        })
+        .from(workComment)
+        .innerJoin(user, eq(workComment.userId, user.id))
+        .where(eq(workComment.workId, id))
+        .orderBy(desc(workComment.createdAt))
+        .limit(200);
+
+    return c.json(
+        rows.map((row) => ({
+            id: row.id,
+            content: row.content,
+            parentId: row.parentId,
+            createdAt: row.createdAt,
+            author: { id: row.authorId, name: row.authorName },
+        })),
+    );
+});
+
+works.post("/:id/comments", async (c) => {
+    const session = await auth.api.getSession({
+        headers: c.req.raw.headers,
+    });
+    if (!session?.user) return jsonError(c, "未登录", 401);
+
+    const id = c.req.param("id");
+    const [row] = await db.select().from(work).where(eq(work.id, id));
+    if (!row) return jsonError(c, "作品不存在", 404);
+
+    const body = await readJson(c);
+    const content =
+        typeof body?.content === "string" ? body.content.trim() : "";
+    if (!content) return jsonError(c, "评论内容不能为空", 400);
+    if (content.length > 500) return jsonError(c, "评论最多 500 字", 400);
+
+    const parentId =
+        typeof body?.parentId === "string" && body.parentId
+            ? body.parentId
+            : null;
+    if (parentId) {
+        const [parent] = await db
+            .select()
+            .from(workComment)
+            .where(eq(workComment.id, parentId));
+        if (!parent || parent.workId !== id) {
+            return jsonError(c, "父评论不存在", 400);
+        }
+        if (parent.parentId) {
+            return jsonError(c, "只能回复一级评论", 400);
+        }
+    }
+
+    const [inserted] = await db
+        .insert(workComment)
+        .values({
+            id: crypto.randomUUID(),
+            workId: id,
+            userId: session.user.id,
+            parentId,
+            content,
+        })
+        .returning({ id: workComment.id, createdAt: workComment.createdAt });
+
+    return c.json(
+        {
+            id: inserted.id,
+            content,
+            parentId,
+            createdAt: inserted.createdAt,
+            author: { id: session.user.id, name: session.user.name },
+        },
+        201,
+    );
 });
 
 works.get("/:id/files", async (c) => {

@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as WorkIdIndexRouteImport } from './routes/work/$id/index'
 import { Route as WorkIdEditRouteImport } from './routes/work/$id/edit'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +42,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WorkIdIndexRoute = WorkIdIndexRouteImport.update({
+  id: '/work/$id/',
+  path: '/work/$id/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WorkIdEditRoute = WorkIdEditRouteImport.update({
   id: '/work/$id/edit',
   path: '/work/$id/edit',
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/discover': typeof DiscoverRoute
   '/reset-password': typeof ResetPasswordRoute
   '/work/$id/edit': typeof WorkIdEditRoute
+  '/work/$id/': typeof WorkIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/discover': typeof DiscoverRoute
   '/reset-password': typeof ResetPasswordRoute
   '/work/$id/edit': typeof WorkIdEditRoute
+  '/work/$id': typeof WorkIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/discover': typeof DiscoverRoute
   '/reset-password': typeof ResetPasswordRoute
   '/work/$id/edit': typeof WorkIdEditRoute
+  '/work/$id/': typeof WorkIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +90,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/reset-password'
     | '/work/$id/edit'
+    | '/work/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/reset-password'
     | '/work/$id/edit'
+    | '/work/$id'
   id:
     | '__root__'
     | '/'
@@ -97,6 +108,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/reset-password'
     | '/work/$id/edit'
+    | '/work/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +118,7 @@ export interface RootRouteChildren {
   DiscoverRoute: typeof DiscoverRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   WorkIdEditRoute: typeof WorkIdEditRoute
+  WorkIdIndexRoute: typeof WorkIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -145,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/work/$id/': {
+      id: '/work/$id/'
+      path: '/work/$id'
+      fullPath: '/work/$id/'
+      preLoaderRoute: typeof WorkIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/work/$id/edit': {
       id: '/work/$id/edit'
       path: '/work/$id/edit'
@@ -162,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   DiscoverRoute: DiscoverRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   WorkIdEditRoute: WorkIdEditRoute,
+  WorkIdIndexRoute: WorkIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

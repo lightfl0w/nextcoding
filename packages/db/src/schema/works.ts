@@ -64,6 +64,30 @@ export const workVersion = sqliteTable(
     (table) => [index("work_version_workId_idx").on(table.workId)],
 );
 
+export const workComment = sqliteTable(
+    "work_comment",
+    {
+        id: text("id").primaryKey(),
+        workId: text("work_id")
+            .notNull()
+            .references(() => work.id, { onDelete: "cascade" }),
+        userId: text("user_id")
+            .notNull()
+            .references(() => user.id, { onDelete: "cascade" }),
+        parentId: text("parent_id").references(() => workComment.id, {
+            onDelete: "cascade",
+        }),
+        content: text("content").notNull(),
+        createdAt: integer("created_at", { mode: "timestamp_ms" })
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+            .notNull(),
+    },
+    (table) => [
+        index("work_comment_workId_idx").on(table.workId),
+        index("work_comment_parentId_idx").on(table.parentId),
+    ],
+);
+
 export const workRelations = relations(work, ({ many, one }) => ({
     author: one(user, {
         fields: [work.userId],
@@ -71,6 +95,7 @@ export const workRelations = relations(work, ({ many, one }) => ({
     }),
     files: many(workFile),
     versions: many(workVersion),
+    comments: many(workComment),
 }));
 
 export const workFileRelations = relations(workFile, ({ one }) => ({
@@ -85,4 +110,20 @@ export const workVersionRelations = relations(workVersion, ({ one }) => ({
         fields: [workVersion.workId],
         references: [work.id],
     }),
+}));
+
+export const workCommentRelations = relations(workComment, ({ one, many }) => ({
+    work: one(work, {
+        fields: [workComment.workId],
+        references: [work.id],
+    }),
+    author: one(user, {
+        fields: [workComment.userId],
+        references: [user.id],
+    }),
+    parent: one(workComment, {
+        fields: [workComment.parentId],
+        references: [workComment.id],
+    }),
+    replies: many(workComment),
 }));

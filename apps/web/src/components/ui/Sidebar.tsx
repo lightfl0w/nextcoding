@@ -28,7 +28,7 @@ export function Sidebar() {
             </div>
 
             {/* 用户信息 */}
-            <div className="w-full p-5 border-t border-foreground/10">
+            <div className="w-full p-5">
                 <UserInfo />
             </div>
         </aside>

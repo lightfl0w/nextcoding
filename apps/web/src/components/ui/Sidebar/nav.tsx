@@ -31,6 +31,9 @@ export function Nav() {
                             variant={active ? "tertiary" : "ghost"}
                             fullWidth
                             className="p-5 rounded-xl"
+                            style={
+                                active ? { color: "var(--accent)" } : undefined
+                            }
                         >
                             <span className="flex-1 text-[15px] tracking-tight">
                                 {nav.label}
