@@ -3,21 +3,29 @@ import {
     Button,
     Chip,
     Input,
-    Modal,
     Spinner,
     toast,
-    useOverlayState,
 } from "@heroui/react";
-import { createFileRoute, useParams } from "@tanstack/react-router";
-import { GitCompareArrows, RotateCcw, Upload, X } from "lucide-react";
+import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import {
+    GitCompareArrows,
+    Play,
+    RotateCcw,
+    Trash2,
+    Upload,
+    X,
+} from "lucide-react";
 import type * as Monaco from "monaco-editor";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 
 import { MonacoWrapper } from "~/components/editor/MonacoWrapper";
+import { RunPanel } from "~/components/editor/RunPanel";
+import { useCodeRunner } from "~/hooks/useCodeRunner";
 import { useMonacoModel } from "~/hooks/useWorkspace";
 import { loadMonaco } from "~/lib/editor";
+import { detectRuntime, languageLabel } from "~/lib/run";
 
 export const Route = createFileRoute("/work/$id/edit")({
     component: EditorPage,
@@ -59,7 +67,10 @@ function EditorPage() {
     const [versions, setVersions] = useState<VersionMeta[]>([]);
     const [message, setMessage] = useState("");
     const [fileName, setFileName] = useState("");
-    const createFileState = useOverlayState();
+    const [fileNameError, setFileNameError] = useState<string | null>(null);
+    const [creatingFile, setCreatingFile] = useState(false);
+    const createInputRef = useRef<HTMLInputElement>(null);
+    const [runPanelOpen, setRunPanelOpen] = useState(false);
     const [diff, setDiff] = useState<{
         version: number;
         original: string;
@@ -70,6 +81,8 @@ function EditorPage() {
     const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const activeKeyRef = useRef(activeKey);
     activeKeyRef.current = activeKey;
+    const [openTabs, setOpenTabs] = useState<Set<string>>(new Set());
+    const seenKeysRef = useRef(new Set<string>());
 
     const {
         data: filesData,
@@ -96,6 +109,20 @@ function EditorPage() {
     }, [files]);
 
     useEffect(() => {
+        const valid = new Set(files.map((f) => f.key));
+        setOpenTabs((prev) => {
+            const next = new Set([...prev].filter((k) => valid.has(k)));
+            for (const f of files) {
+                if (!seenKeysRef.current.has(f.key)) {
+                    next.add(f.key);
+                    seenKeysRef.current.add(f.key);
+                }
+            }
+            return next;
+        });
+    }, [files]);
+
+    useEffect(() => {
         fetcher<VersionMeta[]>(`/api/works/${id}/versions`)
             .then(setVersions)
             .catch(() => {});
@@ -119,6 +146,8 @@ function EditorPage() {
         activeKey,
         loadContent,
     );
+
+    const { running, output, result, run, clear } = useCodeRunner();
 
     const saveFile = useCallback(
         async (key: string) => {
@@ -194,7 +223,14 @@ function EditorPage() {
 
     const openCreateFile = () => {
         setFileName("");
-        createFileState.open();
+        setFileNameError(null);
+        setCreatingFile(true);
+    };
+
+    const cancelCreateFile = () => {
+        setCreatingFile(false);
+        setFileName("");
+        setFileNameError(null);
     };
 
     const submitCreateFile = async () => {
@@ -206,7 +242,8 @@ function EditorPage() {
             body: JSON.stringify({ name, content: "" }),
         });
         if (res.status === 409) {
-            toast.warning("同名文件已存在");
+            setFileNameError("同名文件已存在");
+            createInputRef.current?.focus();
             return;
         }
         if (!res.ok) return;
@@ -214,8 +251,57 @@ function EditorPage() {
         await reloadFiles();
         setActiveKey(data.key);
         versionMapRef.current.set(data.key, data.version ?? 1);
-        setFileName("");
-        createFileState.close();
+        cancelCreateFile();
+    };
+
+    const openFile = (key: string) => {
+        setOpenTabs((prev) => {
+            const next = new Set(prev);
+            next.add(key);
+            return next;
+        });
+        setActiveKey(key);
+    };
+
+    const closeTab = (key: string) => {
+        setOpenTabs((prev) => {
+            const next = new Set(prev);
+            next.delete(key);
+            return next;
+        });
+        if (activeKey === key) {
+            const remaining = files
+                .filter((f) => f.key !== key && openTabs.has(f.key))
+                .map((f) => f.key);
+            setDiff(null);
+            setActiveKey(remaining.length > 0 ? remaining[0] : null);
+        }
+    };
+
+    const deleteFile = async (file: FileMeta) => {
+        const res = await fetch(
+            `/api/works/${id}/files?key=${encodeURIComponent(file.key)}`,
+            { method: "DELETE" },
+        );
+        if (!res.ok) {
+            toast.danger(`删除失败: ${res.status}`);
+            return;
+        }
+        versionMapRef.current.delete(file.key);
+        setDirtyKeys((prev) => {
+            const next = new Set(prev);
+            next.delete(file.key);
+            return next;
+        });
+        if (file.key === activeKey) {
+            setDiff(null);
+            const remaining = files
+                .filter((f) => f.key !== file.key && openTabs.has(f.key))
+                .map((f) => f.key);
+            setActiveKey(remaining.length > 0 ? remaining[0] : null);
+        }
+        await reloadFiles();
+        toast.success("文件已删除");
     };
 
     const publishVersion = async () => {
@@ -258,6 +344,27 @@ function EditorPage() {
         });
     };
 
+    const handleRun = async () => {
+        const runtime = runtimeInfo;
+        if (!runtime) {
+            toast.warning(
+                files.length === 0
+                    ? "还没有文件可运行，请先新建文件"
+                    : `「${files[0].name}」等文件暂不支持在线运行，请使用 Node.js(.js/.ts)、Python(.py)、HTML(.html)、C#(.cs)、Java(.java)、PHP(.php)、Dart(.dart)、Go(.go)`,
+            );
+            return;
+        }
+        const runFiles: Record<string, string> = {};
+        for (const f of files) {
+            runFiles[`/${f.name}`] =
+                getContent(f.key) ?? (await loadContent(f.key));
+        }
+        setRunPanelOpen(true);
+        await run(runFiles, runtime.entryPoint, runtime.language);
+    };
+
+    const runtimeInfo = detectRuntime(files.map((f) => f.name));
+
     if (isLoading) {
         return (
             <div className="h-full w-full flex items-center justify-center">
@@ -269,6 +376,21 @@ function EditorPage() {
     return (
         <div className="h-screen w-full flex flex-col bg-background">
             <header className="flex items-center gap-2 border-b border-default-200 px-4 py-2 shrink-0">
+                <Link
+                    to="/"
+                    title="返回首页"
+                    className="flex items-center gap-2 mr-3 shrink-0"
+                    preload="intent"
+                >
+                    <img
+                        src="/logo.png"
+                        alt="NextCoding 吉祥物"
+                        className="w-7 h-7 rounded-lg object-cover"
+                    />
+                    <span className="text-base font-bold tracking-tight">
+                        NextCoding
+                    </span>
+                </Link>
                 <span className="text-sm font-medium">作品编辑</span>
                 <Chip size="sm" variant="soft">
                     {files.length} 个文件
@@ -295,6 +417,16 @@ function EditorPage() {
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && publishVersion()}
                 />
+                <Button
+                    size="sm"
+                    variant="primary"
+                    onPress={handleRun}
+                    isDisabled={running}
+                    className="gap-1.5"
+                >
+                    <Play className="size-3.5" />
+                    {running ? "运行中…" : "运行"}
+                </Button>
                 <Button size="sm" onPress={publishVersion} className="gap-1.5">
                     <Upload className="size-3.5" />
                     发布版本
@@ -316,44 +448,151 @@ function EditorPage() {
                             <Upload className="size-3.5" />
                         </button>
                     </div>
+                    {creatingFile && (
+                        <div className="flex flex-col gap-0.5 px-1 pb-1">
+                            <Input
+                                ref={createInputRef}
+                                autoFocus
+                                className="w-full"
+                                placeholder="文件名（如 main.js）"
+                                value={fileName}
+                                onChange={(e) => {
+                                    setFileName(e.target.value);
+                                    if (fileNameError) setFileNameError(null);
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        submitCreateFile();
+                                    } else if (e.key === "Escape") {
+                                        cancelCreateFile();
+                                    }
+                                }}
+                                aria-invalid={!!fileNameError}
+                            />
+                            {fileNameError && (
+                                <p className="text-xs text-danger px-1">
+                                    {fileNameError}
+                                </p>
+                            )}
+                        </div>
+                    )}
                     {files.map((f) => (
-                        <button
-                            type="button"
+                        <div
                             key={f.key}
-                            onClick={() => setActiveKey(f.key)}
-                            className={`text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                            className={`group flex items-center rounded-lg pl-3 pr-1 text-sm transition-colors ${
                                 activeKey === f.key
                                     ? "bg-primary-100 text-primary"
                                     : "hover:bg-default-100 text-foreground/80"
                             }`}
                         >
-                            {f.name}
-                        </button>
+                            <button
+                                type="button"
+                                onClick={() => openFile(f.key)}
+                                className="flex-1 text-left truncate py-1.5"
+                            >
+                                {f.name}
+                            </button>
+                            <AlertDialog>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    isIconOnly
+                                    className={`size-6 min-w-0 text-foreground/50 ${
+                                        activeKey === f.key
+                                            ? "opacity-100"
+                                            : "opacity-0 group-hover:opacity-100"
+                                    }`}
+                                    aria-label={`删除 ${f.name}`}
+                                >
+                                    <Trash2 className="size-3.5" />
+                                </Button>
+                                <AlertDialog.Backdrop>
+                                    <AlertDialog.Container>
+                                        <AlertDialog.Dialog className="sm:max-w-[400px]">
+                                            <AlertDialog.CloseTrigger />
+                                            <AlertDialog.Header>
+                                                <AlertDialog.Icon status="danger" />
+                                                <AlertDialog.Heading>
+                                                    删除 {f.name}？
+                                                </AlertDialog.Heading>
+                                            </AlertDialog.Header>
+                                            <AlertDialog.Body>
+                                                <p>
+                                                    将永久删除该文件及其内容，
+                                                    此操作不可恢复。
+                                                </p>
+                                            </AlertDialog.Body>
+                                            <AlertDialog.Footer>
+                                                <Button
+                                                    slot="close"
+                                                    variant="tertiary"
+                                                >
+                                                    取消
+                                                </Button>
+                                                <Button
+                                                    slot="close"
+                                                    variant="danger"
+                                                    onPress={() =>
+                                                        deleteFile(f)
+                                                    }
+                                                >
+                                                    确认删除
+                                                </Button>
+                                            </AlertDialog.Footer>
+                                        </AlertDialog.Dialog>
+                                    </AlertDialog.Container>
+                                </AlertDialog.Backdrop>
+                            </AlertDialog>
+                        </div>
                     ))}
                 </aside>
 
                 <div className="flex-1 flex flex-col min-w-0">
                     <div className="flex items-center gap-1 border-b border-default-200 px-2 h-9 overflow-x-auto shrink-0">
-                        {files.map((f) => (
-                            <button
-                                type="button"
-                                key={f.key}
-                                onClick={() => setActiveKey(f.key)}
-                                className={`flex items-center gap-1.5 px-3 h-full text-xs whitespace-nowrap border-b-2 ${
-                                    activeKey === f.key
-                                        ? "border-primary text-foreground"
-                                        : "border-transparent text-foreground/60 hover:text-foreground"
-                                }`}
-                            >
-                                {f.name}
-                                {dirtyKeys.has(f.key) && (
-                                    <span className="size-1.5 rounded-full bg-warning" />
-                                )}
-                            </button>
-                        ))}
+                        {files
+                            .filter((f) => openTabs.has(f.key))
+                            .map((f) => (
+                                <div
+                                    key={f.key}
+                                    className={`group flex items-center h-full text-xs whitespace-nowrap border-b-2 ${
+                                        activeKey === f.key
+                                            ? "border-primary text-foreground"
+                                            : "border-transparent text-foreground/60 hover:text-foreground"
+                                    }`}
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveKey(f.key)}
+                                        className="flex items-center gap-1.5 pl-3 pr-1 h-full"
+                                    >
+                                        {f.name}
+                                        {dirtyKeys.has(f.key) && (
+                                            <span className="size-1.5 rounded-full bg-warning" />
+                                        )}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => closeTab(f.key)}
+                                        aria-label={`关闭 ${f.name}`}
+                                        className={`p-1 mr-1.5 rounded-md text-foreground/40 hover:bg-default-200 hover:text-foreground transition-opacity ${
+                                            activeKey === f.key
+                                                ? "opacity-100"
+                                                : "opacity-0 group-hover:opacity-100"
+                                        }`}
+                                    >
+                                        <X className="size-3" />
+                                    </button>
+                                </div>
+                            ))}
                     </div>
                     <div className="flex-1 min-h-0">
-                        {diff ? (
+                        {files.length === 0 || activeKey === null ? (
+                            <div className="h-full w-full flex items-center justify-center text-sm text-foreground/50">
+                                {files.length === 0
+                                    ? "暂无文件，点左侧「+」新建"
+                                    : "没有打开的标签页，点左侧文件打开"}
+                            </div>
+                        ) : diff ? (
                             <DiffView
                                 monaco={monaco}
                                 theme={theme}
@@ -459,40 +698,19 @@ function EditorPage() {
                 </aside>
             </div>
 
-            <Modal state={createFileState}>
-                <Modal.Backdrop />
-                <Modal.Container>
-                    <Modal.Dialog className="sm:max-w-[400px]">
-                        <Modal.CloseTrigger />
-                        <Modal.Header>
-                            <Modal.Heading>新建文件</Modal.Heading>
-                        </Modal.Header>
-                        <Modal.Body>
-                            <Input
-                                autoFocus
-                                placeholder="文件名（如 main.js）"
-                                value={fileName}
-                                onChange={(e) => setFileName(e.target.value)}
-                                onKeyDown={(e) =>
-                                    e.key === "Enter" && submitCreateFile()
-                                }
-                            />
-                        </Modal.Body>
-                        <Modal.Footer>
-                            <Button slot="close" variant="tertiary">
-                                取消
-                            </Button>
-                            <Button
-                                variant="primary"
-                                isDisabled={!fileName.trim()}
-                                onPress={submitCreateFile}
-                            >
-                                创建
-                            </Button>
-                        </Modal.Footer>
-                    </Modal.Dialog>
-                </Modal.Container>
-            </Modal>
+            <RunPanel
+                open={runPanelOpen}
+                running={running}
+                output={output}
+                result={result}
+                label={
+                    runtimeInfo
+                        ? `${languageLabel(runtimeInfo.language)} · ${runtimeInfo.entryPoint}`
+                        : null
+                }
+                onClose={() => setRunPanelOpen(false)}
+                onClear={clear}
+            />
         </div>
     );
 }

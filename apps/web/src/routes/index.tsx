@@ -1,5 +1,14 @@
-import { Button, Card, Label } from "@heroui/react";
+import {
+    Button,
+    Card,
+    Input,
+    Label,
+    Modal,
+    toast,
+    useOverlayState,
+} from "@heroui/react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { FeaturedWorks } from "../components/FeaturedWorks";
 import { useAuth } from "../hooks/useAuth";
 import { createWork } from "../hooks/useCreateWork";
@@ -9,8 +18,10 @@ export const Route = createFileRoute("/")({ component: Home });
 function Home() {
     const navigate = useNavigate();
     const { isLoggedIn } = useAuth();
+    const [title, setTitle] = useState("");
+    const createDialogState = useOverlayState();
 
-    const handleCreate = async () => {
+    const openCreateDialog = () => {
         if (!isLoggedIn) {
             navigate({
                 to: "/auth",
@@ -18,13 +29,18 @@ function Home() {
             });
             return;
         }
-        const title = window.prompt("作品标题");
-        if (!title?.trim()) return;
+        setTitle("");
+        createDialogState.open();
+    };
+
+    const submitCreate = async () => {
+        const t = title.trim();
+        if (!t) return;
         try {
-            const { id } = await createWork(title.trim());
+            const { id } = await createWork(t);
             navigate({ to: "/work/$id/edit", params: { id } });
         } catch (err) {
-            alert((err as Error).message);
+            toast.danger((err as Error).message);
         }
     };
 
@@ -43,7 +59,7 @@ function Home() {
                     </div>
 
                     <Card.Footer className="px-6 pb-6">
-                        <Button onPress={handleCreate}>发布作品</Button>
+                        <Button onPress={openCreateDialog}>发布作品</Button>
                     </Card.Footer>
                 </Card>
 
@@ -60,6 +76,41 @@ function Home() {
                     <FeaturedWorks />
                 </section>
             </div>
+
+            <Modal state={createDialogState}>
+                <Modal.Backdrop />
+                <Modal.Container>
+                    <Modal.Dialog className="sm:max-w-[400px]">
+                        <Modal.CloseTrigger />
+                        <Modal.Header>
+                            <Modal.Heading>发布作品</Modal.Heading>
+                        </Modal.Header>
+                        <Modal.Body>
+                            <Input
+                                autoFocus
+                                placeholder="作品标题"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                onKeyDown={(e) =>
+                                    e.key === "Enter" && submitCreate()
+                                }
+                            />
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button slot="close" variant="tertiary">
+                                取消
+                            </Button>
+                            <Button
+                                variant="primary"
+                                isDisabled={!title.trim()}
+                                onPress={submitCreate}
+                            >
+                                创建
+                            </Button>
+                        </Modal.Footer>
+                    </Modal.Dialog>
+                </Modal.Container>
+            </Modal>
         </div>
     );
 }

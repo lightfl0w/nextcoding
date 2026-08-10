@@ -1,4 +1,4 @@
-import { Avatar, Button, Card, Chip, Skeleton } from "@heroui/react";
+import { Avatar, Button, Card, Chip, Skeleton, toast } from "@heroui/react";
 import {
     createFileRoute,
     Link,
@@ -319,7 +319,7 @@ function CommentsSection({ workId }: { workId: string }) {
             setReplyingTo(null);
             await mutate();
         } catch (err) {
-            alert((err as Error).message);
+            toast.danger((err as Error).message);
         } finally {
             setPosting(false);
         }

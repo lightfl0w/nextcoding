@@ -275,6 +275,9 @@ importers:
       '@tanstack/react-router-devtools':
         specifier: latest
         version: 1.167.1(@tanstack/react-router@1.170.21(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@tanstack/router-core@1.171.18)(csstype@3.2.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      clientbox:
+        specifier: ^0.2.2
+        version: 0.2.2
       lucide-react:
         specifier: ^1.29.0
         version: 1.29.0(react@19.2.8)
@@ -2421,6 +2424,9 @@ packages:
 
   client-only@0.0.1:
     resolution: {integrity: sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==}
+
+  clientbox@0.2.2:
+    resolution: {integrity: sha512-yT/tR1jvaKpyyR0T7zonnPHvv39B1XkrHKIqSTs4Vl8o9J0Z7j6fyno84gIRBC88pkA/lRK3hamhwppgV41NrA==}
 
   cliui@8.0.1:
     resolution: {integrity: sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==}
@@ -5385,6 +5391,8 @@ snapshots:
     optional: true
 
   client-only@0.0.1: {}
+
+  clientbox@0.2.2: {}
 
   cliui@8.0.1:
     dependencies:

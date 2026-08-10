@@ -19,5 +19,10 @@ const rootElement = document.getElementById("app");
 
 if (rootElement && !rootElement.innerHTML) {
     const root = ReactDOM.createRoot(rootElement);
-    root.render(<RouterProvider router={router} />);
+    root.render(
+        <>
+            <Toast.Provider />
+            <RouterProvider router={router} />
+        </>,
+    );
 }

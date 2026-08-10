@@ -19,6 +19,7 @@
         "@tanstack/react-devtools": "latest",
         "@tanstack/react-router": "latest",
         "@tanstack/react-router-devtools": "latest",
+        "clientbox": "^0.2.2",
         "lucide-react": "^1.29.0",
         "monaco-editor": "^0.56.0",
         "next-themes": "^0.4.6",
