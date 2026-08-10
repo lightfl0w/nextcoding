@@ -1,4 +1,13 @@
-import { AlertDialog, Button, Chip, Input, Spinner } from "@heroui/react";
+import {
+    AlertDialog,
+    Button,
+    Chip,
+    Input,
+    Modal,
+    Spinner,
+    toast,
+    useOverlayState,
+} from "@heroui/react";
 import { createFileRoute, useParams } from "@tanstack/react-router";
 import { GitCompareArrows, RotateCcw, Upload, X } from "lucide-react";
 import type * as Monaco from "monaco-editor";
@@ -49,6 +58,8 @@ function EditorPage() {
     const [saving, setSaving] = useState(false);
     const [versions, setVersions] = useState<VersionMeta[]>([]);
     const [message, setMessage] = useState("");
+    const [fileName, setFileName] = useState("");
+    const createFileState = useOverlayState();
     const [diff, setDiff] = useState<{
         version: number;
         original: string;
@@ -181,16 +192,21 @@ function EditorPage() {
         [],
     );
 
-    const createFile = async () => {
-        const name = window.prompt("文件名（如 main.js）");
-        if (!name?.trim()) return;
+    const openCreateFile = () => {
+        setFileName("");
+        createFileState.open();
+    };
+
+    const submitCreateFile = async () => {
+        const name = fileName.trim();
+        if (!name) return;
         const res = await fetch(`/api/works/${id}/files`, {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ name: name.trim(), content: "" }),
+            body: JSON.stringify({ name, content: "" }),
         });
         if (res.status === 409) {
-            alert("同名文件已存在");
+            toast.warning("同名文件已存在");
             return;
         }
         if (!res.ok) return;
@@ -198,6 +214,8 @@ function EditorPage() {
         await reloadFiles();
         setActiveKey(data.key);
         versionMapRef.current.set(data.key, data.version ?? 1);
+        setFileName("");
+        createFileState.close();
     };
 
     const publishVersion = async () => {
@@ -290,7 +308,8 @@ function EditorPage() {
                             文件
                         </span>
                         <button
-                            onClick={createFile}
+                            type="button"
+                            onClick={openCreateFile}
                             title="新建文件"
                             className="p-1 rounded-md hover:bg-default-100 text-foreground/60"
                         >
@@ -299,6 +318,7 @@ function EditorPage() {
                     </div>
                     {files.map((f) => (
                         <button
+                            type="button"
                             key={f.key}
                             onClick={() => setActiveKey(f.key)}
                             className={`text-left px-3 py-1.5 rounded-lg text-sm transition-colors ${
@@ -316,6 +336,7 @@ function EditorPage() {
                     <div className="flex items-center gap-1 border-b border-default-200 px-2 h-9 overflow-x-auto shrink-0">
                         {files.map((f) => (
                             <button
+                                type="button"
                                 key={f.key}
                                 onClick={() => setActiveKey(f.key)}
                                 className={`flex items-center gap-1.5 px-3 h-full text-xs whitespace-nowrap border-b-2 ${
@@ -367,6 +388,7 @@ function EditorPage() {
                                 </span>
                                 <div className="flex items-center gap-1">
                                     <button
+                                        type="button"
                                         title="对比当前草稿"
                                         onClick={() => showDiff(v.version)}
                                         className="p-1 rounded-md hover:bg-default-100 text-foreground/60"
@@ -436,6 +458,41 @@ function EditorPage() {
                     )}
                 </aside>
             </div>
+
+            <Modal state={createFileState}>
+                <Modal.Backdrop />
+                <Modal.Container>
+                    <Modal.Dialog className="sm:max-w-[400px]">
+                        <Modal.CloseTrigger />
+                        <Modal.Header>
+                            <Modal.Heading>新建文件</Modal.Heading>
+                        </Modal.Header>
+                        <Modal.Body>
+                            <Input
+                                autoFocus
+                                placeholder="文件名（如 main.js）"
+                                value={fileName}
+                                onChange={(e) => setFileName(e.target.value)}
+                                onKeyDown={(e) =>
+                                    e.key === "Enter" && submitCreateFile()
+                                }
+                            />
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button slot="close" variant="tertiary">
+                                取消
+                            </Button>
+                            <Button
+                                variant="primary"
+                                isDisabled={!fileName.trim()}
+                                onPress={submitCreateFile}
+                            >
+                                创建
+                            </Button>
+                        </Modal.Footer>
+                    </Modal.Dialog>
+                </Modal.Container>
+            </Modal>
         </div>
     );
 }
@@ -491,6 +548,7 @@ function DiffView({
                 </Chip>
             </div>
             <button
+                type="button"
                 onClick={onClose}
                 className="absolute top-2 right-2 z-50 p-1.5 rounded-md bg-background border border-default-200 hover:bg-default-100"
                 title="关闭对比"

@@ -4,6 +4,7 @@
 html,
 body {
     background: var(--background);
+    background-attachment: fixed;
     font-family:
         "Quicksand",
         "Nunito",
@@ -22,7 +23,6 @@ body {
 body {
     background-image:
         radial-gradient(600px 600px at 0 0, rgba(191, 219, 254, 0.55), transparent 70%);
-    background-attachment: fixed;
 }
 
 .dark body,
@@ -30,7 +30,6 @@ body {
     background-image:
         radial-gradient(600px 600px at 85% -5%, rgba(59, 130, 246, 0.16), transparent 70%),
         radial-gradient(550px 550px at -5% 105%, rgba(139, 92, 246, 0.13), transparent 70%);
-    background-attachment: fixed;
 }
 
 .sticky-glass {

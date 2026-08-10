@@ -36,7 +36,6 @@ export function loadMonaco(): Promise<typeof Monaco> {
             },
         };
 
-
         const tsLanguage = (monaco.languages as unknown as {
             typescript?: {
                 typescriptDefaults: {

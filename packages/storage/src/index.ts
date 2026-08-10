@@ -19,7 +19,6 @@ export function createStorage(): StorageAdapter {
             return new S3Adapter(process.env.S3_BUCKET!);
         case "vercel-blob":
             return new VercelBlobStorage();
-        case "local":
         default:
             return new LocalDiskStorage();
     }

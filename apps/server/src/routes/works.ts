@@ -19,6 +19,8 @@ interface SnapshotFile {
     name: string;
     contentType: string | null;
     content: string;
+    
+    encoding?: "base64";
 }
 
 interface Snapshot {
@@ -31,6 +33,69 @@ interface Snapshot {
 type AuthResult =
     | { session: NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>> }
     | { error: string; status: 401 | 403 | 404 };
+
+const DEFAULT_MAX_FILE_SIZE_MB = 20;
+const MAX_FILE_SIZE =
+    Number(process.env.NC_MAX_FILE_SIZE_MB ?? DEFAULT_MAX_FILE_SIZE_MB) *
+    1024 *
+    1024;
+
+const BINARY_CONTENT_TYPES = new Set([
+    "application/octet-stream",
+    "application/pdf",
+    "application/zip",
+    "application/gzip",
+    "application/x-zip-compressed",
+]);
+
+function isBinaryContentType(contentType: string | null | undefined): boolean {
+    if (!contentType) return false;
+    const t = contentType.toLowerCase();
+    return (
+        t.startsWith("image/") ||
+        t.startsWith("video/") ||
+        t.startsWith("audio/") ||
+        BINARY_CONTENT_TYPES.has(t)
+    );
+}
+
+function looksBinary(data: Uint8Array): boolean {
+    try {
+        new TextDecoder("utf-8", { fatal: true }).decode(data);
+        return false;
+    } catch {
+        return true;
+    }
+}
+
+function isBinaryFile(contentType: string | null, data: Uint8Array): boolean {
+    return isBinaryContentType(contentType) || (!contentType && looksBinary(data));
+}
+
+function decodeContent(
+    content: string,
+    isBase64: boolean,
+): Uint8Array | { error: string } {
+    if (isBase64) {
+        const s = content.trim();
+        if (
+            s.length === 0 ||
+            s.length % 4 !== 0 ||
+            !/^[A-Za-z0-9+/]+={0,2}$/.test(s)
+        ) {
+            return { error: "base64 内容不合法" };
+        }
+        return new Uint8Array(Buffer.from(s, "base64"));
+    }
+    return new TextEncoder().encode(content);
+}
+
+function isValidName(name: string): boolean {
+    if (!name || name.startsWith("/") || name.endsWith("/")) return false;
+    return name
+        .split("/")
+        .every((seg) => seg !== "" && seg !== "." && seg !== "..");
+}
 
 async function requireAuthor(c: Context, workId: string): Promise<AuthResult> {
     const session = await auth.api.getSession({
@@ -269,6 +334,9 @@ works.get("/:id/files/content", async (c) => {
     const data = await storage.get(file.key);
     if (!data) return jsonError(c, "内容缺失", 404);
 
+    if (isBinaryFile(file.contentType, data)) {
+        return c.text(Buffer.from(data).toString("base64"));
+    }
     return c.text(new TextDecoder().decode(data));
 });
 
@@ -279,18 +347,13 @@ works.post("/:id/files", async (c) => {
 
     const body = await readJson(c);
     const name = typeof body?.name === "string" ? body.name.trim() : "";
-    if (
-        !name ||
-        name.includes("/") ||
-        name === "." ||
-        name === ".." ||
-        name === ""
-    ) {
+    if (!isValidName(name)) {
         return jsonError(c, "文件名不合法", 400);
     }
     const content = typeof body?.content === "string" ? body.content : "";
     const contentType =
         typeof body?.contentType === "string" ? body.contentType : undefined;
+    const isBase64 = body?.isBase64 === true;
     const key = `works/${id}/${name}`;
 
     const existing = await db
@@ -300,21 +363,29 @@ works.post("/:id/files", async (c) => {
         .limit(1);
     if (existing.length > 0) return jsonError(c, "同名文件已存在", 409);
 
-    const bytes = new TextEncoder().encode(content);
+    const decoded = decodeContent(content, isBase64);
+    if ("error" in decoded) return jsonError(c, decoded.error, 400);
+    if (decoded.byteLength > MAX_FILE_SIZE) {
+        return jsonError(
+            c,
+            `文件超过 ${MAX_FILE_SIZE / 1024 / 1024}MB 限制`,
+            400,
+        );
+    }
     const storage = createStorage();
-    await storage.put(key, bytes, { contentType });
+    await storage.put(key, decoded, { contentType });
 
     await db.insert(workFile).values({
         id: crypto.randomUUID(),
         workId: id,
         key,
         name,
-        size: bytes.byteLength,
+        size: decoded.byteLength,
         contentType: contentType ?? null,
     });
 
     return c.json(
-        { ok: true, key, name, size: bytes.byteLength, version: 1 },
+        { ok: true, key, name, size: decoded.byteLength, version: 1 },
         201,
     );
 });
@@ -328,6 +399,7 @@ works.put("/:id/files/content", async (c) => {
     const key = typeof body?.key === "string" ? body.key : "";
     if (!key) return jsonError(c, "缺少 key", 400);
     const content = typeof body?.content === "string" ? body.content : "";
+    const isBase64 = body?.isBase64 === true;
 
     const [file] = await db
         .select()
@@ -350,22 +422,30 @@ works.put("/:id/files/content", async (c) => {
         }
     }
 
-    const bytes = new TextEncoder().encode(content);
+    const decoded = decodeContent(content, isBase64);
+    if ("error" in decoded) return jsonError(c, decoded.error, 400);
+    if (decoded.byteLength > MAX_FILE_SIZE) {
+        return jsonError(
+            c,
+            `文件超过 ${MAX_FILE_SIZE / 1024 / 1024}MB 限制`,
+            400,
+        );
+    }
     const storage = createStorage();
-    await storage.put(file.key, bytes, {
+    await storage.put(file.key, decoded, {
         contentType: file.contentType ?? undefined,
     });
 
     const nextVersion = currentVersion + 1;
     await db
         .update(workFile)
-        .set({ size: bytes.byteLength, version: nextVersion })
+        .set({ size: decoded.byteLength, version: nextVersion })
         .where(eq(workFile.id, file.id));
 
     return c.json({
         ok: true,
         key,
-        size: bytes.byteLength,
+        size: decoded.byteLength,
         version: nextVersion,
     });
 });
@@ -408,6 +488,28 @@ works.get("/:id/versions/:version", async (c) => {
     return c.json(JSON.parse(new TextDecoder().decode(raw)));
 });
 
+works.delete("/:id/files", async (c) => {
+    const id = c.req.param("id");
+    const authz = await requireAuthor(c, id);
+    if ("error" in authz) return jsonError(c, authz.error, authz.status);
+
+    const key = c.req.query("key");
+    if (!key) return jsonError(c, "缺少 key", 400);
+
+    const [file] = await db
+        .select()
+        .from(workFile)
+        .where(and(eq(workFile.workId, id), eq(workFile.key, key)))
+        .limit(1);
+    if (!file) return jsonError(c, "文件不存在", 404);
+
+    const storage = createStorage();
+    await storage.delete(file.key);
+    await db.delete(workFile).where(eq(workFile.id, file.id));
+
+    return c.json({ ok: true });
+});
+
 works.post("/:id/versions", async (c) => {
     const id = c.req.param("id");
     const authz = await requireAuthor(c, id);
@@ -426,12 +528,31 @@ works.post("/:id/versions", async (c) => {
     const entries: SnapshotFile[] = [];
     for (const file of files) {
         const data = await storage.get(file.key);
-        entries.push({
-            key: file.key,
-            name: file.name,
-            contentType: file.contentType,
-            content: data ? new TextDecoder().decode(data) : "",
-        });
+        if (!data) {
+            entries.push({
+                key: file.key,
+                name: file.name,
+                contentType: file.contentType,
+                content: "",
+            });
+            continue;
+        }
+        if (isBinaryFile(file.contentType, data)) {
+            entries.push({
+                key: file.key,
+                name: file.name,
+                contentType: file.contentType,
+                content: Buffer.from(data).toString("base64"),
+                encoding: "base64",
+            });
+        } else {
+            entries.push({
+                key: file.key,
+                name: file.name,
+                contentType: file.contentType,
+                content: new TextDecoder().decode(data),
+            });
+        }
     }
 
     const [agg] = await db
@@ -506,7 +627,10 @@ works.post("/:id/versions/:version/restore", async (c) => {
 
     for (const file of files) {
         const content = typeof file.content === "string" ? file.content : "";
-        const bytes = new TextEncoder().encode(content);
+        const bytes =
+            file.encoding === "base64"
+                ? new Uint8Array(Buffer.from(content, "base64"))
+                : new TextEncoder().encode(content);
 
         const [existing] = await db
             .select()
@@ -569,6 +693,19 @@ works.post("/", async (c) => {
           ? [form.files]
           : [];
     const files = uploaded.filter((f): f is File => f instanceof File);
+
+    for (const file of files) {
+        if (file.size > MAX_FILE_SIZE) {
+            return jsonError(
+                c,
+                `文件 ${file.name} 超过 ${MAX_FILE_SIZE / 1024 / 1024}MB 限制`,
+                400,
+            );
+        }
+        if (!isValidName(file.name)) {
+            return jsonError(c, `文件名不合法: ${file.name}`, 400);
+        }
+    }
 
     const storage = createStorage();
     const workId = crypto.randomUUID();

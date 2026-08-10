@@ -1,3 +1,4 @@
+import { Toast } from "@heroui/react";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import ReactDOM from "react-dom/client";
 import { routeTree } from "./routeTree.gen";
@@ -14,9 +15,9 @@ declare module "@tanstack/react-router" {
     }
 }
 
-const rootElement = document.getElementById("app")!;
+const rootElement = document.getElementById("app");
 
-if (!rootElement.innerHTML) {
+if (rootElement && !rootElement.innerHTML) {
     const root = ReactDOM.createRoot(rootElement);
     root.render(<RouterProvider router={router} />);
 }

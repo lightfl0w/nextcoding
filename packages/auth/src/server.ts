@@ -34,16 +34,16 @@ export const auth = betterAuth({
         revokeSessionsOnPasswordReset: true,
     },
 
-    // emailVerification: {
-    //     sendVerificationEmail: async ({ user, url }, _request) => {
-    //         await sendAuthEmail(
-    //             user.email,
-    //             "验证你的 NextCoding 邮箱",
-    //             `点击链接验证邮箱：\n${url}`,
-    //         );
-    //     },
-    //     sendOnSignUp: false,
-    // },
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     session: {
         expiresIn: 60 * 60 * 24 * 7,
@@ -55,15 +55,15 @@ export const auth = betterAuth({
         },
     },
 
-    // rateLimit: {
-    //     enabled: true,
-    //     customRules: {
-    //         "/sign-in/email": { window: 60, max: 5 },
-    //         "/sign-up/email": { window: 60, max: 3 },
-    //         "/request-password-reset": { window: 300, max: 3 },
-    //         "/reset-password": { window: 300, max: 5 },
-    //     },
-    // },
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     trustedOrigins: ["http://localhost:5173", "http://localhost:3000"],
 
