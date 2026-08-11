@@ -72,35 +72,29 @@ function RouteComponent() {
             <section className="flex flex-col gap-4">
                 <Label className="text-base">我们的特色</Label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {features.map(
-                        (feature: {
-                            icon: ReactNode;
-                            title: string;
-                            desc: string;
-                        }) => (
-                            <Card
-                                key={feature.title}
-                                className="p-0 shadow-none rounded-2xl"
-                            >
-                                <div className="p-5 flex flex-col gap-2">
-                                    <div className="flex items-center gap-2 text-foreground">
-                                        {feature.icon}
-                                        <Card.Title className="text-base">
-                                            {feature.title}
-                                        </Card.Title>
-                                    </div>
-                                    <Card.Description className="text-sm leading-relaxed">
-                                        {feature.desc}
-                                    </Card.Description>
+                    {features.map((feature) => (
+                        <Card
+                            key={feature.title}
+                            className="p-0 shadow-none rounded-2xl border border-default-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                        >
+                            <div className="p-5 flex flex-col gap-3">
+                                <div className="size-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                                    {feature.icon}
                                 </div>
-                            </Card>
-                        ),
-                    )}
+                                <Card.Title className="text-base">
+                                    {feature.title}
+                                </Card.Title>
+                                <Card.Description className="text-sm leading-relaxed">
+                                    {feature.desc}
+                                </Card.Description>
+                            </div>
+                        </Card>
+                    ))}
                 </div>
             </section>
 
             <footer className="pt-2 pb-4 text-center">
-                <Label className="text-xs text-foreground/40">NextCoding</Label>
+                <Label className="text-xs text-foreground/50">NextCoding</Label>
             </footer>
         </div>
     );

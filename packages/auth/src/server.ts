@@ -34,17 +34,6 @@ export const auth = betterAuth({
         revokeSessionsOnPasswordReset: true,
     },
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-
     session: {
         expiresIn: 60 * 60 * 24 * 7,
         updateAge: 60 * 60 * 24,
@@ -54,16 +43,6 @@ export const auth = betterAuth({
             strategy: "jwe",
         },
     },
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
 
     trustedOrigins: ["http://localhost:5173", "http://localhost:3000"],
 

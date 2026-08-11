@@ -12,13 +12,11 @@
         "preview": "dotenv -e ../../.env vite preview"
     },
     "dependencies": {
-        "@heroui/react": "^3.2.3",
-        "@heroui/styles": "^3.2.3",
+        "@heroui/react": "^3.2.4",
+        "@heroui/styles": "^3.2.4",
         "@nextcoding/auth": "workspace:*",
         "@tailwindcss/vite": "^4.1.18",
-        "@tanstack/react-devtools": "latest",
         "@tanstack/react-router": "latest",
-        "@tanstack/react-router-devtools": "latest",
         "clientbox": "^0.2.2",
         "lucide-react": "^1.29.0",
         "monaco-editor": "^0.56.0",
@@ -30,6 +28,8 @@
     },
     "devDependencies": {
         "@tanstack/devtools-vite": "latest",
+        "@tanstack/react-devtools": "latest",
+        "@tanstack/react-router-devtools": "latest",
         "@tanstack/router-cli": "^1.132.0",
         "@tanstack/router-plugin": "latest",
         "@types/node": "^22.10.2",

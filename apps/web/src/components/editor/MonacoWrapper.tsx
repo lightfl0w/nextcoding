@@ -21,6 +21,7 @@ export function MonacoWrapper({
     const onDisposeRef = useRef(onDispose);
     onDisposeRef.current = onDispose;
 
+    // biome-ignore lint/correctness/useExhaustiveDependencies: 主题由下方 effect 单独更新，不在此重建编辑器
     useEffect(() => {
         if (!monaco || !containerRef.current) return;
 
@@ -36,6 +37,7 @@ export function MonacoWrapper({
             padding: { top: 12, bottom: 12 },
             glyphMargin: false,
             folding: true,
+            stickyScroll: { enabled: false },
         });
         editorRef.current = editor;
         onReadyRef.current(editor);

@@ -3,20 +3,27 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface OutputLine {
     id: number;
-    stream: "stdout" | "stderr" | "system";
+    stream: "stdout" | "stderr";
     text: string;
 }
 
+const LINE_BREAK = /\r?\n/;
+
+const MAX_OUTPUT_LINES = 500;
+
 let nextLineId = 1;
 
-function splitLines(text: string): string[] {
-    return text.split(/\r?\n/);
+function toOutputLines(
+    stream: OutputLine["stream"],
+    text: string,
+): OutputLine[] {
+    return text.split(LINE_BREAK).map((line) => ({
+        id: nextLineId++,
+        stream,
+        text: line,
+    }));
 }
 
-/**
- * 封装 clientbox 在浏览器端的运行生命周期：
- * 懒创建 ClientBox、流式输出聚合、运行结果与清理。
- */
 export function useCodeRunner() {
     const boxRef = useRef<ClientBox | null>(null);
     const [running, setRunning] = useState(false);
@@ -24,14 +31,8 @@ export function useCodeRunner() {
     const [result, setResult] = useState<RunResult | null>(null);
 
     const append = useCallback((stream: OutputLine["stream"], text: string) => {
-        const lines = splitLines(text);
-        setOutput((prev) => {
-            const next = [...prev];
-            for (const line of lines) {
-                next.push({ id: nextLineId++, stream, text: line });
-            }
-            return next;
-        });
+        const lines = toOutputLines(stream, text);
+        setOutput((current) => current.concat(lines).slice(-MAX_OUTPUT_LINES));
     }, []);
 
     const run = useCallback(

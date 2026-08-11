@@ -6,60 +6,73 @@ import HTMLWorker from "monaco-editor/language/html/html.worker.js?worker";
 import JSONWorker from "monaco-editor/language/json/json.worker.js?worker";
 import TSWorker from "monaco-editor/language/typescript/ts.worker.js?worker";
 
+const WORKER_FACTORY_BY_LABEL: Record<string, () => Worker> = {
+    json: () => new JSONWorker(),
+    css: () => new CSSWorker(),
+    scss: () => new CSSWorker(),
+    less: () => new CSSWorker(),
+    html: () => new HTMLWorker(),
+    handlebars: () => new HTMLWorker(),
+    razor: () => new HTMLWorker(),
+    typescript: () => new TSWorker(),
+    javascript: () => new TSWorker(),
+};
+
+function createWorker(label: string): Worker {
+    const factory = WORKER_FACTORY_BY_LABEL[label];
+    return factory ? factory() : new EditorWorker();
+}
+
+interface LanguageDefaults {
+    setCompilerOptions(options: Record<string, unknown>): void;
+    setEagerModelSync?(value: boolean): void;
+}
+
+interface TypescriptLanguage {
+    typescriptDefaults: LanguageDefaults;
+    javascriptDefaults: LanguageDefaults;
+}
+
+const TYPESCRIPT_COMPILER_OPTIONS = {
+    jsx: "react",
+    allowNonTsExtensions: true,
+    target: "ES2020",
+    moduleResolution: "node",
+};
+
+const JAVASCRIPT_COMPILER_OPTIONS = {
+    allowNonTsExtensions: true,
+    target: "ES2020",
+};
+
+function configureTypescript(monaco: typeof Monaco): void {
+    const languages = monaco.languages as unknown as {
+        typescript?: TypescriptLanguage;
+    };
+    const typescript = languages.typescript;
+    if (!typescript) return;
+
+    typescript.typescriptDefaults.setCompilerOptions(
+        TYPESCRIPT_COMPILER_OPTIONS,
+    );
+    typescript.javascriptDefaults.setCompilerOptions(
+        JAVASCRIPT_COMPILER_OPTIONS,
+    );
+    typescript.typescriptDefaults.setEagerModelSync?.(true);
+}
+
 let monacoPromise: Promise<typeof Monaco> | null = null;
 
+export const LARGE_FILE_BYTES = 512 * 1024;
+
 export function loadMonaco(): Promise<typeof Monaco> {
-    monacoPromise ??= import("monaco-editor").then(async (mod) => {
+    monacoPromise ??= import("monaco-editor").then((mod) => {
         const monaco = mod.default ?? mod;
 
         globalThis.MonacoEnvironment = {
-            getWorker(_: unknown, label: string) {
-                if (label === "json") return new JSONWorker();
-                if (
-                    label === "css" ||
-                    label === "scss" ||
-                    label === "less"
-                ) {
-                    return new CSSWorker();
-                }
-                if (
-                    label === "html" ||
-                    label === "handlebars" ||
-                    label === "razor"
-                ) {
-                    return new HTMLWorker();
-                }
-                if (label === "typescript" || label === "javascript") {
-                    return new TSWorker();
-                }
-                return new EditorWorker();
-            },
+            getWorker: (_: unknown, label: string) => createWorker(label),
         };
-
-        const tsLanguage = (monaco.languages as unknown as {
-            typescript?: {
-                typescriptDefaults: {
-                    setCompilerOptions(options: Record<string, unknown>): void;
-                    setEagerModelSync(value: boolean): void;
-                };
-                javascriptDefaults: {
-                    setCompilerOptions(options: Record<string, unknown>): void;
-                };
-            };
-        }).typescript;
-        if (tsLanguage) {
-            tsLanguage.typescriptDefaults.setCompilerOptions({
-                jsx: "react",
-                allowNonTsExtensions: true,
-                target: "ES2020",
-                moduleResolution: "node",
-            });
-            tsLanguage.javascriptDefaults.setCompilerOptions({
-                allowNonTsExtensions: true,
-                target: "ES2020",
-            });
-            tsLanguage.typescriptDefaults.setEagerModelSync(true);
-        }
+        configureTypescript(monaco);
 
         return monaco;
     });

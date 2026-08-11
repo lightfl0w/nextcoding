@@ -1,8 +1,14 @@
 import { del, put } from "@vercel/blob";
-import type { StorageAdapter } from "./index";
+import type { StorageAdapter } from "./index.js";
 
 export class VercelBlobStorage implements StorageAdapter {
-    private token = process.env.BLOB_READ_WRITE_TOKEN!;
+    private token: string;
+
+    constructor() {
+        const token = process.env.BLOB_READ_WRITE_TOKEN;
+        if (!token) throw new Error("缺少环境变量 BLOB_READ_WRITE_TOKEN");
+        this.token = token;
+    }
 
     async put(
         key: string,
@@ -13,12 +19,11 @@ export class VercelBlobStorage implements StorageAdapter {
             body instanceof Blob
                 ? body
                 : new Blob([body as unknown as BlobPart]);
-        const { url } = await put(key, data, {
+        await put(key, data, {
             access: "public",
             contentType: opts?.contentType,
             token: this.token,
         });
-        return { url };
     }
     async get(key: string) {
         const res = await fetch(key);
@@ -26,8 +31,5 @@ export class VercelBlobStorage implements StorageAdapter {
     }
     async delete(key: string) {
         await del(key, { token: this.token });
-    }
-    async getUrl(key: string) {
-        return key;
     }
 }

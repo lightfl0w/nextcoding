@@ -4,7 +4,13 @@ import {
     PutObjectCommand,
     S3Client,
 } from "@aws-sdk/client-s3";
-import type { StorageAdapter } from "./index";
+import type { StorageAdapter } from "./index.js";
+
+function requireEnv(name: string): string {
+    const value = process.env[name];
+    if (!value) throw new Error(`缺少环境变量 ${name}`);
+    return value;
+}
 
 export class S3Adapter implements StorageAdapter {
     private client = new S3Client({
@@ -12,12 +18,12 @@ export class S3Adapter implements StorageAdapter {
         endpoint: process.env.S3_ENDPOINT,
         forcePathStyle: true,
         credentials: {
-            accessKeyId: process.env.S3_ACCESS_KEY_ID!,
-            secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
+            accessKeyId: requireEnv("S3_ACCESS_KEY_ID"),
+            secretAccessKey: requireEnv("S3_SECRET_ACCESS_KEY"),
         },
     });
 
-    constructor(private bucket: string) {}
+    constructor(private bucket: string = requireEnv("S3_BUCKET")) {}
 
     async put(
         key: string,
@@ -32,8 +38,6 @@ export class S3Adapter implements StorageAdapter {
                 ContentType: opts?.contentType,
             }),
         );
-
-        return { url: await this.getUrl(key) };
     }
 
     async get(key: string) {
@@ -51,9 +55,5 @@ export class S3Adapter implements StorageAdapter {
         await this.client.send(
             new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
         );
-    }
-
-    async getUrl(key: string) {
-        return `${process.env.S3_PUBLIC_URL}/${this.bucket}/${key}`;
     }
 }

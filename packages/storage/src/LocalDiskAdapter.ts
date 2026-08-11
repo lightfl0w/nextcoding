@@ -1,6 +1,6 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
-import type { StorageAdapter } from "./index";
+import type { StorageAdapter } from "./index.js";
 
 export class LocalDiskStorage implements StorageAdapter {
     constructor(
@@ -24,7 +24,6 @@ export class LocalDiskStorage implements StorageAdapter {
                 ? new Uint8Array(await body.arrayBuffer())
                 : body;
         await writeFile(file, data);
-        return { url: await this.getUrl(key) };
     }
 
     async get(key: string) {
@@ -37,9 +36,5 @@ export class LocalDiskStorage implements StorageAdapter {
 
     async delete(key: string) {
         await rm(this.resolveSafe(key), { force: true });
-    }
-
-    async getUrl(key: string) {
-        return `/storage/${key}`;
     }
 }

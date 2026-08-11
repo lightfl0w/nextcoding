@@ -52,7 +52,10 @@ export function UserInfo() {
             </Dropdown.Trigger>
             <Dropdown.Popover>
                 <Dropdown.Menu>
-                    <Dropdown.Item>
+                    <Dropdown.Item
+                        onAction={() => navigate({ to: "/account" })}
+                        textValue="我的账号"
+                    >
                         <Label>我的账号</Label>
                     </Dropdown.Item>
                     <Dropdown.Item

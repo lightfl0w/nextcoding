@@ -1,47 +1,61 @@
-import { Button } from "@heroui/react";
+import { Badge, Button } from "@heroui/react";
 import { Link, useRouterState } from "@tanstack/react-router";
+import { Bell, Compass, Home, Info, type LucideIcon } from "lucide-react";
+import { useUnreadCount } from "~/hooks/useUnreadCount";
 
-type NavItem = {
-    label: string;
-    href: string;
-};
+type NavItem =
+    | { label: string; href: string; icon: LucideIcon }
+    | { label: string; href: string; icon: LucideIcon; badge: number };
 
 export function Nav() {
     const pathname = useRouterState({
         select: (s) => s.location.pathname,
     });
-
-    const navigation: NavItem[] = [
-        { label: "首页", href: "/" },
-        { label: "发现", href: "/discover" },
-        { label: "关于", href: "/about" },
-    ];
+    const { count } = useUnreadCount();
 
     const isActive = (href: string) =>
         href === "/" ? pathname === "/" : pathname.startsWith(href);
 
+    const items: NavItem[] = [
+        { label: "首页", href: "/", icon: Home },
+        { label: "发现", href: "/discover", icon: Compass },
+        { label: "消息", href: "/messages", icon: Bell, badge: count },
+        { label: "关于", href: "/about", icon: Info },
+    ];
+
     return (
         <nav className="flex flex-col gap-2">
-            {navigation.map((nav) => {
-                const active = isActive(nav.href);
-
-                return (
-                    <Link key={nav.label} to={nav.href} preload="intent">
-                        <Button
-                            variant={active ? "tertiary" : "ghost"}
-                            fullWidth
-                            className="p-5 rounded-xl"
-                            style={
-                                active ? { color: "var(--accent)" } : undefined
-                            }
-                        >
-                            <span className="flex-1 text-[15px] tracking-tight">
-                                {nav.label}
-                            </span>
-                        </Button>
-                    </Link>
-                );
-            })}
+            {items.map((item) => (
+                <Link key={item.href} to={item.href} preload="intent">
+                    <NavButton item={item} active={isActive(item.href)} />
+                </Link>
+            ))}
         </nav>
+    );
+}
+
+function NavButton({ item, active }: { item: NavItem; active: boolean }) {
+    const button = (
+        <Button
+            variant={active ? "tertiary" : "ghost"}
+            fullWidth
+            className={`p-5 rounded-xl ${active ? "text-accent" : ""}`}
+        >
+            <item.icon
+                className={`size-4 ${active ? "" : "text-foreground/60"}`}
+            />
+            <span className="flex-1 text-[15px] tracking-tight text-left">
+                {item.label}
+            </span>
+        </Button>
+    );
+
+    if (!("badge" in item) || item.badge <= 0) return button;
+
+    return (
+        <Badge.Anchor className="w-full">
+            {button}
+            <Badge>{item.badge > 99 ? "99+" : item.badge}</Badge>
+        </Badge.Anchor>
     );
 }

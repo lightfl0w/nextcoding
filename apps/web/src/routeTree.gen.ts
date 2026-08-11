@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AccountRouteImport } from './routes/account'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DiscoverRouteImport } from './routes/discover'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as WorkIdIndexRouteImport } from './routes/work/$id/index'
 import { Route as WorkIdEditRouteImport } from './routes/work/$id/edit'
@@ -27,6 +29,11 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -35,6 +42,11 @@ const AuthRoute = AuthRouteImport.update({
 const DiscoverRoute = DiscoverRouteImport.update({
   id: '/discover',
   path: '/discover',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -56,8 +68,10 @@ const WorkIdEditRoute = WorkIdEditRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/account': typeof AccountRoute
   '/auth': typeof AuthRoute
   '/discover': typeof DiscoverRoute
+  '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/$id/': typeof WorkIdIndexRoute
@@ -65,8 +79,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/account': typeof AccountRoute
   '/auth': typeof AuthRoute
   '/discover': typeof DiscoverRoute
+  '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/$id': typeof WorkIdIndexRoute
@@ -75,8 +91,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/account': typeof AccountRoute
   '/auth': typeof AuthRoute
   '/discover': typeof DiscoverRoute
+  '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/$id/': typeof WorkIdIndexRoute
@@ -86,8 +104,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/account'
     | '/auth'
     | '/discover'
+    | '/messages'
     | '/reset-password'
     | '/work/$id/edit'
     | '/work/$id/'
@@ -95,8 +115,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/account'
     | '/auth'
     | '/discover'
+    | '/messages'
     | '/reset-password'
     | '/work/$id/edit'
     | '/work/$id'
@@ -104,8 +126,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/account'
     | '/auth'
     | '/discover'
+    | '/messages'
     | '/reset-password'
     | '/work/$id/edit'
     | '/work/$id/'
@@ -114,8 +138,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AccountRoute: typeof AccountRoute
   AuthRoute: typeof AuthRoute
   DiscoverRoute: typeof DiscoverRoute
+  MessagesRoute: typeof MessagesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   WorkIdEditRoute: typeof WorkIdEditRoute
   WorkIdIndexRoute: typeof WorkIdIndexRoute
@@ -137,6 +163,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -149,6 +182,13 @@ declare module '@tanstack/react-router' {
       path: '/discover'
       fullPath: '/discover'
       preLoaderRoute: typeof DiscoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -178,8 +218,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AccountRoute: AccountRoute,
   AuthRoute: AuthRoute,
   DiscoverRoute: DiscoverRoute,
+  MessagesRoute: MessagesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   WorkIdEditRoute: WorkIdEditRoute,
   WorkIdIndexRoute: WorkIdIndexRoute,

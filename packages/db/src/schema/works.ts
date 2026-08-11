@@ -1,4 +1,5 @@
 import { relations, sql } from "drizzle-orm";
+import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { user } from "./auth.js";
 
@@ -18,6 +19,7 @@ export const work = sqliteTable(
             .notNull(),
         views: integer("views").default(0).notNull(),
         likes: integer("likes").default(0).notNull(),
+        sparks: integer("sparks").default(0).notNull(),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
             .notNull(),
@@ -74,9 +76,10 @@ export const workComment = sqliteTable(
         userId: text("user_id")
             .notNull()
             .references(() => user.id, { onDelete: "cascade" }),
-        parentId: text("parent_id").references(() => workComment.id, {
-            onDelete: "cascade",
-        }),
+        parentId: text("parent_id").references(
+            (): AnySQLiteColumn => workComment.id,
+            { onDelete: "cascade" },
+        ),
         content: text("content").notNull(),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)

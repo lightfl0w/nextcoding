@@ -1,17 +1,16 @@
 import { Button, Chip, Spinner } from "@heroui/react";
 import type { RunResult } from "clientbox";
 import { Eraser, Terminal, X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 
 import type { OutputLine } from "~/hooks/useCodeRunner";
 
 const STREAM_STYLE: Record<OutputLine["stream"], string> = {
     stdout: "text-foreground",
     stderr: "text-danger",
-    system: "text-foreground/40 italic",
 };
 
-export function RunPanel({
+export const RunPanel = memo(function RunPanel({
     open,
     running,
     output,
@@ -19,6 +18,7 @@ export function RunPanel({
     label,
     onClose,
     onClear,
+    className,
 }: {
     open: boolean;
     running: boolean;
@@ -27,6 +27,7 @@ export function RunPanel({
     label: string | null;
     onClose: () => void;
     onClear: () => void;
+    className?: string;
 }) {
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -39,8 +40,10 @@ export function RunPanel({
     if (!open) return null;
 
     return (
-        <div className="h-52 shrink-0 border-t border-default-200 flex flex-col bg-background">
-            <div className="flex items-center gap-2 px-3 h-9 border-b border-default-200 shrink-0">
+        <div
+            className={`h-52 shrink-0 border-t border-default-200 flex flex-col bg-surface ${className ?? ""}`}
+        >
+            <div className="flex items-center gap-2 px-3 h-9 border-b border-default-200 shrink-0 bg-default-50">
                 <Terminal className="size-3.5 text-foreground/50" />
                 <span className="text-xs font-medium text-foreground/70">
                     输出
@@ -96,7 +99,7 @@ export function RunPanel({
             </div>
             <div
                 ref={scrollRef}
-                className="flex-1 overflow-y-auto px-3 py-2 font-mono text-[12px] leading-5 whitespace-pre-wrap break-words"
+                className="flex-1 overflow-y-auto px-3 py-2 font-mono text-[12px] leading-5 whitespace-pre-wrap break-words bg-background"
             >
                 {output.length === 0 && (
                     <p className="text-foreground/35">
@@ -113,4 +116,4 @@ export function RunPanel({
             </div>
         </div>
     );
-}
+});
