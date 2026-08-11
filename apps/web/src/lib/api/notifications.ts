@@ -5,10 +5,18 @@ export function notificationsPath(): string {
     return "/api/notifications";
 }
 
+/**
+ * 通知列表的 SWR key。
+ * @param userId - 用户 ID，避免切换账号后串数据。
+ */
 export function notificationsKey(userId: string) {
     return ["notifications", userId] as const;
 }
 
+/**
+ * 未读数的 SWR key。
+ * @param userId - 用户 ID，避免切换账号后串数据。
+ */
 export function unreadCountKey(userId: string) {
     return ["notification-unread", userId] as const;
 }

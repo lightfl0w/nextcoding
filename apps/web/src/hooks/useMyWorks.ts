@@ -5,6 +5,9 @@ import { fetchMyWorks, myWorksKey } from "~/lib/api";
 
 const NO_WORKS: OwnedWork[] = [];
 
+/**
+ * 当前用户的作品列表。
+ */
 export function useMyWorks() {
     const { user } = useAuth();
     const userId = user?.id ?? null;

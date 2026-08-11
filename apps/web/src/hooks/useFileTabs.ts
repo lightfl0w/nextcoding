@@ -3,6 +3,12 @@ import type { WorkFile } from "~/lib/api";
 
 const NO_KEYS: ReadonlySet<string> = new Set<string>();
 
+/**
+ * 编辑器标签页。
+ * @param files - 当前文件列表。
+ * @returns 激活项与打开集合。
+ * @remarks 文件列表变动时自动打开新出现的文件。
+ */
 export function useFileTabs(files: WorkFile[]) {
     const [activeKey, setActiveKey] = useState<string | null>(null);
     const [openKeys, setOpenKeys] = useState<ReadonlySet<string>>(NO_KEYS);

@@ -65,8 +65,16 @@ function configureTypescript(monaco: typeof Monaco): void {
 
 let monacoPromise: Promise<typeof Monaco> | null = null;
 
+/**
+ * 大文件阈值，超过则关闭高亮避免卡顿。
+ */
 export const LARGE_FILE_BYTES = 512 * 1024;
 
+/**
+ * 懒加载 monaco 并初始化语言服务。
+ * @returns monaco 实例的 Promise。
+ * @remarks 进程内只初始化一次，后续调用复用。
+ */
 export function loadMonaco(): Promise<typeof Monaco> {
     monacoPromise ??= import("monaco-editor").then((mod) => {
         const monaco = mod.default ?? mod;
@@ -118,6 +126,11 @@ const LANGUAGE_BY_EXT: Record<string, string> = {
     svelte: "html",
 };
 
+/**
+ * 按扩展名映射 monaco 语言 ID。
+ * @param name - 文件名。
+ * @returns 语言 ID；未识别返回 `plaintext`。
+ */
 export function languageFromName(name: string): string {
     const ext = name.split(".").pop()?.toLowerCase() ?? "";
     return LANGUAGE_BY_EXT[ext] ?? "plaintext";

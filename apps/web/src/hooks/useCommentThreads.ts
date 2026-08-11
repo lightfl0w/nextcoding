@@ -6,6 +6,11 @@ export interface CommentThread {
     replies: Comment[];
 }
 
+/**
+ * 组装评论线程。
+ * @param comments - 平铺的评论列表。
+ * @returns 按 parentId 组装成的「根评论 + 回复」线程。
+ */
 export function useCommentThreads(comments: Comment[] | undefined) {
     return useMemo(() => buildThreads(comments ?? []), [comments]);
 }

@@ -41,6 +41,21 @@ interface TreeRowProps {
     onDeleteFile: (file: WorkFile) => void;
 }
 
+/**
+ * 文件树。
+ * @param props.files - 作品文件列表。
+ * @param props.activeKey - 当前打开文件。
+ * @param props.isComposing - 是否新建输入中。
+ * @param props.draftName - 新建文件名。
+ * @param props.nameError - 文件名校验错误。
+ * @param props.onOpenFile - 打开文件。
+ * @param props.onDeleteFile - 删除文件。
+ * @param props.onStartComposing - 开始新建。
+ * @param props.onCancelComposing - 取消新建。
+ * @param props.onChangeDraftName - 修改文件名。
+ * @param props.onConfirmComposing - 确认新建。
+ * @remarks 按目录折叠，支持新建与删除。
+ */
 export const FileExplorer = memo(function FileExplorer({
     files,
     activeKey,

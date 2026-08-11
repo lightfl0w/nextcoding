@@ -60,12 +60,22 @@ export interface RunnableFile {
     content: string;
 }
 
+/**
+ * 文件列表转成 clientbox 源映射。
+ * @param files - 文件列表。
+ * @returns 键为绝对路径的源映射。
+ */
 export function toSources(files: RunnableFile[]): Record<string, string> {
     return Object.fromEntries(
         files.map((file) => [`/${file.name}`, file.content]),
     );
 }
 
+/**
+ * 识别项目运行时。
+ * @param names - 项目文件名列表。
+ * @returns 运行时信息；无法识别时返回 `null`。
+ */
 export function detectRuntime(names: string[]): RuntimeInfo | null {
     const available = new Set(names);
 
@@ -89,6 +99,12 @@ export function languageLabel(language: Language): string {
     return LANGUAGE_LABELS[language];
 }
 
+/**
+ * 拼接「不支持运行」提示。
+ * @param names - 项目文件名列表。
+ * @param emptyHint - 列表为空时返回的提示。
+ * @returns 完整提示文案。
+ */
 export function unsupportedRuntimeMessage(
     names: string[],
     emptyHint = "还没有文件可运行",

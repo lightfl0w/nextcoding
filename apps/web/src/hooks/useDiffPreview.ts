@@ -14,6 +14,13 @@ interface DiffPreviewOptions {
     readDraft: (key: string) => string | null;
 }
 
+/**
+ * 版本对比。
+ * @param options.workId - 作品 ID。
+ * @param options.activeKey - 当前打开的文件 key。
+ * @param options.readDraft - 读取某文件的草稿内容。
+ * @remarks 对比的是快照里的原始内容与当前草稿。
+ */
 export function useDiffPreview({
     workId,
     activeKey,

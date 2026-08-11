@@ -9,6 +9,12 @@ import {
 } from "~/hooks/useGiveSpark";
 import type { Work } from "~/lib/api";
 
+/**
+ * 卡片火花按钮。
+ * @param work - 作品数据。
+ * @returns 本地计数与点击处理。
+ * @remarks 包含登录、已送、自赞三个守卫。
+ */
 export function useWorkCardSpark(work: Work) {
     const { user, isLoggedIn } = useAuth();
     const navigate = useNavigate();

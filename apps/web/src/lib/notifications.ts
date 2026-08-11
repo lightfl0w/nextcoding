@@ -18,6 +18,11 @@ export type NotificationCounts = {
     remixUnread: number;
 };
 
+/**
+ * 通知文案。
+ * @param item - 通知数据。
+ * @returns 火花与二创两种类型的文案。
+ */
 export function notificationText(item: AppNotification): string {
     const actor = item.actor?.name ?? "某位用户";
     const workTitle = item.work?.title ?? "你的作品";
@@ -34,6 +39,11 @@ export function formatTimeOfDay(timestamp: number | string | Date): string {
     return `${h}:${m}`;
 }
 
+/**
+ * 按时间分组。
+ * @param items - 通知列表。
+ * @returns 今天/昨天/本周/更早 四组，空组不输出。
+ */
 export function groupNotifications(
     items: AppNotification[],
 ): NotificationGroup[] {

@@ -14,6 +14,12 @@ import {
     unsupportedRuntimeMessage,
 } from "~/lib/run";
 
+/**
+ * 详情页运行。
+ * @param workId - 作品 ID。
+ * @param runtime - 检测到的运行时；为 `null` 表示不可运行。
+ * @remarks 支持运行当前版本与历史版本快照。
+ */
 export function useWorkRunner(workId: string, runtime: RuntimeInfo | null) {
     const {
         running,

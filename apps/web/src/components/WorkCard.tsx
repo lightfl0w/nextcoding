@@ -6,6 +6,11 @@ import { useWorkCardSpark } from "~/hooks/useWorkCardSpark";
 import type { Work } from "~/lib/api";
 import { formatCount, formatDate } from "~/lib/format";
 
+/**
+ * 作品卡片。
+ * @param props.work - 作品数据。
+ * @remarks 火花按钮就地更新计数，不重新拉列表。
+ */
 export const WorkCard = memo(function WorkCard({ work }: { work: Work }) {
     const { sparked, count, handleSparkClick } = useWorkCardSpark(work);
 

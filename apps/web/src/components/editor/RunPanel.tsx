@@ -10,6 +10,18 @@ const STREAM_STYLE: Record<OutputLine["stream"], string> = {
     stderr: "text-danger",
 };
 
+/**
+ * 运行输出面板。
+ * @param props.open - 是否展开。
+ * @param props.running - 是否运行中。
+ * @param props.output - 输出行。
+ * @param props.result - 运行结果。
+ * @param props.label - 附加标签。
+ * @param props.onClose - 关闭面板。
+ * @param props.onClear - 清空输出。
+ * @param props.className - 附加类名。
+ * @remarks 展示 stdout/stderr、退出码与耗时。
+ */
 export const RunPanel = memo(function RunPanel({
     open,
     running,

@@ -24,6 +24,20 @@ interface WorkActionsProps {
     onRemix: () => void;
 }
 
+/**
+ * 详情页统计与操作区。
+ * @param props.views - 浏览数。
+ * @param props.sparks - 火花数。
+ * @param props.commentCount - 评论数。
+ * @param props.runtime - 运行环境。
+ * @param props.isOwner - 是否本人作品。
+ * @param props.isRunning - 是否运行中。
+ * @param props.sparked - 是否已送火花。
+ * @param props.onRun - 运行作品。
+ * @param props.onSpark - 送火花。
+ * @param props.onRemix - 二创。
+ * @remarks 提供 运行 / 送火花 / 二创 操作。
+ */
 export function WorkActions({
     views,
     sparks,

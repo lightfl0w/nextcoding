@@ -1,7 +1,17 @@
+/**
+ * 数字缩写。
+ * @param count - 原始数值。
+ * @returns ≥1 万时显示为 `x.xw`。
+ */
 export function formatCount(count: number) {
     return count >= 10000 ? `${(count / 10000).toFixed(1)}w` : String(count);
 }
 
+/**
+ * 格式化时间。
+ * @param timestamp - 时间戳或日期。
+ * @returns 刚刚 → 分钟/小时/天前，超一周显示日期。
+ */
 export function formatDate(timestamp: number | string | Date) {
     const date = new Date(timestamp);
     const now = Date.now();

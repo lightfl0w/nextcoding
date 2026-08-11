@@ -11,10 +11,21 @@ export function workFilesPath(workId: string): string {
     return `/api/works/${workId}/files`;
 }
 
+/**
+ * 文件内容地址。
+ * @param workId - 作品 ID。
+ * @param key - 文件 key。
+ * @returns 同时作为 SWR key 使用。
+ */
 export function fileContentPath(workId: string, key: string): string {
     return `${workFilesPath(workId)}/content?key=${encodeURIComponent(key)}`;
 }
 
+/**
+ * 获取文件列表。
+ * @param path - 由调用方传入的 SWR key，与缓存保持一致。
+ * @returns 文件列表。
+ */
 export function fetchWorkFiles(path: string): Promise<{ files: WorkFile[] }> {
     return getJson<{ files: WorkFile[] }>(path);
 }
@@ -28,6 +39,12 @@ export type CreatedFile =
     | { outcome: "duplicate" }
     | { outcome: "rejected" };
 
+/**
+ * 新建空文件。
+ * @param workId - 作品 ID。
+ * @param name - 文件名。
+ * @returns `created` 携带新文件信息；同名返回 `duplicate`，其余失败返回 `rejected`。
+ */
 export async function createWorkFile(
     workId: string,
     name: string,
@@ -51,6 +68,14 @@ export type SavedFile =
     | { outcome: "saved"; version: number }
     | { outcome: "conflict"; currentVersion: number };
 
+/**
+ * 携带乐观版本号保存内容。
+ * @param workId - 作品 ID。
+ * @param key - 文件 key。
+ * @param content - 新内容。
+ * @param expectedVersion - 预期的当前版本号。
+ * @returns `saved` 携带最新版本；版本不符时返回 `conflict` 与当前版本。
+ */
 export async function saveFileContent(
     workId: string,
     key: string,

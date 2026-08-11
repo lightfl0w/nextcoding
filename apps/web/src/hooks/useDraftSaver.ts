@@ -17,6 +17,13 @@ interface DraftSaverOptions {
     loadContent: (key: string) => Promise<string>;
 }
 
+/**
+ * 自动保存。
+ * @param options.workId - 作品 ID。
+ * @param options.readDraft - 读取某文件的草稿内容。
+ * @param options.loadContent - 从服务器加载文件内容。
+ * @remarks 内容变化防抖提交；版本冲突时拉服务器内容覆盖草稿。
+ */
 export function useDraftSaver({
     workId,
     files,

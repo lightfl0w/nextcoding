@@ -13,6 +13,11 @@ export function workRemixesPath(workId: string): string {
     return `/api/works/${workId}/remixes`;
 }
 
+/**
+ * 基于作品创建二创副本。
+ * @param workId - 原作品 ID。
+ * @returns 新作品信息。
+ */
 export function remixWork(workId: string): Promise<RemixResult> {
     return mutateJson(workRemixPath(workId), "POST", undefined, "二创失败");
 }

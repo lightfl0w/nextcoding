@@ -33,6 +33,11 @@ export function validateName(value: string): string | null {
     return null;
 }
 
+/**
+ * 只放行站内相对路径。
+ * @param target - 原始跳转地址。
+ * @returns 站内路径原样返回，其余回退到 `/`（防 open redirect）。
+ */
 export function safeRedirect(target: string | undefined): string {
     const fallback = "/";
     if (!target) {

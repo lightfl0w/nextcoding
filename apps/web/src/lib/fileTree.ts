@@ -8,11 +8,21 @@ type FolderNode = Extract<FileTreeNode, { kind: "folder" }>;
 
 export type { FolderNode };
 
+/**
+ * 取路径最后一段。
+ * @param name - 含路径的文件名。
+ * @returns 例如 `"src/main.js"` → `"main.js"`。
+ */
 export function pathBasename(name: string): string {
     const slash = name.lastIndexOf("/");
     return slash === -1 ? name : name.slice(slash + 1);
 }
 
+/**
+ * 按文件名中的 `/` 分目录建树。
+ * @param files - 文件列表。
+ * @returns 目录在前、按名字排序的树。
+ */
 export function buildFileTree(files: WorkFile[]): FileTreeNode[] {
     const roots: FileTreeNode[] = [];
     const foldersByPath = new Map<string, FolderNode>();

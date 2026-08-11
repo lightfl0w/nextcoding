@@ -13,6 +13,14 @@ interface FileActionsOptions {
     onFileRemoved: (key: string) => void;
 }
 
+/**
+ * 文件新建/删除。
+ * @param options.workId - 作品 ID。
+ * @param options.reload - 操作成功后刷新文件列表。
+ * @param options.onFileCreated - 新建成功回调（携带 key 与版本号）。
+ * @param options.onFileRemoved - 删除成功回调。
+ * @remarks 内部管理输入态与错误文案。
+ */
 export function useFileActions({
     workId,
     reload,

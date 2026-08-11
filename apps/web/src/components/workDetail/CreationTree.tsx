@@ -3,6 +3,12 @@ import { ArrowDownLeft, GitFork } from "lucide-react";
 import type { Work, WorkSource } from "~/lib/api";
 import { formatDate } from "~/lib/format";
 
+/**
+ * 创作脉络。
+ * @param props.source - 源头作品；独立作品为 `null`。
+ * @param props.remixes - 二创列表。
+ * @remarks 展示 源头 → 当前作品 → 被谁二创。
+ */
 export function CreationTree({
     source,
     remixes,

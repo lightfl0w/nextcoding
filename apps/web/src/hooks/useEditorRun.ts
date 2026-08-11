@@ -10,6 +10,13 @@ interface EditorRunOptions {
     loadContent: (key: string) => Promise<string>;
 }
 
+/**
+ * 编辑页运行。
+ * @param options.files - 当前文件列表。
+ * @param options.readDraft - 读取某文件的草稿内容。
+ * @param options.loadContent - 从服务器加载文件内容。
+ * @remarks 源码优先取草稿，其次从服务器读取。
+ */
 export function useEditorRun({
     files,
     readDraft,

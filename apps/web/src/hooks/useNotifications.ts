@@ -6,6 +6,10 @@ import { fetchNotifications, notificationsKey } from "~/lib/api";
 const REFRESH_INTERVAL_MS = 30_000;
 const EMPTY_NOTIFICATIONS: AppNotification[] = [];
 
+/**
+ * 通知列表。
+ * @remarks 30 秒轮询刷新。
+ */
 export function useNotifications() {
     const { user } = useAuth();
     const userId = user?.id ?? null;

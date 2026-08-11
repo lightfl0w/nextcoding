@@ -11,6 +11,12 @@ import {
 
 const NO_VERSIONS: WorkVersion[] = [];
 
+/**
+ * 版本历史。
+ * @param workId - 作品 ID。
+ * @returns 版本列表与发布/回滚动作。
+ * @remarks 发布成功后本地追加记录。
+ */
 export function useVersionHistory(workId: string) {
     const { data: versions = NO_VERSIONS, mutate } = useSWR(
         workVersionsPath(workId),

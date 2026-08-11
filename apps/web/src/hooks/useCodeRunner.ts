@@ -24,6 +24,10 @@ function toOutputLines(
     }));
 }
 
+/**
+ * clientbox 运行器封装。
+ * @remarks 输出按行流式追加，只保留最近 500 行。
+ */
 export function useCodeRunner() {
     const boxRef = useRef<ClientBox | null>(null);
     const [running, setRunning] = useState(false);

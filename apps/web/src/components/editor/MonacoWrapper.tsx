@@ -8,6 +8,14 @@ interface MonacoWrapperProps {
     onDispose?: () => void;
 }
 
+/**
+ * monaco 编辑器承载。
+ * @param props.monaco - monaco 模块实例。
+ * @param props.theme - 明暗主题。
+ * @param props.onReady - 编辑器创建完成回调。
+ * @param props.onDispose - 编辑器销毁回调。
+ * @remarks 主题变化只更新选项，不重建编辑器实例。
+ */
 export function MonacoWrapper({
     monaco,
     theme,

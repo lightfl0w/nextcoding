@@ -9,6 +9,12 @@ export interface ReplyTarget {
     name: string;
 }
 
+/**
+ * 评论/回复输入与提交。
+ * @param workId - 作品 ID。
+ * @param reload - 提交成功后的刷新回调。
+ * @remarks 成功后清空草稿并触发 reload。
+ */
 export function useCommentComposer(
     workId: string,
     reload: () => Promise<unknown>,

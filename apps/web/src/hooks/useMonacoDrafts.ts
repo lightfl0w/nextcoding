@@ -11,6 +11,13 @@ interface MonacoDraftsOptions {
     activeContent: string | undefined;
 }
 
+/**
+ * 编辑器模型草稿。
+ * @param options.files - 当前文件列表。
+ * @param options.activeKey - 当前打开的文件 key。
+ * @param options.activeContent - 服务器上的文件内容。
+ * @remarks 打开过的文件内容留在模型里，读草稿优先于服务器。
+ */
 export function useMonacoDrafts({
     monaco,
     editor,

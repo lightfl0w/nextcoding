@@ -10,6 +10,14 @@ interface VersionTimelineProps {
     onRun: (version: WorkVersion) => void;
 }
 
+/**
+ * 版本时间线。
+ * @param props.versions - 版本列表。
+ * @param props.runningVersion - 运行中的版本号。
+ * @param props.isRunning - 是否运行中。
+ * @param props.onRun - 点击运行某版本。
+ * @remarks 可点击运行历史版本。
+ */
 export function VersionTimeline({
     versions,
     runningVersion,
