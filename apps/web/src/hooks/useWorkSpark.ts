@@ -15,7 +15,9 @@ export function useWorkSpark(workId: string) {
 
     const give = useCallback(async (): Promise<boolean> => {
         const ok = await giveSpark(workId);
-        if (ok) mutate({ sparked: true }, false);
+        if (ok) {
+            mutate({ sparked: true }, false);
+        }
         return ok;
     }, [workId, giveSpark, mutate]);
 

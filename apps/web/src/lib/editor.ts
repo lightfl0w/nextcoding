@@ -50,7 +50,9 @@ function configureTypescript(monaco: typeof Monaco): void {
         typescript?: TypescriptLanguage;
     };
     const typescript = languages.typescript;
-    if (!typescript) return;
+    if (!typescript) {
+        return;
+    }
 
     typescript.typescriptDefaults.setCompilerOptions(
         TYPESCRIPT_COMPILER_OPTIONS,

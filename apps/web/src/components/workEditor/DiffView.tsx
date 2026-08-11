@@ -24,7 +24,9 @@ export function DiffView({
 
     useEffect(() => {
         const container = containerRef.current;
-        if (!monaco || !container) return;
+        if (!monaco || !container) {
+            return;
+        }
 
         const originalModel = monaco.editor.createModel(original, "plaintext");
         const modifiedModel = monaco.editor.createModel(modified, "plaintext");

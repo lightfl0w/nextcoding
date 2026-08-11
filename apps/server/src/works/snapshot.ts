@@ -60,7 +60,9 @@ function toSnapshotFile(
         contentType: file.contentType,
     };
 
-    if (!data) return { ...base, content: "" };
+    if (!data) {
+        return { ...base, content: "" };
+    }
     if (isBinaryPayload(file.contentType, data)) {
         return { ...base, content: toBase64(data), encoding: "base64" };
     }

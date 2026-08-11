@@ -14,7 +14,9 @@ export interface AuthenticatedEnv {
 export const requireSession = createMiddleware<AuthenticatedEnv>(
     async (c, next) => {
         const session = await readSession(c);
-        if (!session?.user) return jsonError(c, "未登录", 401);
+        if (!session?.user) {
+            return jsonError(c, "未登录", 401);
+        }
 
         c.set("userId", session.user.id);
         c.set("userName", session.user.name ?? null);
@@ -29,9 +31,15 @@ export const requireWorkAuthor = createMiddleware<AuthenticatedEnv>(
             findWorkOwnerId(c.req.param("id") ?? ""),
         ]);
 
-        if (!session?.user) return jsonError(c, "未登录", 401);
-        if (!ownerId) return jsonError(c, "作品不存在", 404);
-        if (ownerId !== session.user.id) return jsonError(c, "无权操作", 403);
+        if (!session?.user) {
+            return jsonError(c, "未登录", 401);
+        }
+        if (!ownerId) {
+            return jsonError(c, "作品不存在", 404);
+        }
+        if (ownerId !== session.user.id) {
+            return jsonError(c, "无权操作", 403);
+        }
 
         c.set("userId", session.user.id);
         c.set("userName", session.user.name ?? null);

@@ -78,7 +78,9 @@ async function copyFiles(originalId: string, forkId: string) {
     const copies = await Promise.all(
         files.map(async (file) => {
             const bytes = await storage.get(file.key);
-            if (!bytes) return null;
+            if (!bytes) {
+                return null;
+            }
             const newKey = fileStorageKey(forkId, file.name);
             await storage.put(newKey, bytes, {
                 contentType: file.contentType ?? undefined,

@@ -44,7 +44,9 @@ export function useCodeRunner() {
             setRunning(true);
             setResult(null);
             setOutput([]);
-            if (!boxRef.current) boxRef.current = new ClientBox();
+            if (!boxRef.current) {
+                boxRef.current = new ClientBox();
+            }
             const box = boxRef.current;
             let streamed = false;
             try {
@@ -61,9 +63,15 @@ export function useCodeRunner() {
                     },
                 });
                 if (!streamed) {
-                    if (res.stdout) append("stdout", res.stdout);
-                    if (res.stderr) append("stderr", res.stderr);
-                    if (res.error) append("stderr", res.error);
+                    if (res.stdout) {
+                        append("stdout", res.stdout);
+                    }
+                    if (res.stderr) {
+                        append("stderr", res.stderr);
+                    }
+                    if (res.error) {
+                        append("stderr", res.error);
+                    }
                 }
                 setResult(res);
             } catch (err) {

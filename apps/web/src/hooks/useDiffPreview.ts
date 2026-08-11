@@ -41,13 +41,17 @@ export function useDiffPreview({
     );
 
     useEffect(() => {
-        if (previewVersion === null) return;
+        if (previewVersion === null) {
+            return;
+        }
         if (error) {
             toast.danger("版本快照加载失败");
             close();
             return;
         }
-        if (!snapshot) return;
+        if (!snapshot) {
+            return;
+        }
         if (!activeKey) {
             close();
             return;

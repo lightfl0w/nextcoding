@@ -23,7 +23,9 @@ export function MonacoWrapper({
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: 主题由下方 effect 单独更新，不在此重建编辑器
     useEffect(() => {
-        if (!monaco || !containerRef.current) return;
+        if (!monaco || !containerRef.current) {
+            return;
+        }
 
         const editor = monaco.editor.create(containerRef.current, {
             theme: theme === "dark" ? "vs-dark" : "vs",

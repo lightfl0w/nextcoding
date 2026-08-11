@@ -40,11 +40,17 @@ versionRoutes.get("/:id/versions", async (c) => {
 
 versionRoutes.get("/:id/versions/:version", async (c) => {
     const version = parseVersionNumber(c.req.param("version"));
-    if (version === null) return jsonError(c, "版本号不合法", 400);
+    if (version === null) {
+        return jsonError(c, "版本号不合法", 400);
+    }
 
     const raw = await readSnapshotBytes(c.req.param("id"), version);
-    if (raw === "missing-version") return jsonError(c, "版本不存在", 404);
-    if (raw === "missing-snapshot") return jsonError(c, "快照数据丢失", 500);
+    if (raw === "missing-version") {
+        return jsonError(c, "版本不存在", 404);
+    }
+    if (raw === "missing-snapshot") {
+        return jsonError(c, "快照数据丢失", 500);
+    }
 
     return c.json(parseSnapshot(raw));
 });
@@ -92,10 +98,14 @@ versionRoutes.post(
     async (c) => {
         const workId = c.req.param("id");
         const version = parseVersionNumber(c.req.param("version"));
-        if (version === null) return jsonError(c, "版本号不合法", 400);
+        if (version === null) {
+            return jsonError(c, "版本号不合法", 400);
+        }
 
         const raw = await readSnapshotBytes(workId, version);
-        if (raw === "missing-version") return jsonError(c, "版本不存在", 404);
+        if (raw === "missing-version") {
+            return jsonError(c, "版本不存在", 404);
+        }
         if (raw === "missing-snapshot") {
             return jsonError(c, "快照数据丢失", 500);
         }
@@ -164,7 +174,9 @@ async function readSnapshotBytes(
     version: number,
 ): Promise<Uint8Array | "missing-version" | "missing-snapshot"> {
     const row = await findVersion(workId, version);
-    if (!row) return "missing-version";
+    if (!row) {
+        return "missing-version";
+    }
 
     const raw = await getStorage().get(row.snapshotKey);
     return raw ?? "missing-snapshot";

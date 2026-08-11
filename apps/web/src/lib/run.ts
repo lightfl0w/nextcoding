@@ -70,12 +70,16 @@ export function detectRuntime(names: string[]): RuntimeInfo | null {
     const available = new Set(names);
 
     for (const { file, language } of ENTRY_POINTS) {
-        if (available.has(file)) return { language, entryPoint: `/${file}` };
+        if (available.has(file)) {
+            return { language, entryPoint: `/${file}` };
+        }
     }
 
     for (const { extension, language } of FALLBACK_BY_EXTENSION) {
         const match = names.find((name) => name.endsWith(extension));
-        if (match) return { language, entryPoint: `/${match}` };
+        if (match) {
+            return { language, entryPoint: `/${match}` };
+        }
     }
 
     return null;
@@ -89,6 +93,8 @@ export function unsupportedRuntimeMessage(
     names: string[],
     emptyHint = "还没有文件可运行",
 ): string {
-    if (names.length === 0) return emptyHint;
+    if (names.length === 0) {
+        return emptyHint;
+    }
     return `「${names[0]}」等文件暂不支持在线运行，请使用 ${SUPPORTED_RUNTIMES}`;
 }

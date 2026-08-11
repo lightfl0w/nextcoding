@@ -34,8 +34,12 @@ export async function createWork(title: string): Promise<{ id: string }> {
     form.append("title", title);
 
     const response = await postForm("/api/works", form);
-    if (response.status === 401) throw new Error("请先登录");
-    if (!response.ok) throw new HttpError(response.status, "创建失败");
+    if (response.status === 401) {
+        throw new Error("请先登录");
+    }
+    if (!response.ok) {
+        throw new HttpError(response.status, "创建失败");
+    }
 
     return response.json() as Promise<{ id: string }>;
 }

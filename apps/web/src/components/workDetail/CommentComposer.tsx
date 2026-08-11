@@ -92,6 +92,8 @@ export function SignInPrompt() {
 }
 
 function submitLabel(isPosting: boolean, isReplying: boolean): string {
-    if (isPosting) return "发表中…";
+    if (isPosting) {
+        return "发表中…";
+    }
     return isReplying ? "发表回复" : "发表评论";
 }

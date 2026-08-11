@@ -23,8 +23,12 @@ sparkRoutes.post("/:id/spark", requireSession, async (c) => {
     const userId = c.get("userId");
 
     const ownerId = await findPublishedWorkOwnerId(workId);
-    if (!ownerId) return jsonError(c, "作品不存在", 404);
-    if (ownerId === userId) return jsonError(c, "不能给自己的作品送火花", 400);
+    if (!ownerId) {
+        return jsonError(c, "作品不存在", 404);
+    }
+    if (ownerId === userId) {
+        return jsonError(c, "不能给自己的作品送火花", 400);
+    }
 
     if (await findSpark(workId, userId)) {
         return jsonError(c, "已经给这个作品送过火花了", 409);

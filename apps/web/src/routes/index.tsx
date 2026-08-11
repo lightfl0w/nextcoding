@@ -24,7 +24,9 @@ function Home() {
 
         try {
             const { id } = await createWork(`${user?.name} 的作品`);
-            if (user) await mutate(myWorksKey(user.id));
+            if (user) {
+                await mutate(myWorksKey(user.id));
+            }
             navigate({ to: "/work/$id/edit", params: { id } });
         } catch (err) {
             toast.danger((err as Error).message);

@@ -47,7 +47,9 @@ export function useDraftSaver({
 
     const markSaved = useCallback((key: string) => {
         setDirtyKeys((current) => {
-            if (!current.has(key)) return current;
+            if (!current.has(key)) {
+                return current;
+            }
             const next = new Set(current);
             next.delete(key);
             return next;
@@ -57,7 +59,9 @@ export function useDraftSaver({
     const saveFile = useCallback(
         async (key: string) => {
             const content = readDraft(key);
-            if (content === null) return;
+            if (content === null) {
+                return;
+            }
 
             setIsSaving(true);
             try {
@@ -89,7 +93,9 @@ export function useDraftSaver({
                 current.has(key) ? current : new Set(current).add(key),
             );
             const pending = timersRef.current.get(key);
-            if (pending) clearTimeout(pending);
+            if (pending) {
+                clearTimeout(pending);
+            }
             const contentLength = readDraft(key)?.length ?? 0;
             const delay =
                 contentLength > LARGE_FILE_BYTES

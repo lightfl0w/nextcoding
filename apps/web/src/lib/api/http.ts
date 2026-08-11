@@ -17,7 +17,9 @@ export function sendJson(
     method: MutationMethod,
     body?: unknown,
 ): Promise<Response> {
-    if (body === undefined) return fetch(path, { method });
+    if (body === undefined) {
+        return fetch(path, { method });
+    }
     return fetch(path, {
         method,
         headers: JSON_HEADERS,
@@ -50,6 +52,8 @@ export async function mutateJson<T>(
 }
 
 async function unwrapJson<T>(response: Response, action?: string): Promise<T> {
-    if (!response.ok) throw new HttpError(response.status, action);
+    if (!response.ok) {
+        throw new HttpError(response.status, action);
+    }
     return response.json() as Promise<T>;
 }

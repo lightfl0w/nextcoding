@@ -50,7 +50,9 @@ function NavButton({ item, active }: { item: NavItem; active: boolean }) {
         </Button>
     );
 
-    if (!("badge" in item) || item.badge <= 0) return button;
+    if (!("badge" in item) || item.badge <= 0) {
+        return button;
+    }
 
     return (
         <Badge.Anchor className="w-full">

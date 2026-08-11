@@ -25,7 +25,9 @@ export function useMonacoDrafts({
     useEffect(() => {
         const models = modelsRef.current;
         return () => {
-            for (const model of models.values()) model.dispose();
+            for (const model of models.values()) {
+                model.dispose();
+            }
             models.clear();
         };
     }, []);
@@ -33,14 +35,18 @@ export function useMonacoDrafts({
     useEffect(() => {
         const liveKeys = new Set(files.map((file) => file.key));
         for (const [key, model] of modelsRef.current) {
-            if (liveKeys.has(key)) continue;
+            if (liveKeys.has(key)) {
+                continue;
+            }
             model.dispose();
             modelsRef.current.delete(key);
         }
     }, [files]);
 
     useEffect(() => {
-        if (!monaco || !editor || !activeKey) return;
+        if (!monaco || !editor || !activeKey) {
+            return;
+        }
 
         const existing = modelsRef.current.get(activeKey);
         if (existing) {
@@ -54,9 +60,13 @@ export function useMonacoDrafts({
     }, [monaco, editor, activeKey]);
 
     useEffect(() => {
-        if (!monaco || !activeKey || activeContent === undefined) return;
+        if (!monaco || !activeKey || activeContent === undefined) {
+            return;
+        }
         const model = modelsRef.current.get(activeKey);
-        if (model) fillEmptyModel(monaco, model, activeContent);
+        if (model) {
+            fillEmptyModel(monaco, model, activeContent);
+        }
     }, [activeKey, activeContent, monaco]);
 
     const readDraft = useCallback(
@@ -90,7 +100,9 @@ function fillEmptyModel(
     model: Monaco.editor.ITextModel,
     content: string,
 ): void {
-    if (model.isDisposed() || model.getValue() !== "") return;
+    if (model.isDisposed() || model.getValue() !== "") {
+        return;
+    }
     model.setValue(content);
 
     if (

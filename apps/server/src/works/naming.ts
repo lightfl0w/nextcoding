@@ -1,7 +1,9 @@
 const FORBIDDEN_SEGMENTS = new Set(["", ".", ".."]);
 
 export function isValidFileName(name: string): boolean {
-    if (!name || name.startsWith("/") || name.endsWith("/")) return false;
+    if (!name || name.startsWith("/") || name.endsWith("/")) {
+        return false;
+    }
     return name.split("/").every((segment) => !FORBIDDEN_SEGMENTS.has(segment));
 }
 

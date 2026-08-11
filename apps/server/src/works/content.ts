@@ -18,7 +18,9 @@ export type DecodeResult =
     | { ok: false; reason: string };
 
 function isBinaryContentType(contentType: string | null | undefined): boolean {
-    if (!contentType) return false;
+    if (!contentType) {
+        return false;
+    }
     const normalized = contentType.toLowerCase();
     return (
         BINARY_CONTENT_TYPES.has(normalized) ||
@@ -32,7 +34,9 @@ export function isBinaryPayload(
     contentType: string | null,
     data: Uint8Array,
 ): boolean {
-    if (isBinaryContentType(contentType)) return true;
+    if (isBinaryContentType(contentType)) {
+        return true;
+    }
     return !contentType && !isDecodableAsUtf8(data);
 }
 
@@ -40,7 +44,9 @@ export function decodePayload(
     content: string,
     isBase64: boolean,
 ): DecodeResult {
-    if (!isBase64) return { ok: true, bytes: encoder.encode(content) };
+    if (!isBase64) {
+        return { ok: true, bytes: encoder.encode(content) };
+    }
 
     const normalized = content.trim();
     if (!isWellFormedBase64(normalized)) {

@@ -23,7 +23,9 @@ export const WorksGrid = memo(function WorksGrid({
     error,
     placeholderCount,
 }: WorksGridProps) {
-    if (isLoading) return <LoadingGrid count={placeholderCount} />;
+    if (isLoading) {
+        return <LoadingGrid count={placeholderCount} />;
+    }
 
     if (error) {
         return (

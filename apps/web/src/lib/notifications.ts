@@ -63,13 +63,17 @@ export function groupNotifications(
     }
 
     const groups: NotificationGroup[] = [];
-    if (todayItems.length > 0)
+    if (todayItems.length > 0) {
         groups.push({ key: "today", label: "今天", items: todayItems });
-    if (yesterdayItems.length > 0)
+    }
+    if (yesterdayItems.length > 0) {
         groups.push({ key: "yesterday", label: "昨天", items: yesterdayItems });
-    if (weekItems.length > 0)
+    }
+    if (weekItems.length > 0) {
         groups.push({ key: "week", label: "本周", items: weekItems });
-    if (earlierItems.length > 0)
+    }
+    if (earlierItems.length > 0) {
         groups.push({ key: "earlier", label: "更早", items: earlierItems });
+    }
     return groups;
 }

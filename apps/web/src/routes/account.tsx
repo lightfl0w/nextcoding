@@ -34,7 +34,9 @@ function AccountRoute() {
         );
     }
 
-    if (!user) return <SignInPrompt />;
+    if (!user) {
+        return <SignInPrompt />;
+    }
 
     return (
         <div className="p-8 w-full flex flex-col gap-6 max-w-3xl mx-auto">
@@ -69,13 +71,17 @@ function ProfileCard() {
 
     const saveProfile = async () => {
         const trimmedName = name.trim();
-        if (!trimmedName) return;
+        if (!trimmedName) {
+            return;
+        }
         try {
             const { error } = await authClient.updateUser({
                 name: trimmedName,
                 image: image.trim(),
             });
-            if (error) throw new Error(error.message ?? "更新失败");
+            if (error) {
+                throw new Error(error.message ?? "更新失败");
+            }
             editDialogState.close();
             toast.success("资料已更新");
             refetch();

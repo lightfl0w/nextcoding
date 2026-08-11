@@ -32,12 +32,18 @@ export const RunPanel = memo(function RunPanel({
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (!open || output.length === 0) return;
+        if (!open || output.length === 0) {
+            return;
+        }
         const el = scrollRef.current;
-        if (el) el.scrollTop = el.scrollHeight;
+        if (el) {
+            el.scrollTop = el.scrollHeight;
+        }
     }, [output, open]);
 
-    if (!open) return null;
+    if (!open) {
+        return null;
+    }
 
     return (
         <div

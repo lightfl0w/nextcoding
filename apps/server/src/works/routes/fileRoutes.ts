@@ -35,20 +35,28 @@ fileRoutes.get("/:id/files", async (c) => {
         workExists(workId),
         listWorkFiles(workId),
     ]);
-    if (!exists) return jsonError(c, "作品不存在", 404);
+    if (!exists) {
+        return jsonError(c, "作品不存在", 404);
+    }
 
     return c.json({ files });
 });
 
 fileRoutes.get("/:id/files/content", async (c) => {
     const key = c.req.query("key");
-    if (!key) return jsonError(c, "缺少 key", 400);
+    if (!key) {
+        return jsonError(c, "缺少 key", 400);
+    }
 
     const file = await findWorkFileByKey(c.req.param("id"), key);
-    if (!file) return jsonError(c, "文件不存在", 404);
+    if (!file) {
+        return jsonError(c, "文件不存在", 404);
+    }
 
     const data = await getStorage().get(file.key);
-    if (!data) return jsonError(c, "内容缺失", 404);
+    if (!data) {
+        return jsonError(c, "内容缺失", 404);
+    }
 
     return c.text(
         isBinaryPayload(file.contentType, data) ? toBase64(data) : toText(data),
@@ -60,7 +68,9 @@ fileRoutes.post("/:id/files", requireWorkAuthor, async (c) => {
     const body = await readJsonBody(c);
 
     const name = readTrimmed(body, "name");
-    if (!isValidFileName(name)) return jsonError(c, "文件名不合法", 400);
+    if (!isValidFileName(name)) {
+        return jsonError(c, "文件名不合法", 400);
+    }
 
     const key = fileStorageKey(workId, name);
     if (await findWorkFileByKey(workId, key)) {
@@ -68,7 +78,9 @@ fileRoutes.post("/:id/files", requireWorkAuthor, async (c) => {
     }
 
     const decoded = decodeBody(body);
-    if (!decoded.ok) return jsonError(c, decoded.reason, 400);
+    if (!decoded.ok) {
+        return jsonError(c, decoded.reason, 400);
+    }
     if (exceedsFileSizeLimit(decoded.bytes.byteLength)) {
         return jsonError(c, fileSizeLimitMessage(), 400);
     }
@@ -94,10 +106,14 @@ fileRoutes.post("/:id/files", requireWorkAuthor, async (c) => {
 fileRoutes.put("/:id/files/content", requireWorkAuthor, async (c) => {
     const body = await readJsonBody(c);
     const key = readString(body, "key");
-    if (!key) return jsonError(c, "缺少 key", 400);
+    if (!key) {
+        return jsonError(c, "缺少 key", 400);
+    }
 
     const file = await findWorkFileByKey(c.req.param("id"), key);
-    if (!file) return jsonError(c, "文件不存在", 404);
+    if (!file) {
+        return jsonError(c, "文件不存在", 404);
+    }
 
     const currentVersion = file.version ?? 1;
     if (isStaleWrite(body, currentVersion)) {
@@ -108,7 +124,9 @@ fileRoutes.put("/:id/files/content", requireWorkAuthor, async (c) => {
     }
 
     const decoded = decodeBody(body);
-    if (!decoded.ok) return jsonError(c, decoded.reason, 400);
+    if (!decoded.ok) {
+        return jsonError(c, decoded.reason, 400);
+    }
     if (exceedsFileSizeLimit(decoded.bytes.byteLength)) {
         return jsonError(c, fileSizeLimitMessage(), 400);
     }
@@ -129,10 +147,14 @@ fileRoutes.put("/:id/files/content", requireWorkAuthor, async (c) => {
 
 fileRoutes.delete("/:id/files", requireWorkAuthor, async (c) => {
     const key = c.req.query("key");
-    if (!key) return jsonError(c, "缺少 key", 400);
+    if (!key) {
+        return jsonError(c, "缺少 key", 400);
+    }
 
     const file = await findWorkFileByKey(c.req.param("id"), key);
-    if (!file) return jsonError(c, "文件不存在", 404);
+    if (!file) {
+        return jsonError(c, "文件不存在", 404);
+    }
 
     await getStorage().delete(file.key);
     await deleteWorkFile(file.id);
@@ -148,7 +170,9 @@ function decodeBody(body: JsonBody): DecodeResult {
 }
 
 function isStaleWrite(body: JsonBody, currentVersion: number): boolean {
-    if (body.expectedVersion === undefined) return false;
+    if (body.expectedVersion === undefined) {
+        return false;
+    }
     const expected = Number(body.expectedVersion);
     return !Number.isInteger(expected) || expected !== currentVersion;
 }

@@ -11,7 +11,7 @@
             "**",
             "!apps/web/src/routeTree.gen.ts",
             "!**/dist",
-            "!**/data",
+            "!**/data"
         ]
     },
     "formatter": {
@@ -23,12 +23,31 @@
     "linter": {
         "enabled": true,
         "rules": {
-            "preset": "recommended"
+            "preset": "recommended",
+            "correctness": {
+                "noInvalidUseBeforeDeclaration": "error",
+                "noUnusedImports": "error",
+                "noUnusedVariables": "error"
+            },
+            "style": {
+                "noDefaultExport": "error",
+                "noNonNullAssertion": "error",
+                "noParameterAssign": "error",
+                "useBlockStatements": "error",
+                "useExportType": "error",
+                "useImportType": "error",
+                "useTemplate": "error"
+            },
+            "suspicious": {
+                "noExplicitAny": "error"
+            }
         }
     },
     "javascript": {
         "formatter": {
-            "quoteStyle": "double"
+            "quoteStyle": "double",
+            "semicolons": "always",
+            "trailingCommas": "all"
         }
     },
     "css": {
@@ -43,5 +62,22 @@
                 "organizeImports": "on"
             }
         }
-    }
+    },
+    "overrides": [
+        {
+            "includes": [
+                "**/*.config.ts",
+                "**/*.config.js",
+                "**/*.config.mts",
+                "**/*.config.cts"
+            ],
+            "linter": {
+                "rules": {
+                    "style": {
+                        "noDefaultExport": "off"
+                    }
+                }
+            }
+        }
+    ]
 }

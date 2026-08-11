@@ -58,7 +58,9 @@ catalogRoutes.get("/:id", async (c) => {
         findWorkDetail(workId),
         listWorkFiles(workId),
     ]);
-    if (!detail) return jsonError(c, "作品不存在", 404);
+    if (!detail) {
+        return jsonError(c, "作品不存在", 404);
+    }
 
     return c.json(toWorkDetail(detail, files));
 });
@@ -66,11 +68,15 @@ catalogRoutes.get("/:id", async (c) => {
 catalogRoutes.post("/", requireSession, async (c) => {
     const form = await c.req.parseBody();
     const title = String(form.title ?? "").trim();
-    if (!title) return jsonError(c, "标题不能为空", 400);
+    if (!title) {
+        return jsonError(c, "标题不能为空", 400);
+    }
 
     const uploads = collectUploads(form.files);
     const rejection = findRejectedUpload(uploads);
-    if (rejection) return jsonError(c, rejection, 400);
+    if (rejection) {
+        return jsonError(c, rejection, 400);
+    }
 
     const workId = crypto.randomUUID();
     await insertWork({
@@ -119,7 +125,9 @@ catalogRoutes.post("/:id/publish", requireWorkAuthor, async (c) => {
 catalogRoutes.patch("/:id", requireWorkAuthor, async (c) => {
     const body = await readJsonBody(c);
     const title = readTrimmed(body, "title");
-    if (!title) return jsonError(c, "标题不能为空", 400);
+    if (!title) {
+        return jsonError(c, "标题不能为空", 400);
+    }
 
     await updateWorkTitle(c.req.param("id"), title);
     return c.json({ id: c.req.param("id"), title });

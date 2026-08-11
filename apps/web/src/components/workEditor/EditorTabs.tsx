@@ -77,7 +77,9 @@ function collectDuplicateBasenames(files: WorkFile[]): Set<string> {
     }
     const duplicates = new Set<string>();
     for (const [basename, count] of counts) {
-        if (count > 1) duplicates.add(basename);
+        if (count > 1) {
+            duplicates.add(basename);
+        }
     }
     return duplicates;
 }

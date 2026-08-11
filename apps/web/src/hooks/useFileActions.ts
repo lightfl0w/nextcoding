@@ -42,7 +42,9 @@ export function useFileActions({
 
     const confirmComposing = useCallback(async () => {
         const name = draftName.trim();
-        if (!name) return;
+        if (!name) {
+            return;
+        }
 
         const created = await createWorkFile(workId, name);
         if (created.outcome === "duplicate") {

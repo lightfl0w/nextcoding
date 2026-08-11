@@ -36,8 +36,12 @@ export async function createWorkFile(
         name,
         content: "",
     });
-    if (response.status === 409) return { outcome: "duplicate" };
-    if (!response.ok) return { outcome: "rejected" };
+    if (response.status === 409) {
+        return { outcome: "duplicate" };
+    }
+    if (!response.ok) {
+        return { outcome: "rejected" };
+    }
 
     const file = (await response.json()) as { key: string; version?: number };
     return { outcome: "created", key: file.key, version: file.version ?? 1 };
@@ -68,7 +72,9 @@ export async function saveFileContent(
             currentVersion: conflict.currentVersion ?? 1,
         };
     }
-    if (!response.ok) throw new HttpError(response.status, "保存失败");
+    if (!response.ok) {
+        throw new HttpError(response.status, "保存失败");
+    }
 
     const saved = (await response.json()) as { version: number };
     return { outcome: "saved", version: saved.version };

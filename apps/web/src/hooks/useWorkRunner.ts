@@ -88,13 +88,17 @@ export function useWorkRunner(workId: string, runtime: RuntimeInfo | null) {
     }, []);
 
     useEffect(() => {
-        if (pendingVersion === null) return;
+        if (pendingVersion === null) {
+            return;
+        }
         if (pendingError) {
             toast.danger("版本快照加载失败");
             setPendingVersion(null);
             return;
         }
-        if (!pendingSnapshot) return;
+        if (!pendingSnapshot) {
+            return;
+        }
 
         const files: RunnableFile[] = pendingSnapshot.files
             .filter((file) => file.encoding !== "base64")

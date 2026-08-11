@@ -21,7 +21,9 @@ export function useCommentComposer(
 
     const submit = useCallback(async () => {
         const content = draft.trim();
-        if (!content || isPosting) return;
+        if (!content || isPosting) {
+            return;
+        }
 
         setIsPosting(true);
         try {

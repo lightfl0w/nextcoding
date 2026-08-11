@@ -6,7 +6,9 @@ export class VercelBlobStorage implements StorageAdapter {
 
     constructor() {
         const token = process.env.BLOB_READ_WRITE_TOKEN;
-        if (!token) throw new Error("缺少环境变量 BLOB_READ_WRITE_TOKEN");
+        if (!token) {
+            throw new Error("缺少环境变量 BLOB_READ_WRITE_TOKEN");
+        }
         this.token = token;
     }
 

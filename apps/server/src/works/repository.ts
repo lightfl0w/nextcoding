@@ -51,7 +51,9 @@ const sortOrders = {
 const WEEK_IN_MS = 7 * 24 * 60 * 60 * 1000;
 
 function sparkedColumn(userId?: string | null) {
-    if (!userId) return sql<number>`0`;
+    if (!userId) {
+        return sql<number>`0`;
+    }
     return sql<number>`exists(
         select 1 from spark
         where spark.work_id = ${work.id} and spark.user_id = ${userId}
@@ -63,7 +65,9 @@ export function listPublishedWorks(
     limit: number,
     userId?: string | null,
 ) {
-    if (sort === "weekly") return listWeeklyHotWorks(limit, userId);
+    if (sort === "weekly") {
+        return listWeeklyHotWorks(limit, userId);
+    }
     return db
         .select({ ...summaryColumns, sparked: sparkedColumn(userId) })
         .from(work)
@@ -180,7 +184,9 @@ export async function findWorkFileByKey(workId: string, key: string) {
 }
 
 export async function mapWorkFilesByKey(workId: string, keys: string[]) {
-    if (keys.length === 0) return new Map<string, WorkFileRow>();
+    if (keys.length === 0) {
+        return new Map<string, WorkFileRow>();
+    }
     const rows = await db
         .select()
         .from(workFile)
@@ -207,7 +213,9 @@ export function insertWorkFiles(
         contentType: string | null;
     }>,
 ) {
-    if (rows.length === 0) return Promise.resolve();
+    if (rows.length === 0) {
+        return Promise.resolve();
+    }
     return db
         .insert(workFile)
         .values(rows.map((row) => ({ id: crypto.randomUUID(), ...row })));

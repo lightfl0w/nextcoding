@@ -54,12 +54,16 @@ function WorkEditorRoute() {
     const [title, setTitle] = useState("");
 
     useEffect(() => {
-        if (work) setTitle(work.title);
+        if (work) {
+            setTitle(work.title);
+        }
     }, [work?.title, work]);
 
     const saveTitle = useCallback(async () => {
         const trimmed = title.trim();
-        if (!work || !trimmed || trimmed === work.title) return;
+        if (!work || !trimmed || trimmed === work.title) {
+            return;
+        }
         try {
             await updateWorkTitle(workId, trimmed);
             setTitle(trimmed);
@@ -174,7 +178,9 @@ function WorkEditorRoute() {
             setEditor(instance);
             instance.onDidChangeModelContent(() => {
                 const key = editedKeyRef.current;
-                if (key) scheduleSaveRef.current(key);
+                if (key) {
+                    scheduleSaveRef.current(key);
+                }
             });
         },
         [editedKeyRef, scheduleSaveRef],
@@ -186,7 +192,9 @@ function WorkEditorRoute() {
         const published = await versionHistory.publish(
             versionMessage.trim() || null,
         );
-        if (published) setVersionMessage("");
+        if (published) {
+            setVersionMessage("");
+        }
     }, [versionHistory.publish, versionMessage]);
 
     if (isLoading) {
@@ -348,7 +356,9 @@ function useMonaco() {
     useEffect(() => {
         let subscribed = true;
         loadMonaco().then((instance) => {
-            if (subscribed) setMonaco(instance);
+            if (subscribed) {
+                setMonaco(instance);
+            }
         });
         return () => {
             subscribed = false;

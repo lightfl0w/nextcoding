@@ -111,8 +111,12 @@ export const FileExplorer = memo(function FileExplorer({
                             onChangeDraftName(event.target.value)
                         }
                         onKeyDown={(event) => {
-                            if (event.key === "Enter") onConfirmComposing();
-                            if (event.key === "Escape") onCancelComposing();
+                            if (event.key === "Enter") {
+                                onConfirmComposing();
+                            }
+                            if (event.key === "Escape") {
+                                onCancelComposing();
+                            }
                         }}
                     />
                     {nameError && (
@@ -269,7 +273,9 @@ function collectFolderPaths(files: WorkFile[]): Set<string> {
     const paths = new Set<string>();
     for (const file of files) {
         const slash = file.name.lastIndexOf("/");
-        if (slash === -1) continue;
+        if (slash === -1) {
+            continue;
+        }
         paths.add(file.name.slice(0, slash));
     }
     return paths;

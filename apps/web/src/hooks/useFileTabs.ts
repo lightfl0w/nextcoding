@@ -16,7 +16,9 @@ export function useFileTabs(files: WorkFile[]) {
     const autoOpenedRef = useRef(new Set<string>());
 
     useEffect(() => {
-        if (files.length === 0) return;
+        if (files.length === 0) {
+            return;
+        }
         setActiveKey((current) =>
             current && files.some((file) => file.key === current)
                 ? current
@@ -42,7 +44,9 @@ export function useFileTabs(files: WorkFile[]) {
         remaining.delete(key);
         setOpenKeys(remaining);
 
-        if (activeKeyRef.current !== key) return;
+        if (activeKeyRef.current !== key) {
+            return;
+        }
         const fallback = filesRef.current.find(
             (file) => file.key !== key && remaining.has(file.key),
         );
@@ -77,9 +81,13 @@ function hasSameKeys(
     current: ReadonlySet<string>,
     next: ReadonlySet<string>,
 ): boolean {
-    if (current.size !== next.size) return false;
+    if (current.size !== next.size) {
+        return false;
+    }
     for (const key of next) {
-        if (!current.has(key)) return false;
+        if (!current.has(key)) {
+            return false;
+        }
     }
     return true;
 }

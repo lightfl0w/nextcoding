@@ -19,7 +19,9 @@ export function buildFileTree(files: WorkFile[]): FileTreeNode[] {
 
     function folderFor(path: string): FolderNode {
         const existing = foldersByPath.get(path);
-        if (existing) return existing;
+        if (existing) {
+            return existing;
+        }
 
         const slash = path.lastIndexOf("/");
         const folder: FolderNode = {
@@ -58,11 +60,15 @@ export function buildFileTree(files: WorkFile[]): FileTreeNode[] {
 function sortNodes(nodes: FileTreeNode[]): void {
     nodes.sort(compareNodes);
     for (const node of nodes) {
-        if (node.kind === "folder") sortNodes(node.children);
+        if (node.kind === "folder") {
+            sortNodes(node.children);
+        }
     }
 }
 
 function compareNodes(a: FileTreeNode, b: FileTreeNode): number {
-    if (a.kind !== b.kind) return a.kind === "folder" ? -1 : 1;
+    if (a.kind !== b.kind) {
+        return a.kind === "folder" ? -1 : 1;
+    }
     return a.name.localeCompare(b.name);
 }

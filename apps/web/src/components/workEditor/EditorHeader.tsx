@@ -62,7 +62,9 @@ export function EditorHeader({
                 value={title}
                 onChange={(event) => onTitleChange(event.target.value)}
                 onKeyDown={(event) => {
-                    if (event.key === "Enter") event.currentTarget.blur();
+                    if (event.key === "Enter") {
+                        event.currentTarget.blur();
+                    }
                 }}
                 onBlur={onTitleSave}
             />

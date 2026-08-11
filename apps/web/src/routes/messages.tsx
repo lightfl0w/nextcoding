@@ -47,8 +47,12 @@ function MessageCenterRoute() {
 
     const filtered = useMemo(() => {
         return notifications.filter((item) => {
-            if (readFilter === "unread" && item.read) return false;
-            if (typeFilter !== "all" && item.type !== typeFilter) return false;
+            if (readFilter === "unread" && item.read) {
+                return false;
+            }
+            if (typeFilter !== "all" && item.type !== typeFilter) {
+                return false;
+            }
             return true;
         });
     }, [notifications, readFilter, typeFilter]);

@@ -104,8 +104,12 @@ function WorkDetailRoute() {
         }
     }, [isLoggedIn, navigate, workId, mutate, user]);
 
-    if (isLoading) return <WorkDetailSkeleton />;
-    if (error || !work) return <WorkNotFound />;
+    if (isLoading) {
+        return <WorkDetailSkeleton />;
+    }
+    if (error || !work) {
+        return <WorkNotFound />;
+    }
 
     const isOwner = !!user && user.id === work.userId;
     const authorName = work.author.name ?? ANONYMOUS_NAME;

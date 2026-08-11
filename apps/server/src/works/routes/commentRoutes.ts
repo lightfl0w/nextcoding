@@ -29,10 +29,14 @@ commentRoutes.post("/:id/comments", requireSession, async (c) => {
         readJsonBody(c),
         workExists(workId),
     ]);
-    if (!exists) return jsonError(c, "作品不存在", 404);
+    if (!exists) {
+        return jsonError(c, "作品不存在", 404);
+    }
 
     const content = readTrimmed(body, "content");
-    if (!content) return jsonError(c, "评论内容不能为空", 400);
+    if (!content) {
+        return jsonError(c, "评论内容不能为空", 400);
+    }
     if (content.length > COMMENT_MAX_LENGTH) {
         return jsonError(c, `评论最多 ${COMMENT_MAX_LENGTH} 字`, 400);
     }
@@ -40,7 +44,9 @@ commentRoutes.post("/:id/comments", requireSession, async (c) => {
     const parentId = readParentId(body);
     if (parentId) {
         const rejection = await validateParent(workId, parentId);
-        if (rejection) return jsonError(c, rejection, 400);
+        if (rejection) {
+            return jsonError(c, rejection, 400);
+        }
     }
 
     const userId = c.get("userId");
@@ -72,7 +78,11 @@ async function validateParent(
     parentId: string,
 ): Promise<string | null> {
     const parent = await findComment(parentId);
-    if (!parent || parent.workId !== workId) return "父评论不存在";
-    if (parent.parentId) return "只能回复一级评论";
+    if (!parent || parent.workId !== workId) {
+        return "父评论不存在";
+    }
+    if (parent.parentId) {
+        return "只能回复一级评论";
+    }
     return null;
 }
