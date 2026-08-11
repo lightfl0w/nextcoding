@@ -1,6 +1,6 @@
 import { Chip } from "@heroui/react";
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, GitFork, Sparkles } from "lucide-react";
+import { ChevronRight, GitFork, MessageSquare, Sparkles } from "lucide-react";
 import type { AppNotification } from "~/lib/api";
 import { formatDate } from "~/lib/format";
 import {
@@ -54,6 +54,9 @@ function NotificationRow({
                 <Link
                     to="/work/$id"
                     params={{ id: item.work.id }}
+                    {...(item.comment
+                        ? { search: { comment: item.comment.id } }
+                        : {})}
                     className={`block transition-colors hover:bg-default-100/60 ${
                         !isLast ? "" : "rounded-b-2xl"
                     }`}
@@ -74,11 +77,14 @@ function NotificationCard({
     item: AppNotification;
     isLast: boolean;
 }) {
-    const isSpark = item.type === "spark";
-    const tileColor = isSpark
-        ? "bg-warning/15 text-warning"
-        : "bg-accent/10 text-accent";
-    const Icon = isSpark ? Sparkles : GitFork;
+    const variant =
+        item.type === "spark"
+            ? { tile: "bg-warning/15 text-warning", Icon: Sparkles }
+            : item.type === "comment"
+              ? { tile: "bg-success/15 text-success", Icon: MessageSquare }
+              : { tile: "bg-accent/10 text-accent", Icon: GitFork };
+    const tileColor = variant.tile;
+    const Icon = variant.Icon;
 
     return (
         <div

@@ -1,0 +1,1 @@
+ALTER TABLE `notification` ADD `comment_id` text REFERENCES work_comment(id);

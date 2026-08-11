@@ -9,6 +9,7 @@ interface CommentRowProps {
     comment: Comment;
     isReply?: boolean;
     canReply: boolean;
+    focus?: boolean;
     onReply: (name: string) => void;
 }
 
@@ -16,12 +17,20 @@ export function CommentRow({
     comment,
     isReply = false,
     canReply,
+    focus = false,
     onReply,
 }: CommentRowProps) {
     const authorName = comment.author.name ?? ANONYMOUS_NAME;
 
     return (
-        <div className="py-2.5 px-3 -mx-3 rounded-lg hover:bg-default-50/60 transition-colors flex gap-3 group">
+        <div
+            id={`comment-${comment.id}`}
+            className={`py-2.5 px-3 -mx-3 rounded-lg transition-colors flex gap-3 group ${
+                focus
+                    ? "bg-accent/10 ring-1 ring-accent/40"
+                    : "hover:bg-default-50/60"
+            }`}
+        >
             <Avatar size="sm" className="shrink-0">
                 <Avatar.Fallback>
                     {authorName.charAt(0).toUpperCase()}

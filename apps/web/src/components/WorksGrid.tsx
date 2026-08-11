@@ -15,6 +15,7 @@ interface WorksGridProps {
     isLoading: boolean;
     error: Error | undefined;
     placeholderCount: number;
+    emptyText?: string;
 }
 
 export const WorksGrid = memo(function WorksGrid({
@@ -22,6 +23,7 @@ export const WorksGrid = memo(function WorksGrid({
     isLoading,
     error,
     placeholderCount,
+    emptyText = "还没有作品，来发布第一个吧",
 }: WorksGridProps) {
     if (isLoading) {
         return <LoadingGrid count={placeholderCount} />;
@@ -36,11 +38,7 @@ export const WorksGrid = memo(function WorksGrid({
     }
 
     if (!works?.length) {
-        return (
-            <p className="text-sm text-foreground/60">
-                还没有作品，来发布第一个吧
-            </p>
-        );
+        return <p className="text-sm text-foreground/60">{emptyText}</p>;
     }
 
     return (

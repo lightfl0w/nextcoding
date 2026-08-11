@@ -32,13 +32,15 @@ interface CommentRow extends AuthoredRow {
 
 interface NotificationRow {
     id: string;
-    type: "spark" | "remix";
+    type: "spark" | "remix" | "comment";
     read: boolean;
     createdAt: Date;
     actorId: string | null;
     actorName: string | null;
     workId: string | null;
     workTitle: string | null;
+    commentId: string | null;
+    commentContent: string | null;
 }
 
 interface OwnedWorkRow {
@@ -94,6 +96,9 @@ export function toNotification(row: NotificationRow) {
         createdAt: row.createdAt,
         actor: row.actorId ? { id: row.actorId, name: row.actorName } : null,
         work: row.workId ? { id: row.workId, title: row.workTitle } : null,
+        comment: row.commentId
+            ? { id: row.commentId, content: row.commentContent }
+            : null,
     };
 }
 

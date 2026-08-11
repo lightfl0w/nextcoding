@@ -30,6 +30,9 @@ export function useWorkRunner(workId: string, runtime: RuntimeInfo | null) {
         isPanelOpen,
         openPanel,
         closePanel,
+        awaitingInput,
+        submitInput,
+        cancelInput,
     } = useRunPanel();
     const { mutate } = useSWRConfig();
     const [activeVersion, setActiveVersion] = useState<number | null>(null);
@@ -138,6 +141,9 @@ export function useWorkRunner(workId: string, runtime: RuntimeInfo | null) {
         panelRef,
         runCurrent,
         runVersion,
+        awaitingInput,
+        submitInput,
+        cancelInput,
     };
 }
 

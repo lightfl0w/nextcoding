@@ -36,6 +36,13 @@
             "when": 1786418273668,
             "tag": "0004_funny_raider",
             "breakpoints": true
+        },
+        {
+            "idx": 5,
+            "version": "6",
+            "when": 1786451424838,
+            "tag": "0005_dapper_pete_wisdom",
+            "breakpoints": true
         }
     ]
 }

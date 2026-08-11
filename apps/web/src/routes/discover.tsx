@@ -1,7 +1,7 @@
-import { Tabs } from "@heroui/react";
+import { Input, Tabs } from "@heroui/react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Clock, Crown, Flame } from "lucide-react";
-import { useState } from "react";
+import { Clock, Crown, Flame, Search, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { WorksGrid } from "~/components/WorksGrid";
 import { useWorks } from "~/hooks/useWorks";
 import type { WorkSort } from "~/lib/api";
@@ -15,11 +15,19 @@ const PLACEHOLDER_COUNT = 9;
 
 function DiscoverPage() {
     const [sort, setSort] = useState<WorkSort>("latest");
+    const [keyword, setKeyword] = useState("");
+    const [searchTerm, setSearchTerm] = useState("");
+
+    useEffect(() => {
+        const timer = setTimeout(() => setSearchTerm(keyword.trim()), 300);
+        return () => clearTimeout(timer);
+    }, [keyword]);
+
     const {
         data: works,
         isLoading,
         error,
-    } = useWorks(sort, DISCOVER_PAGE_SIZE);
+    } = useWorks(sort, DISCOVER_PAGE_SIZE, searchTerm || undefined);
 
     return (
         <div className="p-8 w-full flex flex-col gap-6">
@@ -31,6 +39,27 @@ function DiscoverPage() {
                     浏览社区里大家发布的编程作品，找到感兴趣的灵感
                 </p>
             </header>
+
+            <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-foreground/40 pointer-events-none" />
+                <Input
+                    value={keyword}
+                    onChange={(event) => setKeyword(event.target.value)}
+                    placeholder="搜索作品标题、标签、简介…"
+                    aria-label="搜索作品"
+                    className="w-full pl-10 pr-9"
+                />
+                {keyword && (
+                    <button
+                        type="button"
+                        onClick={() => setKeyword("")}
+                        aria-label="清除搜索"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-default-100 text-foreground/40 hover:text-foreground transition-colors"
+                    >
+                        <X className="size-4" />
+                    </button>
+                )}
+            </div>
 
             <Tabs
                 selectedKey={sort}
@@ -73,6 +102,11 @@ function DiscoverPage() {
                     isLoading={isLoading}
                     error={error}
                     placeholderCount={PLACEHOLDER_COUNT}
+                    emptyText={
+                        searchTerm
+                            ? "没有找到相关作品，换个关键词试试"
+                            : undefined
+                    }
                 />
             </div>
         </div>

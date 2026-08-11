@@ -17,6 +17,7 @@ interface CommentsSectionProps {
     comments: Comment[] | undefined;
     isLoading: boolean;
     mutate: KeyedMutator<Comment[]>;
+    focusCommentId?: string | null;
 }
 
 export const CommentsSection = memo(function CommentsSection({
@@ -24,6 +25,7 @@ export const CommentsSection = memo(function CommentsSection({
     comments,
     isLoading,
     mutate,
+    focusCommentId,
 }: CommentsSectionProps) {
     const { isLoggedIn } = useAuth();
     const composer = useCommentComposer(workId, mutate);
@@ -59,6 +61,7 @@ export const CommentsSection = memo(function CommentsSection({
                                 key={thread.root.id}
                                 thread={thread}
                                 canReply={isLoggedIn}
+                                focusCommentId={focusCommentId}
                                 onReply={(name) =>
                                     composer.setReplyTarget({
                                         rootId: thread.root.id,
@@ -77,10 +80,12 @@ export const CommentsSection = memo(function CommentsSection({
 function ThreadBlock({
     thread,
     canReply,
+    focusCommentId,
     onReply,
 }: {
     thread: CommentThread;
     canReply: boolean;
+    focusCommentId?: string | null;
     onReply: (name: string) => void;
 }) {
     return (
@@ -88,6 +93,7 @@ function ThreadBlock({
             <CommentRow
                 comment={thread.root}
                 canReply={canReply}
+                focus={focusCommentId === thread.root.id}
                 onReply={onReply}
             />
             {thread.replies.length > 0 && (
@@ -98,6 +104,7 @@ function ThreadBlock({
                             comment={reply}
                             isReply
                             canReply={canReply}
+                            focus={focusCommentId === reply.id}
                             onReply={onReply}
                         />
                     ))}

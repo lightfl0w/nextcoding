@@ -6,6 +6,11 @@ import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
+const CROSS_ORIGIN_ISOLATION_HEADERS: Record<string, string> = {
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Embedder-Policy": "credentialless",
+};
+
 const config = defineConfig({
     resolve: {
         tsconfigPaths: true,
@@ -18,6 +23,10 @@ const config = defineConfig({
                 changeOrigin: true,
             },
         },
+        headers: CROSS_ORIGIN_ISOLATION_HEADERS,
+    },
+    preview: {
+        headers: CROSS_ORIGIN_ISOLATION_HEADERS,
     },
     plugins: [
         devtools(),

@@ -60,24 +60,44 @@ function sparkedColumn(userId?: string | null) {
     )`;
 }
 
+function workSearchCondition(keyword: string) {
+    const escaped = keyword.replace(/[\\%_]/g, (ch) => `\\${ch}`);
+    const pattern = `%${escaped}%`;
+    return sql`(
+        ${work.title} like ${pattern} escape '\\'
+        or ${work.description} like ${pattern} escape '\\'
+        or ${work.tags} like ${pattern} escape '\\'
+    )`;
+}
+
 export function listPublishedWorks(
     sort: WorkSort,
     limit: number,
     userId?: string | null,
+    keyword?: string,
 ) {
     if (sort === "weekly") {
-        return listWeeklyHotWorks(limit, userId);
+        return listWeeklyHotWorks(limit, userId, keyword);
     }
     return db
         .select({ ...summaryColumns, sparked: sparkedColumn(userId) })
         .from(work)
         .leftJoin(user, eq(work.userId, user.id))
-        .where(eq(work.status, "published"))
+        .where(
+            and(
+                eq(work.status, "published"),
+                keyword ? workSearchCondition(keyword) : undefined,
+            ),
+        )
         .orderBy(...sortOrders[sort])
         .limit(limit);
 }
 
-export function listWeeklyHotWorks(limit: number, userId?: string | null) {
+export function listWeeklyHotWorks(
+    limit: number,
+    userId?: string | null,
+    keyword?: string,
+) {
     const weekAgo = new Date(Date.now() - WEEK_IN_MS);
     return db
         .select({
@@ -91,7 +111,12 @@ export function listWeeklyHotWorks(limit: number, userId?: string | null) {
             spark,
             and(eq(spark.workId, work.id), gte(spark.createdAt, weekAgo)),
         )
-        .where(eq(work.status, "published"))
+        .where(
+            and(
+                eq(work.status, "published"),
+                keyword ? workSearchCondition(keyword) : undefined,
+            ),
+        )
         .groupBy(work.id)
         .orderBy(desc(count(spark.id)), desc(work.createdAt))
         .limit(limit);
@@ -307,6 +332,7 @@ export async function findComment(commentId: string) {
             id: workComment.id,
             workId: workComment.workId,
             parentId: workComment.parentId,
+            userId: workComment.userId,
         })
         .from(workComment)
         .where(eq(workComment.id, commentId))

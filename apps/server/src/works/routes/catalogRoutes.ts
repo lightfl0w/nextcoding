@@ -35,10 +35,11 @@ catalogRoutes.get("/", async (c) => {
     const sort: WorkSort =
         raw === "popular" || raw === "weekly" ? raw : "latest";
     const limit = clampLimit(c.req.query("limit"));
+    const keyword = (c.req.query("q") ?? "").trim().slice(0, 64) || undefined;
 
     const session = await readSession(c);
     const userId = session?.user?.id ?? null;
-    const rows = await listPublishedWorks(sort, limit, userId);
+    const rows = await listPublishedWorks(sort, limit, userId, keyword);
     return c.json(
         rows.map((row) => ({
             ...toWorkSummary(row),

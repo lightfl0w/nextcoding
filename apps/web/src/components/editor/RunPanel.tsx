@@ -1,7 +1,7 @@
 import { Button, Chip, Spinner } from "@heroui/react";
 import type { RunResult } from "clientbox";
 import { Eraser, Terminal, X } from "lucide-react";
-import { memo, useEffect, useRef } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 import type { OutputLine } from "~/hooks/useCodeRunner";
 
@@ -20,7 +20,10 @@ const STREAM_STYLE: Record<OutputLine["stream"], string> = {
  * @param props.onClose - 关闭面板。
  * @param props.onClear - 清空输出。
  * @param props.className - 附加类名。
- * @remarks 展示 stdout/stderr、退出码与耗时。
+ * @param props.awaitingInput - 程序是否在等待输入。
+ * @param props.onSubmitInput - 提交一行输入。
+ * @param props.onCancelInput - 结束输入（EOF）。
+ * @remarks 展示 stdout/stderr、退出码与耗时；程序 `input()` 时出现输入行。
  */
 export const RunPanel = memo(function RunPanel({
     open,
@@ -31,6 +34,9 @@ export const RunPanel = memo(function RunPanel({
     onClose,
     onClear,
     className,
+    awaitingInput,
+    onSubmitInput,
+    onCancelInput,
 }: {
     open: boolean;
     running: boolean;
@@ -40,8 +46,13 @@ export const RunPanel = memo(function RunPanel({
     onClose: () => void;
     onClear: () => void;
     className?: string;
+    awaitingInput: boolean;
+    onSubmitInput: (value: string) => void;
+    onCancelInput: () => void;
 }) {
     const scrollRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const [draft, setDraft] = useState("");
 
     useEffect(() => {
         if (!open || output.length === 0) {
@@ -52,6 +63,12 @@ export const RunPanel = memo(function RunPanel({
             el.scrollTop = el.scrollHeight;
         }
     }, [output, open]);
+
+    useEffect(() => {
+        if (awaitingInput) {
+            inputRef.current?.focus();
+        }
+    }, [awaitingInput]);
 
     if (!open) {
         return null;
@@ -132,6 +149,29 @@ export const RunPanel = memo(function RunPanel({
                     </div>
                 ))}
             </div>
+            {awaitingInput && (
+                <div className="flex items-center gap-2 px-3 py-2 border-t border-default-200 bg-default-50/60 shrink-0">
+                    <span className="text-xs text-foreground/50 shrink-0">
+                        输入
+                    </span>
+                    <input
+                        ref={inputRef}
+                        value={draft}
+                        onChange={(event) => setDraft(event.target.value)}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                                onSubmitInput(draft);
+                                setDraft("");
+                            } else if (event.key === "Escape") {
+                                onCancelInput();
+                                setDraft("");
+                            }
+                        }}
+                        placeholder="输入一行后回车，Esc 结束输入"
+                        className="flex-1 min-w-0 h-8 px-2.5 rounded-lg border border-default-200 bg-background text-sm outline-none focus:border-default-400"
+                    />
+                </div>
+            )}
         </div>
     );
 });

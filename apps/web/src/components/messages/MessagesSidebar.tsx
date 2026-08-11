@@ -1,5 +1,5 @@
 import { ToggleButton } from "@heroui/react";
-import { Bell, GitFork, Sparkles } from "lucide-react";
+import { Bell, GitFork, MessageSquare, Sparkles } from "lucide-react";
 import type {
     NotificationCounts,
     NotificationTypeFilter,
@@ -41,6 +41,13 @@ export function MessagesSidebar({
             count: counts.remix,
             unread: counts.remixUnread,
             icon: GitFork,
+        },
+        {
+            key: "comment",
+            label: "评论",
+            count: counts.comment,
+            unread: counts.commentUnread,
+            icon: MessageSquare,
         },
     ];
 
@@ -105,6 +112,7 @@ export function MobileTypeFilter({
         { key: "all", label: "全部", count: counts.total },
         { key: "spark", label: "火花", count: counts.spark },
         { key: "remix", label: "二创", count: counts.remix },
+        { key: "comment", label: "评论", count: counts.comment },
     ];
     return (
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">

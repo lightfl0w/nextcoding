@@ -275,6 +275,9 @@ function WorkEditorRoute() {
                 output={runner.output}
                 result={runner.result}
                 label={runLabel}
+                awaitingInput={runner.awaitingInput}
+                onSubmitInput={runner.submitInput}
+                onCancelInput={runner.cancelInput}
                 onClose={runner.closePanel}
                 onClear={runner.clear}
             />

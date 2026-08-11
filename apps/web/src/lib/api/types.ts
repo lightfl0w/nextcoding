@@ -74,11 +74,12 @@ export interface WorkSource {
 
 export interface AppNotification {
     id: string;
-    type: "spark" | "remix";
+    type: "spark" | "remix" | "comment";
     read: boolean;
     createdAt: string;
     actor: { id: string; name: string | null } | null;
     work: WorkSource | null;
+    comment: { id: string; content: string } | null;
 }
 
 export interface RemixResult {

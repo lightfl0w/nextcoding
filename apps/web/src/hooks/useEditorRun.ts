@@ -31,6 +31,9 @@ export function useEditorRun({
         isPanelOpen,
         openPanel,
         closePanel,
+        awaitingInput,
+        submitInput,
+        cancelInput,
     } = useRunPanel();
 
     const runtime = useMemo(
@@ -63,6 +66,9 @@ export function useEditorRun({
         start,
         closePanel,
         clear,
+        awaitingInput,
+        submitInput,
+        cancelInput,
     };
 }
 

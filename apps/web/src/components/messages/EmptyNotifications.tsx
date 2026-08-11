@@ -15,7 +15,13 @@ export function EmptyNotifications({
 }) {
     const isUnread = readFilter === "unread";
     const typeLabel =
-        typeFilter === "spark" ? "火花" : typeFilter === "remix" ? "二创" : "";
+        typeFilter === "spark"
+            ? "火花"
+            : typeFilter === "remix"
+              ? "二创"
+              : typeFilter === "comment"
+                ? "评论"
+                : "";
 
     const title = isUnread
         ? "没有未读通知"

@@ -5,7 +5,7 @@ import {
     useParams,
 } from "@tanstack/react-router";
 import { GitFork, Hash, Sparkles } from "lucide-react";
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 
 import { RunPanel } from "~/components/editor/RunPanel";
@@ -33,11 +33,18 @@ import { detectRuntime } from "~/lib/run";
 const ANONYMOUS_NAME = "匿名";
 
 export const Route = createFileRoute("/work/$id/")({
+    validateSearch: (
+        search: Record<string, unknown>,
+    ): { comment?: string } => ({
+        comment:
+            typeof search.comment === "string" ? search.comment : undefined,
+    }),
     component: WorkDetailRoute,
 });
 
 function WorkDetailRoute() {
     const { id: workId } = useParams({ from: "/work/$id/" });
+    const { comment: focusCommentId } = Route.useSearch();
     const navigate = useNavigate();
     const { user, isLoggedIn } = useAuth();
     const { data: work, isLoading, error } = useWork(workId);
@@ -57,6 +64,28 @@ function WorkDetailRoute() {
     const remixes = useWorkRemixes(workId);
     const source = useWorkSource(workId);
     const { mutate } = useSWRConfig();
+
+    const [focusedCommentId, setFocusedCommentId] = useState<string | null>(
+        focusCommentId ?? null,
+    );
+    const commentsReady = !commentsLoading && !!comments;
+
+    useEffect(() => {
+        setFocusedCommentId(focusCommentId ?? null);
+    }, [focusCommentId]);
+
+    useEffect(() => {
+        if (!commentsReady || !focusedCommentId) {
+            return;
+        }
+        const el = document.getElementById(`comment-${focusedCommentId}`);
+        if (!el) {
+            return;
+        }
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        const timer = setTimeout(() => setFocusedCommentId(null), 2500);
+        return () => clearTimeout(timer);
+    }, [commentsReady, focusedCommentId]);
 
     const handleSpark = useCallback(async () => {
         if (!isLoggedIn) {
@@ -182,6 +211,9 @@ function WorkDetailRoute() {
                                 result={runner.result}
                                 label={runner.label}
                                 className="rounded-2xl border border-default-200 overflow-hidden shadow-sm"
+                                awaitingInput={runner.awaitingInput}
+                                onSubmitInput={runner.submitInput}
+                                onCancelInput={runner.cancelInput}
                                 onClose={runner.closePanel}
                                 onClear={runner.clear}
                             />
@@ -200,6 +232,7 @@ function WorkDetailRoute() {
                             comments={comments}
                             isLoading={commentsLoading}
                             mutate={mutateComments}
+                            focusCommentId={focusedCommentId}
                         />
                     </div>
 

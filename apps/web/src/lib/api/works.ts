@@ -1,8 +1,13 @@
 import { getJson, HttpError, mutateJson, postForm } from "./http";
 import type { OwnedWork, Work, WorkDetail, WorkSort } from "./types";
 
-export function worksPath(sort: WorkSort, limit: number): string {
-    return `/api/works?sort=${sort}&limit=${limit}`;
+export function worksPath(
+    sort: WorkSort,
+    limit: number,
+    keyword?: string,
+): string {
+    const base = `/api/works?sort=${sort}&limit=${limit}`;
+    return keyword ? `${base}&q=${encodeURIComponent(keyword)}` : base;
 }
 
 export function workPath(workId: string): string {

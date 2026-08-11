@@ -26,17 +26,42 @@ function toOutputLines(
 
 /**
  * clientbox 运行器封装。
- * @remarks 输出按行流式追加，只保留最近 500 行。
+ * @remarks 输出按行流式追加，只保留最近 500 行；交互式输入依赖页面跨源隔离。
  */
 export function useCodeRunner() {
     const boxRef = useRef<ClientBox | null>(null);
+    const inputResolverRef = useRef<((value: string | null) => void) | null>(
+        null,
+    );
     const [running, setRunning] = useState(false);
     const [output, setOutput] = useState<OutputLine[]>([]);
     const [result, setResult] = useState<RunResult | null>(null);
+    const [awaitingInput, setAwaitingInput] = useState(false);
 
     const append = useCallback((stream: OutputLine["stream"], text: string) => {
         const lines = toOutputLines(stream, text);
         setOutput((current) => current.concat(lines).slice(-MAX_OUTPUT_LINES));
+    }, []);
+
+    const requestInput = useCallback(() => {
+        setAwaitingInput(true);
+        return new Promise<string | null>((resolve) => {
+            inputResolverRef.current = resolve;
+        });
+    }, []);
+
+    const submitInput = useCallback((value: string) => {
+        const resolve = inputResolverRef.current;
+        inputResolverRef.current = null;
+        setAwaitingInput(false);
+        resolve?.(value);
+    }, []);
+
+    const cancelInput = useCallback(() => {
+        const resolve = inputResolverRef.current;
+        inputResolverRef.current = null;
+        setAwaitingInput(false);
+        resolve?.(null);
     }, []);
 
     const run = useCallback(
@@ -48,6 +73,8 @@ export function useCodeRunner() {
             setRunning(true);
             setResult(null);
             setOutput([]);
+            setAwaitingInput(false);
+            inputResolverRef.current = null;
             if (!boxRef.current) {
                 boxRef.current = new ClientBox();
             }
@@ -65,6 +92,8 @@ export function useCodeRunner() {
                         streamed = true;
                         append("stderr", chunk);
                     },
+                    // 未跨源隔离时传 onInput 会导致整个运行报错，仅在可用时启用
+                    ...(crossOriginIsolated ? { onInput: requestInput } : {}),
                 });
                 if (!streamed) {
                     if (res.stdout) {
@@ -91,14 +120,18 @@ export function useCodeRunner() {
                 });
             } finally {
                 setRunning(false);
+                setAwaitingInput(false);
+                inputResolverRef.current = null;
             }
         },
-        [append],
+        [append, requestInput],
     );
 
     const clear = useCallback(() => {
         setOutput([]);
         setResult(null);
+        setAwaitingInput(false);
+        inputResolverRef.current = null;
     }, []);
 
     useEffect(
@@ -109,5 +142,14 @@ export function useCodeRunner() {
         [],
     );
 
-    return { running, output, result, run, clear };
+    return {
+        running,
+        output,
+        result,
+        run,
+        clear,
+        awaitingInput,
+        submitInput,
+        cancelInput,
+    };
 }

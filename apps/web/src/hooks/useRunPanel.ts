@@ -6,7 +6,16 @@ import { useCodeRunner } from "~/hooks/useCodeRunner";
  * @remarks 编辑页与详情页共用的「运行中 / 输出 / 开关」。
  */
 export function useRunPanel() {
-    const { running, output, result, run, clear } = useCodeRunner();
+    const {
+        running,
+        output,
+        result,
+        run,
+        clear,
+        awaitingInput,
+        submitInput,
+        cancelInput,
+    } = useCodeRunner();
     const [isPanelOpen, setIsPanelOpen] = useState(false);
 
     const openPanel = useCallback(() => setIsPanelOpen(true), []);
@@ -18,6 +27,9 @@ export function useRunPanel() {
         result,
         run,
         clear,
+        awaitingInput,
+        submitInput,
+        cancelInput,
         isPanelOpen,
         openPanel,
         closePanel,

@@ -7,7 +7,7 @@ import {
     uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import { user } from "./auth.js";
-import { work } from "./works.js";
+import { work, workComment } from "./works.js";
 
 export const spark = sqliteTable(
     "spark",
@@ -60,12 +60,15 @@ export const notification = sqliteTable(
         userId: text("user_id")
             .notNull()
             .references(() => user.id, { onDelete: "cascade" }),
-        type: text("type", { enum: ["spark", "remix"] }).notNull(),
+        type: text("type", { enum: ["spark", "remix", "comment"] }).notNull(),
         actorId: text("actor_id").references(() => user.id, {
             onDelete: "set null",
         }),
         workId: text("work_id").references(() => work.id, {
             onDelete: "set null",
+        }),
+        commentId: text("comment_id").references(() => workComment.id, {
+            onDelete: "cascade",
         }),
         read: integer("read", { mode: "boolean" }).default(false).notNull(),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
@@ -107,5 +110,9 @@ export const notificationRelations = relations(notification, ({ one }) => ({
     work: one(work, {
         fields: [notification.workId],
         references: [work.id],
+    }),
+    comment: one(workComment, {
+        fields: [notification.commentId],
+        references: [workComment.id],
     }),
 }));

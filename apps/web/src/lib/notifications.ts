@@ -1,7 +1,7 @@
 import type { AppNotification } from "./api";
 
 export type NotificationFilter = "all" | "unread";
-export type NotificationTypeFilter = "all" | "spark" | "remix";
+export type NotificationTypeFilter = "all" | "spark" | "remix" | "comment";
 
 export type NotificationGroup = {
     key: string;
@@ -14,20 +14,26 @@ export type NotificationCounts = {
     unread: number;
     spark: number;
     remix: number;
+    comment: number;
     sparkUnread: number;
     remixUnread: number;
+    commentUnread: number;
 };
 
 /**
  * 通知文案。
  * @param item - 通知数据。
- * @returns 火花与二创两种类型的文案。
+ * @returns 火花、二创、评论回复三种类型的文案。
  */
 export function notificationText(item: AppNotification): string {
     const actor = item.actor?.name ?? "某位用户";
     const workTitle = item.work?.title ?? "你的作品";
     if (item.type === "spark") {
         return `${actor} 给你的作品《${workTitle}》送了一个火花`;
+    }
+    if (item.type === "comment") {
+        const snippet = item.comment?.content ?? "";
+        return `${actor} 回复了你在《${workTitle}》的评论：${snippet}`;
     }
     return `${actor} 二创了你的作品《${workTitle}》，快去看看吧`;
 }

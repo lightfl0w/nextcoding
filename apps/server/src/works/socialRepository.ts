@@ -1,9 +1,17 @@
-import { db, notification, remix, spark, user, work } from "@nextcoding/db";
+import {
+    db,
+    notification,
+    remix,
+    spark,
+    user,
+    work,
+    workComment,
+} from "@nextcoding/db";
 import { and, count, desc, eq, sql } from "drizzle-orm";
 
 export const NOTIFICATION_PAGE_SIZE = 100;
 
-export type NotificationType = "spark" | "remix";
+export type NotificationType = "spark" | "remix" | "comment";
 
 export function findSpark(workId: string, userId: string) {
     return db
@@ -76,6 +84,7 @@ export function insertNotification(values: {
     type: NotificationType;
     actorId: string;
     workId: string | null;
+    commentId?: string | null;
 }) {
     return db
         .insert(notification)
@@ -93,10 +102,13 @@ export function listNotifications(userId: string, limit: number) {
             actorName: user.name,
             workId: notification.workId,
             workTitle: work.title,
+            commentId: notification.commentId,
+            commentContent: workComment.content,
         })
         .from(notification)
         .leftJoin(user, eq(user.id, notification.actorId))
         .leftJoin(work, eq(work.id, notification.workId))
+        .leftJoin(workComment, eq(workComment.id, notification.commentId))
         .where(eq(notification.userId, userId))
         .orderBy(desc(notification.createdAt))
         .limit(limit);

@@ -15,6 +15,7 @@ import {
     workExists,
 } from "../repository.js";
 import { toComment } from "../serializers.js";
+import { insertNotification } from "../socialRepository.js";
 
 export const commentRoutes = new Hono<AuthenticatedEnv>();
 
@@ -42,11 +43,13 @@ commentRoutes.post("/:id/comments", requireSession, async (c) => {
     }
 
     const parentId = readParentId(body);
+    let replyTarget: { userId: string } | null = null;
     if (parentId) {
-        const rejection = await validateParent(workId, parentId);
-        if (rejection) {
-            return jsonError(c, rejection, 400);
+        const target = await resolveReplyTarget(workId, parentId);
+        if (!target.ok) {
+            return jsonError(c, target.error, 400);
         }
+        replyTarget = target;
     }
 
     const userId = c.get("userId");
@@ -56,6 +59,16 @@ commentRoutes.post("/:id/comments", requireSession, async (c) => {
         parentId,
         content,
     });
+
+    if (replyTarget && replyTarget.userId !== userId) {
+        await insertNotification({
+            userId: replyTarget.userId,
+            type: "comment",
+            actorId: userId,
+            workId,
+            commentId: inserted.id,
+        });
+    }
 
     return c.json(
         {
@@ -73,16 +86,16 @@ function readParentId(body: JsonBody): string | null {
     return readString(body, "parentId") || null;
 }
 
-async function validateParent(
+async function resolveReplyTarget(
     workId: string,
     parentId: string,
-): Promise<string | null> {
+): Promise<{ ok: true; userId: string } | { ok: false; error: string }> {
     const parent = await findComment(parentId);
     if (!parent || parent.workId !== workId) {
-        return "父评论不存在";
+        return { ok: false, error: "父评论不存在" };
     }
     if (parent.parentId) {
-        return "只能回复一级评论";
+        return { ok: false, error: "只能回复一级评论" };
     }
-    return null;
+    return { ok: true, userId: parent.userId };
 }

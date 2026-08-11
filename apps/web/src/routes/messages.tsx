@@ -36,13 +36,28 @@ function MessageCenterRoute() {
         const remixUnread = notifications.filter(
             (item) => !item.read && item.type === "remix",
         ).length;
+        const commentUnread = notifications.filter(
+            (item) => !item.read && item.type === "comment",
+        ).length;
         const spark = notifications.filter(
             (item) => item.type === "spark",
         ).length;
         const remix = notifications.filter(
             (item) => item.type === "remix",
         ).length;
-        return { total, unread, spark, remix, sparkUnread, remixUnread };
+        const comment = notifications.filter(
+            (item) => item.type === "comment",
+        ).length;
+        return {
+            total,
+            unread,
+            spark,
+            remix,
+            comment,
+            sparkUnread,
+            remixUnread,
+            commentUnread,
+        };
     }, [notifications]);
 
     const filtered = useMemo(() => {
