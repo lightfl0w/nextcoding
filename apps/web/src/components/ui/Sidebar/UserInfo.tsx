@@ -1,6 +1,7 @@
 import { Avatar, Button, Description, Dropdown, Label } from "@heroui/react";
 import { authClient } from "@nextcoding/auth/client";
 import { useNavigate } from "@tanstack/react-router";
+import { LogIn } from "lucide-react";
 import { useAuth } from "~/hooks/useAuth";
 
 export function UserInfo() {
@@ -13,18 +14,25 @@ export function UserInfo() {
 
     if (!user) {
         return (
-            <Button
-                variant="secondary"
-                fullWidth
-                onPress={() =>
-                    navigate({
-                        to: "/auth",
-                        search: { mode: "login", redirect: "/" },
-                    })
-                }
-            >
-                登录
-            </Button>
+            <div className="flex flex-col gap-2">
+                <p className="text-xs text-foreground/45">
+                    登录后发布作品、送火花
+                </p>
+                <Button
+                    variant="secondary"
+                    fullWidth
+                    className="gap-1.5"
+                    onPress={() =>
+                        navigate({
+                            to: "/auth",
+                            search: { mode: "login", redirect: "/" },
+                        })
+                    }
+                >
+                    <LogIn className="size-3.5" />
+                    登录
+                </Button>
+            </div>
         );
     }
 

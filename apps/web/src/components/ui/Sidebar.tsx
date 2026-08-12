@@ -11,11 +11,6 @@ export function Sidebar() {
                     className="flex items-center gap-2.5 w-fit"
                     preload="intent"
                 >
-                    <img
-                        src="/logo.png"
-                        alt="NextCoding 吉祥物"
-                        className="w-9 h-9 rounded-xl object-cover"
-                    />
                     <span className="text-xl font-bold tracking-tight">
                         NextCoding
                     </span>

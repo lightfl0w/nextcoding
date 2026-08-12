@@ -2,6 +2,7 @@ import { Input, Tabs } from "@heroui/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Clock, Crown, Flame, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { PageHeader } from "~/components/ui/PageHeader";
 import { WorksGrid } from "~/components/WorksGrid";
 import { useWorks } from "~/hooks/useWorks";
 import type { WorkSort } from "~/lib/api";
@@ -30,15 +31,11 @@ function DiscoverPage() {
     } = useWorks(sort, DISCOVER_PAGE_SIZE, searchTerm || undefined);
 
     return (
-        <div className="p-8 w-full flex flex-col gap-6">
-            <header className="flex flex-col gap-1">
-                <h1 className="text-2xl font-bold tracking-tight text-balance">
-                    发现作品
-                </h1>
-                <p className="text-sm text-foreground/60">
-                    浏览社区里大家发布的编程作品，找到感兴趣的灵感
-                </p>
-            </header>
+        <div className="mx-auto w-full max-w-7xl p-8 flex flex-col gap-6">
+            <PageHeader
+                title="发现作品"
+                description="浏览社区里大家发布的编程作品，找到感兴趣的灵感"
+            />
 
             <div className="relative max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-foreground/40 pointer-events-none" />
@@ -96,7 +93,7 @@ function DiscoverPage() {
                 </Tabs.ListContainer>
             </Tabs>
 
-            <div className="pt-6">
+            <div className="pt-2">
                 <WorksGrid
                     works={works}
                     isLoading={isLoading}

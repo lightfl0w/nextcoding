@@ -1,6 +1,7 @@
-import { Button, Card } from "@heroui/react";
+import { Button } from "@heroui/react";
 import { Link } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
+import { EmptyState } from "~/components/ui/EmptyState";
 import type {
     NotificationFilter,
     NotificationTypeFilter,
@@ -31,29 +32,23 @@ export function EmptyNotifications({
     const hint = isUnread
         ? "已读通知会自动归档到这里"
         : typeFilter !== "all"
-          ? `试试切换到其他分类，或者去发现页看看`
+          ? "试试切换到其他分类，或者去发现页看看"
           : "快去发现页逛逛，给喜欢的作品送火花吧";
 
     return (
-        <Card className="p-0 shadow-none rounded-2xl border border-dashed border-default-300 bg-background">
-            <Card.Content className="py-16 flex flex-col items-center gap-3 text-foreground/45">
-                <div className="size-12 rounded-full bg-default-100/70 flex items-center justify-center">
-                    <Bell className="size-6" strokeWidth={1.5} />
-                </div>
-                <div className="flex flex-col items-center gap-1">
-                    <p className="text-sm font-medium text-foreground/65">
-                        {title}
-                    </p>
-                    <p className="text-xs text-foreground/40">{hint}</p>
-                </div>
-                {!isUnread && typeFilter === "all" && (
-                    <Link to="/discover" className="mt-1">
+        <EmptyState
+            icon={Bell}
+            title={title}
+            hint={hint}
+            action={
+                !isUnread && typeFilter === "all" ? (
+                    <Link to="/discover">
                         <Button size="sm" variant="ghost">
                             去发现好作品
                         </Button>
                     </Link>
-                )}
-            </Card.Content>
-        </Card>
+                ) : undefined
+            }
+        />
     );
 }

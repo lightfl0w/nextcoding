@@ -1,5 +1,7 @@
 import { Skeleton } from "@heroui/react";
+import { Inbox, TriangleAlert } from "lucide-react";
 import { memo } from "react";
+import { EmptyState } from "~/components/ui/EmptyState";
 import { WorkCard } from "~/components/WorkCard";
 import type { Work } from "~/lib/api";
 
@@ -31,14 +33,16 @@ export const WorksGrid = memo(function WorksGrid({
 
     if (error) {
         return (
-            <p className="text-sm text-foreground/60">
-                作品加载失败，请稍后重试
-            </p>
+            <EmptyState
+                icon={TriangleAlert}
+                title="作品加载失败"
+                hint="请稍后重试"
+            />
         );
     }
 
     if (!works?.length) {
-        return <p className="text-sm text-foreground/60">{emptyText}</p>;
+        return <EmptyState icon={Inbox} title={emptyText} />;
     }
 
     return (

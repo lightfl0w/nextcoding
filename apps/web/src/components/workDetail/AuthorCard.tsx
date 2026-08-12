@@ -1,4 +1,5 @@
 import { Avatar, Button, Card } from "@heroui/react";
+import { Link } from "@tanstack/react-router";
 import type { Author } from "~/lib/api";
 
 const ANONYMOUS_NAME = "匿名";
@@ -40,9 +41,19 @@ export function AuthorCard({
                         <Avatar.Fallback>{initial}</Avatar.Fallback>
                     </Avatar>
                     <div className="flex flex-col min-w-0 gap-0.5 flex-1">
-                        <span className="text-base font-semibold truncate">
-                            {name}
-                        </span>
+                        {author.id ? (
+                            <Link
+                                to="/user/$id"
+                                params={{ id: author.id }}
+                                className="text-base font-semibold truncate hover:text-primary transition-colors"
+                            >
+                                {name}
+                            </Link>
+                        ) : (
+                            <span className="text-base font-semibold truncate">
+                                {name}
+                            </span>
+                        )}
                         <span className="text-xs text-foreground/50">
                             {followers} 粉丝
                         </span>

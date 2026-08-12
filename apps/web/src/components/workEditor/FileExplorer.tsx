@@ -6,6 +6,7 @@ import {
     FilePlus2,
     Folder,
     FolderOpen,
+    Pencil,
     Trash2,
 } from "lucide-react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
@@ -23,12 +24,19 @@ interface FileExplorerProps {
     isComposing: boolean;
     draftName: string;
     nameError: string | null;
+    renamingKey: string | null;
+    renameDraft: string;
     onOpenFile: (key: string) => void;
     onDeleteFile: (file: WorkFile) => void;
+    onDeleteFolder: (folder: string) => void;
     onStartComposing: () => void;
     onCancelComposing: () => void;
     onChangeDraftName: (value: string) => void;
     onConfirmComposing: () => void;
+    onStartRename: (file: WorkFile) => void;
+    onCancelRename: () => void;
+    onChangeRenameDraft: (value: string) => void;
+    onConfirmRename: () => void;
 }
 
 interface TreeRowProps {
@@ -36,9 +44,17 @@ interface TreeRowProps {
     depth: number;
     collapsed: ReadonlySet<string>;
     activeKey: string | null;
+    nameError: string | null;
+    renamingKey: string | null;
+    renameDraft: string;
     onToggleFolder: (path: string) => void;
     onOpenFile: (key: string) => void;
     onDeleteFile: (file: WorkFile) => void;
+    onDeleteFolder: (folder: string) => void;
+    onStartRename: (file: WorkFile) => void;
+    onCancelRename: () => void;
+    onChangeRenameDraft: (value: string) => void;
+    onConfirmRename: () => void;
 }
 
 /**
@@ -48,13 +64,20 @@ interface TreeRowProps {
  * @param props.isComposing - 是否新建输入中。
  * @param props.draftName - 新建文件名。
  * @param props.nameError - 文件名校验错误。
+ * @param props.renamingKey - 正在重命名的文件 key。
+ * @param props.renameDraft - 重命名输入值。
  * @param props.onOpenFile - 打开文件。
  * @param props.onDeleteFile - 删除文件。
+ * @param props.onDeleteFolder - 删除文件夹。
  * @param props.onStartComposing - 开始新建。
  * @param props.onCancelComposing - 取消新建。
- * @param props.onChangeDraftName - 修改文件名。
+ * @param props.onChangeDraftName - 修改新建文件名。
  * @param props.onConfirmComposing - 确认新建。
- * @remarks 按目录折叠，支持新建与删除。
+ * @param props.onStartRename - 开始重命名。
+ * @param props.onCancelRename - 取消重命名。
+ * @param props.onChangeRenameDraft - 修改重命名文件名。
+ * @param props.onConfirmRename - 确认重命名。
+ * @remarks 按目录折叠，支持新建、重命名与删除（文件/文件夹）。
  */
 export const FileExplorer = memo(function FileExplorer({
     files,
@@ -62,12 +85,19 @@ export const FileExplorer = memo(function FileExplorer({
     isComposing,
     draftName,
     nameError,
+    renamingKey,
+    renameDraft,
     onOpenFile,
     onDeleteFile,
+    onDeleteFolder,
     onStartComposing,
     onCancelComposing,
     onChangeDraftName,
     onConfirmComposing,
+    onStartRename,
+    onCancelRename,
+    onChangeRenameDraft,
+    onConfirmRename,
 }: FileExplorerProps) {
     const tree = useMemo(() => buildFileTree(files), [files]);
     const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(
@@ -105,12 +135,13 @@ export const FileExplorer = memo(function FileExplorer({
             </div>
 
             {isComposing && (
-                <NewFileInput
+                <InlineNameInput
+                    placeholder="文件名（如 main.js / src/index.js）"
                     draftName={draftName}
                     nameError={nameError}
                     onChangeDraftName={onChangeDraftName}
-                    onConfirmComposing={onConfirmComposing}
-                    onCancelComposing={onCancelComposing}
+                    onConfirm={onConfirmComposing}
+                    onCancel={onCancelComposing}
                 />
             )}
 
@@ -121,9 +152,17 @@ export const FileExplorer = memo(function FileExplorer({
                     depth={0}
                     collapsed={collapsed}
                     activeKey={activeKey}
+                    nameError={nameError}
+                    renamingKey={renamingKey}
+                    renameDraft={renameDraft}
                     onToggleFolder={toggleFolder}
                     onOpenFile={onOpenFile}
                     onDeleteFile={onDeleteFile}
+                    onDeleteFolder={onDeleteFolder}
+                    onStartRename={onStartRename}
+                    onCancelRename={onCancelRename}
+                    onChangeRenameDraft={onChangeRenameDraft}
+                    onConfirmRename={onConfirmRename}
                 />
             ))}
         </aside>
@@ -143,41 +182,78 @@ function FolderRow({
     depth,
     collapsed,
     activeKey,
+    nameError,
+    renamingKey,
+    renameDraft,
     onToggleFolder,
     onOpenFile,
     onDeleteFile,
+    onDeleteFolder,
+    onStartRename,
+    onCancelRename,
+    onChangeRenameDraft,
+    onConfirmRename,
 }: {
     node: FolderNode;
     depth: number;
     collapsed: ReadonlySet<string>;
     activeKey: string | null;
+    nameError: string | null;
+    renamingKey: string | null;
+    renameDraft: string;
     onToggleFolder: (path: string) => void;
     onOpenFile: (key: string) => void;
     onDeleteFile: (file: WorkFile) => void;
+    onDeleteFolder: (folder: string) => void;
+    onStartRename: (file: WorkFile) => void;
+    onCancelRename: () => void;
+    onChangeRenameDraft: (value: string) => void;
+    onConfirmRename: () => void;
 }) {
     const isCollapsed = collapsed.has(node.path);
     const indent = 12 + depth * 14;
 
     return (
         <>
-            <button
-                type="button"
-                onClick={() => onToggleFolder(node.path)}
+            <div
                 style={{ paddingLeft: indent }}
-                className="flex items-center gap-1.5 py-1.5 pr-1 rounded-lg hover:bg-default-100 text-sm text-foreground/80 min-w-0"
+                className="group flex items-center rounded-lg pr-1 text-sm text-foreground/80 transition-colors hover:bg-default-100"
             >
-                {isCollapsed ? (
-                    <ChevronRight className="size-3.5 shrink-0 text-foreground/40" />
-                ) : (
-                    <ChevronDown className="size-3.5 shrink-0 text-foreground/40" />
-                )}
-                {isCollapsed ? (
-                    <Folder className="size-3.5 shrink-0 text-foreground/50" />
-                ) : (
-                    <FolderOpen className="size-3.5 shrink-0 text-foreground/50" />
-                )}
-                <span className="truncate">{node.name}</span>
-            </button>
+                <button
+                    type="button"
+                    onClick={() => onToggleFolder(node.path)}
+                    className="flex-1 text-left truncate py-1.5 flex items-center gap-1.5 min-w-0"
+                >
+                    {isCollapsed ? (
+                        <ChevronRight className="size-3.5 shrink-0 text-foreground/40" />
+                    ) : (
+                        <ChevronDown className="size-3.5 shrink-0 text-foreground/40" />
+                    )}
+                    {isCollapsed ? (
+                        <Folder className="size-3.5 shrink-0 text-foreground/50" />
+                    ) : (
+                        <FolderOpen className="size-3.5 shrink-0 text-foreground/50" />
+                    )}
+                    <span className="truncate">{node.name}</span>
+                </button>
+                <ConfirmButton
+                    heading={`删除文件夹 ${node.name}？`}
+                    description="将删除该文件夹下的所有文件，此操作不可恢复。"
+                    confirmLabel="确认删除"
+                    onConfirm={() => onDeleteFolder(node.path)}
+                    trigger={
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            isIconOnly
+                            aria-label={`删除文件夹 ${node.name}`}
+                            className={rowActionButtonClassName(false)}
+                        >
+                            <Trash2 className="size-3.5" />
+                        </Button>
+                    }
+                />
+            </div>
             {!isCollapsed &&
                 node.children.map((child) => (
                     <TreeRow
@@ -190,9 +266,17 @@ function FolderRow({
                         depth={depth + 1}
                         collapsed={collapsed}
                         activeKey={activeKey}
+                        nameError={nameError}
+                        renamingKey={renamingKey}
+                        renameDraft={renameDraft}
                         onToggleFolder={onToggleFolder}
                         onOpenFile={onOpenFile}
                         onDeleteFile={onDeleteFile}
+                        onDeleteFolder={onDeleteFolder}
+                        onStartRename={onStartRename}
+                        onCancelRename={onCancelRename}
+                        onChangeRenameDraft={onChangeRenameDraft}
+                        onConfirmRename={onConfirmRename}
                     />
                 ))}
         </>
@@ -203,17 +287,47 @@ function FileRow({
     node,
     depth,
     activeKey,
+    nameError,
+    renamingKey,
+    renameDraft,
     onOpenFile,
     onDeleteFile,
+    onStartRename,
+    onCancelRename,
+    onChangeRenameDraft,
+    onConfirmRename,
 }: {
     node: Extract<FileTreeNode, { kind: "file" }>;
     depth: number;
     activeKey: string | null;
+    nameError: string | null;
+    renamingKey: string | null;
+    renameDraft: string;
     onOpenFile: (key: string) => void;
     onDeleteFile: (file: WorkFile) => void;
+    onStartRename: (file: WorkFile) => void;
+    onCancelRename: () => void;
+    onChangeRenameDraft: (value: string) => void;
+    onConfirmRename: () => void;
 }) {
     const indent = 12 + depth * 14;
     const isActive = activeKey === node.file.key;
+    const isRenaming = renamingKey === node.file.key;
+
+    if (isRenaming) {
+        return (
+            <div style={{ paddingLeft: indent }} className="py-1 pr-1">
+                <InlineNameInput
+                    placeholder="文件名（如 main.js / src/index.js）"
+                    draftName={renameDraft}
+                    nameError={nameError}
+                    onChangeDraftName={onChangeRenameDraft}
+                    onConfirm={onConfirmRename}
+                    onCancel={onCancelRename}
+                />
+            </div>
+        );
+    }
 
     return (
         <div
@@ -229,6 +343,16 @@ function FileRow({
                 <FileCode2 className="size-3.5 shrink-0 text-foreground/40" />
                 <span className="truncate">{node.name}</span>
             </button>
+            <Button
+                size="sm"
+                variant="ghost"
+                isIconOnly
+                aria-label={`重命名 ${node.file.name}`}
+                onPress={() => onStartRename(node.file)}
+                className={rowActionButtonClassName(isActive)}
+            >
+                <Pencil className="size-3.5" />
+            </Button>
             <ConfirmButton
                 heading={`删除 ${node.file.name}？`}
                 description="将永久删除该文件及其内容，此操作不可恢复。"
@@ -240,7 +364,7 @@ function FileRow({
                         variant="ghost"
                         isIconOnly
                         aria-label={`删除 ${node.file.name}`}
-                        className={deleteButtonClassName(isActive)}
+                        className={rowActionButtonClassName(isActive)}
                     >
                         <Trash2 className="size-3.5" />
                     </Button>
@@ -291,11 +415,11 @@ function fileRowClassName(isActive: boolean): string {
 }
 
 /**
- * 删除按钮样式。
+ * 行内操作按钮样式。
  * @param isActive - 是否当前打开。
  * @returns 完整 className。
  */
-function deleteButtonClassName(isActive: boolean): string {
+function rowActionButtonClassName(isActive: boolean): string {
     const visibilityClass = isActive
         ? "opacity-100"
         : "opacity-0 group-hover:opacity-100";
@@ -303,25 +427,28 @@ function deleteButtonClassName(isActive: boolean): string {
 }
 
 /**
- * 新建文件输入框。
- * @param props.draftName - 文件名。
+ * 行内文件名输入框（新建/重命名共用）。
+ * @param props.placeholder - 输入占位文案。
+ * @param props.draftName - 输入值。
  * @param props.nameError - 校验错误。
  * @param props.onChangeDraftName - 修改文件名。
- * @param props.onConfirmComposing - 确认新建。
- * @param props.onCancelComposing - 取消新建。
+ * @param props.onConfirm - 确认。
+ * @param props.onCancel - 取消。
  */
-function NewFileInput({
+function InlineNameInput({
+    placeholder,
     draftName,
     nameError,
     onChangeDraftName,
-    onConfirmComposing,
-    onCancelComposing,
+    onConfirm,
+    onCancel,
 }: {
+    placeholder: string;
     draftName: string;
     nameError: string | null;
     onChangeDraftName: (value: string) => void;
-    onConfirmComposing: () => void;
-    onCancelComposing: () => void;
+    onConfirm: () => void;
+    onCancel: () => void;
 }) {
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -331,16 +458,16 @@ function NewFileInput({
                 ref={inputRef}
                 autoFocus
                 className="w-full"
-                placeholder="文件名（如 main.js / src/index.js）"
+                placeholder={placeholder}
                 value={draftName}
                 aria-invalid={nameError !== null}
                 onChange={(event) => onChangeDraftName(event.target.value)}
                 onKeyDown={(event) => {
                     if (event.key === "Enter") {
-                        onConfirmComposing();
+                        onConfirm();
                     }
                     if (event.key === "Escape") {
-                        onCancelComposing();
+                        onCancel();
                     }
                 }}
             />

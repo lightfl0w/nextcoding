@@ -1,5 +1,5 @@
 import { Button, Chip, Spinner } from "@heroui/react";
-import { Play } from "lucide-react";
+import { History, Play } from "lucide-react";
 import type { WorkVersion } from "~/lib/api";
 import { formatDate } from "~/lib/format";
 
@@ -26,9 +26,10 @@ export function VersionTimeline({
 }: VersionTimelineProps) {
     if (versions.length === 0) {
         return (
-            <p className="text-sm text-foreground/45 py-3 text-center">
-                暂无版本记录
-            </p>
+            <div className="flex flex-col items-center gap-2 py-6 text-foreground/40">
+                <History className="size-5" strokeWidth={1.5} />
+                <p className="text-sm">暂无版本记录</p>
+            </div>
         );
     }
 

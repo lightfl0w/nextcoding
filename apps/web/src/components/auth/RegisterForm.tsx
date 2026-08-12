@@ -53,7 +53,7 @@ export function RegisterForm({ redirect }: { redirect: string }) {
     return (
         <Form
             onSubmit={handleSubmit}
-            className="flex flex-col gap-4 p-6 rounded-2xl border border-foreground/10 bg-surface"
+            className="flex flex-col gap-4 p-6 rounded-2xl border border-default-200/70 bg-surface"
         >
             <TextField
                 isRequired

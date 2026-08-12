@@ -4,6 +4,7 @@ import {
     useNavigate,
     useParams,
 } from "@tanstack/react-router";
+import { FileCode } from "lucide-react";
 import type * as Monaco from "monaco-editor";
 import { useTheme } from "next-themes";
 import { memo, useCallback, useMemo, useRef, useState } from "react";
@@ -86,14 +87,20 @@ function WorkEditorRoute() {
         navigate,
     });
 
-    const { dirtyKeys, isSaving, scheduleSave, trackFile, forgetFile } =
-        useDraftSaver({
-            workId,
-            files,
-            readDraft,
-            replaceDraft,
-            loadContent,
-        });
+    const {
+        dirtyKeys,
+        isSaving,
+        scheduleSave,
+        trackFile,
+        forgetFile,
+        flushSave,
+    } = useDraftSaver({
+        workId,
+        files,
+        readDraft,
+        replaceDraft,
+        loadContent,
+    });
 
     const diff = useDiffPreview({ workId, activeKey, readDraft });
     const versionHistory = useVersionHistory(workId);
@@ -116,6 +123,7 @@ function WorkEditorRoute() {
     const fileActions = useFileActions({
         workId,
         reload,
+        flushDraft: flushSave,
         onFileCreated: useCallback(
             (key: string, version: number) => {
                 trackFile(key, version);
@@ -130,6 +138,30 @@ function WorkEditorRoute() {
                 closeFile(key);
             },
             [forgetFile, diff.close, closeFile],
+        ),
+        onFileRenamed: useCallback(
+            (oldKey: string, newKey: string, version: number) => {
+                diff.close();
+                closeFile(oldKey);
+                forgetFile(oldKey);
+                trackFile(newKey, version);
+                openFile(newKey);
+            },
+            [diff.close, closeFile, forgetFile, trackFile, openFile],
+        ),
+        onFolderRemoved: useCallback(
+            (folder: string) => {
+                const prefix = `${folder}/`;
+                for (const key of [...openKeys]) {
+                    if (!key.startsWith(prefix)) {
+                        continue;
+                    }
+                    forgetFile(key);
+                    closeFile(key);
+                }
+                diff.close();
+            },
+            [openKeys, forgetFile, closeFile, diff.close],
         ),
     });
 
@@ -204,12 +236,19 @@ function WorkEditorRoute() {
                     isComposing={fileActions.isComposing}
                     draftName={fileActions.draftName}
                     nameError={fileActions.nameError}
+                    renamingKey={fileActions.renamingKey}
+                    renameDraft={fileActions.renameDraft}
                     onOpenFile={openFile}
                     onDeleteFile={fileActions.removeFile}
+                    onDeleteFolder={fileActions.removeFolder}
                     onStartComposing={fileActions.startComposing}
                     onCancelComposing={fileActions.cancelComposing}
                     onChangeDraftName={fileActions.changeDraftName}
                     onConfirmComposing={fileActions.confirmComposing}
+                    onStartRename={fileActions.startRename}
+                    onCancelRename={fileActions.cancelRename}
+                    onChangeRenameDraft={fileActions.changeRenameDraft}
+                    onConfirmRename={fileActions.confirmRename}
                 />
 
                 <div className="flex-1 flex flex-col min-w-0">
@@ -284,10 +323,13 @@ function EditorSurface({
 }) {
     if (!hasFiles || activeKey === null) {
         return (
-            <div className="h-full w-full flex items-center justify-center text-sm text-foreground/50">
-                {hasFiles
-                    ? "没有打开的标签页，点左侧文件打开"
-                    : "暂无文件，点左侧「+」新建"}
+            <div className="h-full w-full flex flex-col items-center justify-center gap-2 text-foreground/45">
+                <FileCode className="size-7" strokeWidth={1.5} />
+                <p className="text-sm">
+                    {hasFiles
+                        ? "没有打开的标签页，点左侧文件打开"
+                        : "暂无文件，点左侧「+」新建"}
+                </p>
             </div>
         );
     }

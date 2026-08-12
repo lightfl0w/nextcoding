@@ -1,5 +1,5 @@
 import { Button } from "@heroui/react";
-import { GitCompareArrows, RotateCcw } from "lucide-react";
+import { GitCompareArrows, History, RotateCcw } from "lucide-react";
 import { memo } from "react";
 import type { WorkVersion } from "~/lib/api";
 import { ConfirmButton } from "./ConfirmButton";
@@ -22,9 +22,12 @@ export const VersionHistoryPanel = memo(function VersionHistoryPanel({
             </div>
 
             {versions.length === 0 ? (
-                <p className="text-xs text-foreground/40">
-                    还没有版本，点右上角「发布版本」
-                </p>
+                <div className="flex flex-col items-center gap-2 py-6 text-foreground/40">
+                    <History className="size-5" strokeWidth={1.5} />
+                    <p className="text-xs text-center px-2">
+                        还没有版本，点右上角「发布版本」
+                    </p>
+                </div>
             ) : (
                 versions.map((version) => (
                     <VersionRow

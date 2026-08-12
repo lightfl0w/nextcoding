@@ -9,7 +9,7 @@ export function ModeTabs({
     redirect: string;
 }) {
     return (
-        <div className="grid grid-cols-2 gap-1 p-1 rounded-xl border border-foreground/10">
+        <div className="grid grid-cols-2 gap-1 p-1 rounded-xl border border-default-200/70">
             <ModeLink
                 mode="login"
                 current={mode}

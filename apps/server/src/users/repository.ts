@@ -5,6 +5,50 @@ export function findUserById(id: string) {
     return db.select({ id: user.id }).from(user).where(eq(user.id, id)).get();
 }
 
+/**
+ * 查询用户的公开资料字段（不包含邮箱等隐私字段）。
+ * @param id - 用户 ID。
+ */
+export function findUserProfile(id: string) {
+    return db
+        .select({
+            id: user.id,
+            name: user.name,
+            image: user.image,
+            bio: user.bio,
+            createdAt: user.createdAt,
+        })
+        .from(user)
+        .where(eq(user.id, id))
+        .get();
+}
+
+/**
+ * 用户的粉丝数。
+ * @param userId - 被关注的用户 ID。
+ */
+export function countFollowers(userId: string) {
+    return db
+        .select({ total: count() })
+        .from(follow)
+        .where(eq(follow.followingId, userId))
+        .get()
+        .then((row) => row?.total ?? 0);
+}
+
+/**
+ * 用户关注的用户数。
+ * @param userId - 关注者 ID。
+ */
+export function countFollowing(userId: string) {
+    return db
+        .select({ total: count() })
+        .from(follow)
+        .where(eq(follow.followerId, userId))
+        .get()
+        .then((row) => row?.total ?? 0);
+}
+
 export function findFollow(followerId: string, followingId: string) {
     return db
         .select({ id: follow.id })

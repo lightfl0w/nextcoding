@@ -57,6 +57,33 @@ interface OwnedWorkRow {
     updatedAt: Date;
 }
 
+interface UserProfileRow {
+    id: string;
+    name: string;
+    image: string | null;
+    bio: string | null;
+    createdAt: Date;
+}
+
+export interface UserProfileStats {
+    followers: number;
+    following: number;
+    isFollowedByMe: boolean;
+}
+
+export function toUserProfile(row: UserProfileRow, stats: UserProfileStats) {
+    return {
+        id: row.id,
+        name: row.name,
+        image: row.image,
+        bio: row.bio,
+        createdAt: row.createdAt,
+        followers: stats.followers,
+        following: stats.following,
+        isFollowedByMe: stats.isFollowedByMe,
+    };
+}
+
 export function toWorkSummary(row: WorkSummaryRow) {
     return {
         id: row.id,

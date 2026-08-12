@@ -12,12 +12,8 @@ import {
 export function NotificationList({ groups }: { groups: NotificationGroup[] }) {
     return (
         <div className="flex flex-col gap-8">
-            {groups.map((group, groupIndex) => (
-                <section
-                    key={group.key}
-                    className="flex flex-col gap-3 fade-up"
-                    style={{ animationDelay: `${groupIndex * 40}ms` }}
-                >
+            {groups.map((group) => (
+                <section key={group.key} className="flex flex-col gap-3">
                     <div className="flex items-center justify-between">
                         <h2 className="text-xs font-medium text-foreground/45 uppercase tracking-wider">
                             {group.label}
@@ -49,7 +45,7 @@ function NotificationRow({
     isLast: boolean;
 }) {
     return (
-        <div className="fade-up group">
+        <div className="group">
             {item.work ? (
                 <Link
                     to="/work/$id"

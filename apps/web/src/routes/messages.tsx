@@ -58,7 +58,7 @@ function MessageCenterRoute() {
     };
 
     return (
-        <div className="w-full mx-auto px-4 md:px-8 py-6 md:py-8">
+        <div className="mx-auto w-full max-w-6xl p-8">
             <div className="flex flex-col gap-6 md:grid md:gap-8 md:grid-cols-[minmax(0,1fr)_220px]">
                 <main className="flex min-w-0 flex-col gap-6 order-2 md:order-1">
                     <MessagesHeader

@@ -32,7 +32,7 @@ export const CommentsSection = memo(function CommentsSection({
     const threads = useCommentThreads(comments);
 
     return (
-        <Card>
+        <Card className="shadow-none rounded-2xl border border-default-200/70">
             <Card.Header>
                 <Card.Title>评论</Card.Title>
             </Card.Header>

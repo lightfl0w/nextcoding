@@ -7,6 +7,17 @@ export interface Author {
     followedByMe?: boolean;
 }
 
+export interface UserProfile {
+    id: string;
+    name: string;
+    image: string | null;
+    bio: string | null;
+    createdAt: string;
+    followers: number;
+    following: number;
+    isFollowedByMe: boolean;
+}
+
 export interface Work {
     id: string;
     title: string;

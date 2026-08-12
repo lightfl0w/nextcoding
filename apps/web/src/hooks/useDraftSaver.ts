@@ -156,11 +156,36 @@ export function useDraftSaver({
 
     const forgetFile = useCallback(
         (key: string) => {
+            const pending = timersRef.current.get(key);
+            if (pending) {
+                clearTimeout(pending);
+                timersRef.current.delete(key);
+            }
             versionsRef.current.delete(key);
             markSaved(key);
         },
         [markSaved],
     );
 
-    return { dirtyKeys, isSaving, scheduleSave, trackFile, forgetFile };
+    const flushSave = useCallback(
+        (key: string) => {
+            const pending = timersRef.current.get(key);
+            if (!pending) {
+                return Promise.resolve();
+            }
+            clearTimeout(pending);
+            timersRef.current.delete(key);
+            return saveFile(key);
+        },
+        [saveFile],
+    );
+
+    return {
+        dirtyKeys,
+        isSaving,
+        scheduleSave,
+        trackFile,
+        forgetFile,
+        flushSave,
+    };
 }

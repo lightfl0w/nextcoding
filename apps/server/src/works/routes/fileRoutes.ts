@@ -21,9 +21,12 @@ import { exceedsFileSizeLimit, fileSizeLimitMessage } from "../limits.js";
 import { fileStorageKey, isValidFileName } from "../naming.js";
 import {
     deleteWorkFile,
+    deleteWorkFilesByIds,
     findWorkFileByKey,
     insertWorkFile,
     listWorkFiles,
+    listWorkFilesByPrefix,
+    renameWorkFile,
     setWorkFileVersion,
     workExists,
 } from "../repository.js";
@@ -146,6 +149,58 @@ fileRoutes.put("/:id/files/content", requireWorkAuthor, async (c) => {
     });
 });
 
+fileRoutes.patch("/:id/files", requireWorkAuthor, async (c) => {
+    const workId = c.req.param("id");
+    const body = await readJsonBody(c);
+
+    const key = readString(body, "key");
+    if (!key) {
+        return jsonError(c, "缺少 key", 400);
+    }
+    const newName = readTrimmed(body, "newName");
+    if (!isValidFileName(newName)) {
+        return jsonError(c, "文件名不合法", 400);
+    }
+
+    const file = await findWorkFileByKey(workId, key);
+    if (!file) {
+        return jsonError(c, "文件不存在", 404);
+    }
+
+    const newKey = fileStorageKey(workId, newName);
+    if (newKey === file.key) {
+        return c.json({
+            ok: true,
+            key: file.key,
+            name: file.name,
+            size: file.size,
+            version: file.version ?? 1,
+        });
+    }
+    if (await findWorkFileByKey(workId, newKey)) {
+        return jsonError(c, "同名文件已存在", 409);
+    }
+
+    const data = await getStorage().get(file.key);
+    if (!data) {
+        return jsonError(c, "内容缺失", 404);
+    }
+
+    await getStorage().put(newKey, data, {
+        contentType: file.contentType ?? undefined,
+    });
+    await getStorage().delete(file.key);
+    await renameWorkFile(file.id, newKey, newName);
+
+    return c.json({
+        ok: true,
+        key: newKey,
+        name: newName,
+        size: file.size,
+        version: file.version ?? 1,
+    });
+});
+
 fileRoutes.delete("/:id/files", requireWorkAuthor, async (c) => {
     const key = c.req.query("key");
     if (!key) {
@@ -161,6 +216,24 @@ fileRoutes.delete("/:id/files", requireWorkAuthor, async (c) => {
     await deleteWorkFile(file.id);
 
     return c.json({ ok: true });
+});
+
+fileRoutes.delete("/:id/files/folder", requireWorkAuthor, async (c) => {
+    const workId = c.req.param("id");
+    const folder = c.req.query("name");
+    if (!folder || !isValidFileName(folder)) {
+        return jsonError(c, "文件夹名不合法", 400);
+    }
+
+    const files = await listWorkFilesByPrefix(workId, folder);
+    if (files.length === 0) {
+        return jsonError(c, "文件夹为空或不存在", 404);
+    }
+
+    await Promise.all(files.map((file) => getStorage().delete(file.key)));
+    await deleteWorkFilesByIds(files.map((file) => file.id));
+
+    return c.json({ ok: true, deleted: files.length });
 });
 
 function decodeBody(body: JsonBody): DecodeResult {

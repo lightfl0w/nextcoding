@@ -61,7 +61,15 @@ import {
     workSparkPath,
 } from "../src/lib/api/sparks";
 import type { AppNotification, WorkFile } from "../src/lib/api/types";
-import { fetchMyStats, myStatsPath, uploadAvatar } from "../src/lib/api/users";
+import {
+    fetchMyStats,
+    fetchUser,
+    fetchUserWorks,
+    myStatsPath,
+    uploadAvatar,
+    userPath,
+    userWorksPath,
+} from "../src/lib/api/users";
 import {
     fetchSnapshot,
     fetchVersions,
@@ -908,6 +916,57 @@ describe("api/users", () => {
                 receivedSparks: 2,
             });
             expect(fetch).toHaveBeenCalledWith(myStatsPath());
+        });
+    });
+
+    describe("fetchUser", () => {
+        const profile = {
+            id: "u2",
+            name: "李四",
+            image: null,
+            bio: "你好",
+            createdAt: "2026-01-01T00:00:00.000Z",
+            followers: 3,
+            following: 2,
+            isFollowedByMe: false,
+        };
+
+        it("userPath 拼接公开资料路径", () => {
+            expect(userPath("u2")).toBe("/api/users/u2");
+        });
+
+        it("获取公开资料", async () => {
+            vi.mocked(fetch).mockResolvedValue(jsonResponse(profile));
+            await expect(fetchUser("u2")).resolves.toEqual(profile);
+            expect(fetch).toHaveBeenCalledWith("/api/users/u2");
+        });
+
+        it("用户不存在时抛 404 HttpError", async () => {
+            vi.mocked(fetch).mockResolvedValue(
+                jsonResponse({ error: "用户不存在" }, 404),
+            );
+            await expect(fetchUser("ghost")).rejects.toMatchObject({
+                status: 404,
+                message: "请求失败: 404",
+            });
+        });
+    });
+
+    describe("fetchUserWorks", () => {
+        it("userWorksPath 拼接作品列表路径", () => {
+            expect(userWorksPath("u2", 50)).toBe(
+                "/api/users/u2/works?limit=50",
+            );
+        });
+
+        it("获取某用户的已发布作品", async () => {
+            vi.mocked(fetch).mockResolvedValue(
+                jsonResponse([{ id: "w1", title: "作品" }]),
+            );
+            await expect(fetchUserWorks("u2", 50)).resolves.toEqual([
+                { id: "w1", title: "作品" },
+            ]);
+            expect(fetch).toHaveBeenCalledWith("/api/users/u2/works?limit=50");
         });
     });
 

@@ -4,6 +4,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
 import "~/styles.css";
 import { Providers } from "~/components/ThemeProviders";
+import { RightAside } from "~/components/ui/RightAside";
 import { Sidebar } from "~/components/ui/Sidebar";
 
 export const Route = createRootRoute({
@@ -16,6 +17,10 @@ function RootComponent() {
         pathname.startsWith("/auth") || pathname.startsWith("/reset-password");
     const isEditor = /^\/work\/[^/]+\/edit$/.test(pathname);
     const fullscreen = isAuthPage || isEditor;
+
+    const isWorkDetail = /^\/work\/[^/]+$/.test(pathname);
+    const hasOwnAside = isWorkDetail || pathname.startsWith("/messages");
+    const showAside = !fullscreen && !hasOwnAside;
 
     return (
         <div className="min-h-screen">
@@ -32,6 +37,8 @@ function RootComponent() {
                             <div className="flex-1 min-w-0">
                                 <Outlet />
                             </div>
+
+                            {showAside && <RightAside />}
                         </div>
                     </main>
                 )}

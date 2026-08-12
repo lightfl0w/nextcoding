@@ -8,11 +8,10 @@ import { jsonError, readJsonBody, readTrimmed } from "../../http/responses.js";
 import { getStorage } from "../../storage/storageClient.js";
 import { requireWorkAuthor } from "../guards.js";
 import {
+    clampLimit,
     exceedsFileSizeLimit,
     fileSizeLimitMessage,
     MY_WORKS_PAGE_SIZE,
-    WORK_PAGE_SIZE_DEFAULT,
-    WORK_PAGE_SIZE_MAX,
 } from "../limits.js";
 import { fileStorageKey, isValidFileName } from "../naming.js";
 import {
@@ -135,14 +134,6 @@ catalogRoutes.patch("/:id", requireWorkAuthor, async (c) => {
     await updateWorkTitle(c.req.param("id"), title);
     return c.json({ id: c.req.param("id"), title });
 });
-
-function clampLimit(raw: string | undefined): number {
-    const requested = Number(raw);
-    if (!Number.isFinite(requested) || requested <= 0) {
-        return WORK_PAGE_SIZE_DEFAULT;
-    }
-    return Math.min(requested, WORK_PAGE_SIZE_MAX);
-}
 
 function collectUploads(field: unknown): File[] {
     const candidates = Array.isArray(field) ? field : field ? [field] : [];

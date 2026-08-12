@@ -2,6 +2,8 @@ import { Card, Label } from "@heroui/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Compass, Pencil, Users } from "lucide-react";
 import type { ReactNode } from "react";
+import { PageHeader } from "~/components/ui/PageHeader";
+import { SectionHeading } from "~/components/ui/SectionHeading";
 
 export const Route = createFileRoute("/about")({
     component: RouteComponent,
@@ -27,15 +29,13 @@ const features: { icon: ReactNode; title: string; desc: string }[] = [
 
 function RouteComponent() {
     return (
-        <div className="p-8 w-full flex flex-col gap-6">
-            <header className="flex flex-col gap-1">
-                <h1 className="text-2xl font-bold tracking-tight">关于我们</h1>
-                <p className="text-sm text-foreground/60">
-                    吉祥物白羽带你看一看 NextCoding
-                </p>
-            </header>
+        <div className="mx-auto w-full max-w-6xl p-8 flex flex-col gap-6">
+            <PageHeader
+                title="关于我们"
+                description="吉祥物白羽带你看一看 NextCoding"
+            />
 
-            <Card className="w-full p-0 shadow-none rounded-2xl">
+            <Card className="w-full p-0 shadow-none rounded-2xl border border-default-200/70">
                 <div className="p-6 flex flex-col gap-4">
                     <div className="flex items-center gap-3">
                         <img
@@ -70,12 +70,12 @@ function RouteComponent() {
             </Card>
 
             <section className="flex flex-col gap-4">
-                <Label className="text-base">我们的特色</Label>
+                <SectionHeading title="我们的特色" />
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {features.map((feature) => (
                         <Card
                             key={feature.title}
-                            className="p-0 shadow-none rounded-2xl border border-default-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                            className="p-0 shadow-none rounded-2xl border border-default-200/70 transition-colors hover:border-default-300"
                         >
                             <div className="p-5 flex flex-col gap-3">
                                 <div className="size-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
@@ -93,8 +93,11 @@ function RouteComponent() {
                 </div>
             </section>
 
-            <footer className="pt-2 pb-4 text-center">
+            <footer className="pt-2 pb-4 text-center flex flex-col gap-0.5">
                 <Label className="text-xs text-foreground/50">NextCoding</Label>
+                <p className="text-xs text-foreground/40">
+                    分享编程作品与灵感的社区
+                </p>
             </footer>
         </div>
     );

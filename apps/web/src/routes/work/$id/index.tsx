@@ -203,7 +203,7 @@ function WorkDetailRoute() {
 
 const LikedCard = memo(function LikedCard() {
     return (
-        <Card className="w-full p-0 shadow-none rounded-2xl border border-default-200 bg-gradient-to-br from-primary/8 to-secondary/5">
+        <Card className="w-full p-0 shadow-none rounded-2xl border border-default-200 bg-gradient-to-br from-primary/10 to-secondary/5">
             <Card.Content className="p-5 flex flex-col gap-2">
                 <div className="flex items-center gap-2 text-foreground/80">
                     <Sparkles className="size-4 text-primary" />

@@ -1,13 +1,23 @@
 import { Hono } from "hono";
-import { type AuthenticatedEnv, requireSession } from "../http/guards.js";
+import {
+    type AuthenticatedEnv,
+    readSession,
+    requireSession,
+} from "../http/guards.js";
 import { jsonError } from "../http/responses.js";
 import { getStorage } from "../storage/storageClient.js";
+import { clampLimit } from "../works/limits.js";
+import { listUserPublishedWorks } from "../works/repository.js";
+import { toUserProfile, toWorkSummary } from "../works/serializers.js";
 import {
+    countFollowers,
+    countFollowing,
     countGivenSparks,
     countReceivedSparks,
     deleteFollow,
     findFollow,
     findUserById,
+    findUserProfile,
     insertFollow,
 } from "./repository.js";
 
@@ -85,6 +95,48 @@ export const userRoutes = new Hono<AuthenticatedEnv>()
         }
 
         return c.json({ key, url: publicStorageUrl(key) }, 201);
+    })
+    .get("/:id", async (c) => {
+        const id = c.req.param("id");
+        const [profile, session] = await Promise.all([
+            findUserProfile(id),
+            readSession(c),
+        ]);
+        if (!profile) {
+            return jsonError(c, "用户不存在", 404);
+        }
+        const viewerId = session?.user?.id ?? null;
+        const [followers, following, follows] = await Promise.all([
+            countFollowers(id),
+            countFollowing(id),
+            viewerId ? findFollow(viewerId, id) : Promise.resolve(undefined),
+        ]);
+        return c.json(
+            toUserProfile(profile, {
+                followers,
+                following,
+                isFollowedByMe: Boolean(follows),
+            }),
+        );
+    })
+    .get("/:id/works", async (c) => {
+        const id = c.req.param("id");
+        const limit = clampLimit(c.req.query("limit"));
+        const [profile, session] = await Promise.all([
+            findUserProfile(id),
+            readSession(c),
+        ]);
+        if (!profile) {
+            return jsonError(c, "用户不存在", 404);
+        }
+        const viewerId = session?.user?.id ?? null;
+        const rows = await listUserPublishedWorks(id, limit, viewerId);
+        return c.json(
+            rows.map((row) => ({
+                ...toWorkSummary(row),
+                sparked: Boolean(row.sparked),
+            })),
+        );
     })
     .post("/:id/follow", requireSession, async (c) => {
         const targetId = c.req.param("id");

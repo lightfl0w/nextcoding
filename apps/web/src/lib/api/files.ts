@@ -109,3 +109,44 @@ export function deleteWorkFile(workId: string, key: string): Promise<unknown> {
     const path = `${workFilesPath(workId)}?key=${encodeURIComponent(key)}`;
     return mutateJson(path, "DELETE", undefined, "删除失败");
 }
+
+export type RenamedFile =
+    | { outcome: "renamed"; key: string; version: number }
+    | { outcome: "duplicate" }
+    | { outcome: "missing" }
+    | { outcome: "rejected" };
+
+/**
+ * 重命名文件。
+ * @param workId - 作品 ID。
+ * @param key - 原文件 key。
+ * @param newName - 新文件名（可为含目录的相对路径）。
+ * @returns `renamed` 携带新 key 与版本号；同名冲突返回 `duplicate`，文件已消失返回 `missing`，其余失败返回 `rejected`。
+ */
+export async function renameWorkFile(
+    workId: string,
+    key: string,
+    newName: string,
+): Promise<RenamedFile> {
+    const response = await sendJson(workFilesPath(workId), "PATCH", {
+        key,
+        newName,
+    });
+    if (response.status === 409) {
+        return { outcome: "duplicate" };
+    }
+    if (response.status === 404) {
+        return { outcome: "missing" };
+    }
+    if (!response.ok) {
+        return { outcome: "rejected" };
+    }
+
+    const file = (await response.json()) as { key: string; version?: number };
+    return { outcome: "renamed", key: file.key, version: file.version ?? 1 };
+}
+
+export function deleteFolder(workId: string, folder: string): Promise<unknown> {
+    const path = `${workFilesPath(workId)}/folder?name=${encodeURIComponent(folder)}`;
+    return mutateJson(path, "DELETE", undefined, "删除失败");
+}

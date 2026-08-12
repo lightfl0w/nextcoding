@@ -69,7 +69,7 @@ function ResetPasswordRoute() {
         <AuthLayout title="设置新密码" subtitle="输入一个新的登录密码">
             <Form
                 onSubmit={handleSubmit}
-                className="flex flex-col gap-4 p-6 rounded-2xl border border-foreground/10 bg-surface"
+                className="flex flex-col gap-4 p-6 rounded-2xl border border-default-200/70 bg-surface"
             >
                 {done ? (
                     <Alert status="success">

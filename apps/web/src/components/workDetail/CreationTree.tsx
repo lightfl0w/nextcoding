@@ -18,9 +18,10 @@ export function CreationTree({
 }) {
     if (!source && remixes.length === 0) {
         return (
-            <p className="text-sm text-foreground/45 py-3 text-center">
-                暂无创作脉络
-            </p>
+            <div className="flex flex-col items-center gap-2 py-6 text-foreground/40">
+                <GitFork className="size-5" strokeWidth={1.5} />
+                <p className="text-sm">暂无创作脉络</p>
+            </div>
         );
     }
 

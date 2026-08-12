@@ -20,7 +20,7 @@ export const WorkCard = memo(function WorkCard({ work }: { work: Work }) {
             params={{ id: work.id }}
             className="block h-full group"
         >
-            <Card className="w-full p-0 shadow-none rounded-2xl overflow-hidden h-full border border-default-200/70 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-default-300 group-hover:shadow-lg">
+            <Card className="w-full p-0 shadow-none rounded-2xl overflow-hidden h-full border border-default-200/70 transition-colors group-hover:border-default-300">
                 <div className="p-4 flex flex-col gap-2.5 h-full">
                     <Card.Header className="gap-1">
                         <Card.Title className="text-sm font-semibold line-clamp-1">

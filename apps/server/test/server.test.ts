@@ -8,6 +8,7 @@ vi.mock("@nextcoding/auth", () => ({
 vi.mock("../src/works/repository.js", () => ({
     bumpWorkFileVersion: vi.fn(),
     deleteWorkFile: vi.fn(),
+    deleteWorkFilesByIds: vi.fn(),
     findComment: vi.fn(),
     findPublishedWorkOwnerId: vi.fn(),
     findVersion: vi.fn(),
@@ -22,11 +23,14 @@ vi.mock("../src/works/repository.js", () => ({
     listComments: vi.fn(),
     listOwnedWorks: vi.fn(),
     listPublishedWorks: vi.fn(),
+    listUserPublishedWorks: vi.fn(),
     listVersionSummaries: vi.fn(),
     listWorkFiles: vi.fn(),
+    listWorkFilesByPrefix: vi.fn(),
     mapWorkFilesByKey: vi.fn(),
     nextVersionNumber: vi.fn(),
     publishWork: vi.fn(),
+    renameWorkFile: vi.fn(),
     setWorkFileVersion: vi.fn(),
     updateWorkTitle: vi.fn(),
     workExists: vi.fn(),
@@ -47,11 +51,14 @@ vi.mock("../src/works/socialRepository.js", () => ({
 }));
 
 vi.mock("../src/users/repository.js", () => ({
+    countFollowers: vi.fn(),
+    countFollowing: vi.fn(),
     countGivenSparks: vi.fn(),
     countReceivedSparks: vi.fn(),
     deleteFollow: vi.fn(),
     findFollow: vi.fn(),
     findUserById: vi.fn(),
+    findUserProfile: vi.fn(),
     insertFollow: vi.fn(),
 }));
 
@@ -1391,6 +1398,216 @@ describe("fileRoutes", () => {
             expect(workRepo.deleteWorkFile).toHaveBeenCalledWith("file-1");
         });
     });
+
+    describe("PATCH /:id/files", () => {
+        it("需要作者权限", async () => {
+            mockGetSession.mockResolvedValue(makeSession({ id: "someone" }));
+            vi.mocked(workRepo.findWorkOwnerId).mockResolvedValue("owner");
+            const res = await app().request("/api/works/work-1/files", {
+                method: "PATCH",
+                body: JSON.stringify({
+                    key: "works/work-1/main.js",
+                    newName: "x.js",
+                }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(403);
+        });
+
+        it("非法文件名返回 400", async () => {
+            asOwner();
+            const res = await app().request("/api/works/work-1/files", {
+                method: "PATCH",
+                body: JSON.stringify({ key: "k", newName: "../x.js" }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(400);
+            expect(await res.json()).toEqual({ error: "文件名不合法" });
+        });
+
+        it("文件不存在返回 404", async () => {
+            asOwner();
+            vi.mocked(workRepo.findWorkFileByKey).mockResolvedValue(null);
+            const res = await app().request("/api/works/work-1/files", {
+                method: "PATCH",
+                body: JSON.stringify({
+                    key: "works/work-1/main.js",
+                    newName: "x.js",
+                }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(404);
+            expect(await res.json()).toEqual({ error: "文件不存在" });
+        });
+
+        it("新名称与现有文件冲突返回 409", async () => {
+            asOwner();
+            vi.mocked(workRepo.findWorkFileByKey)
+                .mockResolvedValueOnce(makeWorkFileRow())
+                .mockResolvedValueOnce(
+                    makeWorkFileRow({
+                        key: "works/work-1/b.js",
+                        name: "b.js",
+                    }),
+                );
+            const res = await app().request("/api/works/work-1/files", {
+                method: "PATCH",
+                body: JSON.stringify({
+                    key: "works/work-1/main.js",
+                    newName: "b.js",
+                }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(409);
+            expect(await res.json()).toEqual({ error: "同名文件已存在" });
+        });
+
+        it("存储内容缺失返回 404", async () => {
+            asOwner();
+            vi.mocked(workRepo.findWorkFileByKey)
+                .mockResolvedValueOnce(makeWorkFileRow())
+                .mockResolvedValueOnce(null);
+            const res = await app().request("/api/works/work-1/files", {
+                method: "PATCH",
+                body: JSON.stringify({
+                    key: "works/work-1/main.js",
+                    newName: "b.js",
+                }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(404);
+            expect(await res.json()).toEqual({ error: "内容缺失" });
+        });
+
+        it("新名称不变时直接返回", async () => {
+            asOwner();
+            vi.mocked(workRepo.findWorkFileByKey).mockResolvedValue(
+                makeWorkFileRow(),
+            );
+            const res = await app().request("/api/works/work-1/files", {
+                method: "PATCH",
+                body: JSON.stringify({
+                    key: "works/work-1/main.js",
+                    newName: "main.js",
+                }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(200);
+            expect(await res.json()).toEqual({
+                ok: true,
+                key: "works/work-1/main.js",
+                name: "main.js",
+                size: 5,
+                version: 1,
+            });
+            expect(storage.putCalls).toHaveLength(0);
+            expect(workRepo.renameWorkFile).not.toHaveBeenCalled();
+        });
+
+        it("重命名成功移动存储并更新数据库", async () => {
+            asOwner();
+            vi.mocked(workRepo.findWorkFileByKey)
+                .mockResolvedValueOnce(makeWorkFileRow())
+                .mockResolvedValueOnce(null);
+            storage.store.set(
+                "works/work-1/main.js",
+                new TextEncoder().encode("hi"),
+            );
+            const res = await app().request("/api/works/work-1/files", {
+                method: "PATCH",
+                body: JSON.stringify({
+                    key: "works/work-1/main.js",
+                    newName: "src/b.js",
+                }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(200);
+            expect(await res.json()).toEqual({
+                ok: true,
+                key: "works/work-1/src/b.js",
+                name: "src/b.js",
+                size: 5,
+                version: 1,
+            });
+            expect(storage.store.has("works/work-1/main.js")).toBe(false);
+            expect(storage.store.get("works/work-1/src/b.js")).toEqual(
+                new TextEncoder().encode("hi"),
+            );
+            expect(workRepo.renameWorkFile).toHaveBeenCalledWith(
+                "file-1",
+                "works/work-1/src/b.js",
+                "src/b.js",
+            );
+        });
+    });
+
+    describe("DELETE /:id/files/folder", () => {
+        it("需要作者权限", async () => {
+            mockGetSession.mockResolvedValue(makeSession({ id: "someone" }));
+            vi.mocked(workRepo.findWorkOwnerId).mockResolvedValue("owner");
+            const res = await app().request(
+                "/api/works/work-1/files/folder?name=src",
+                { method: "DELETE" },
+            );
+            expect(res.status).toBe(403);
+        });
+
+        it("缺少或非法文件夹名返回 400", async () => {
+            asOwner();
+            const res = await app().request("/api/works/work-1/files/folder", {
+                method: "DELETE",
+            });
+            expect(res.status).toBe(400);
+            expect(await res.json()).toEqual({ error: "文件夹名不合法" });
+        });
+
+        it("文件夹下无文件返回 404", async () => {
+            asOwner();
+            vi.mocked(workRepo.listWorkFilesByPrefix).mockResolvedValue([]);
+            const res = await app().request(
+                "/api/works/work-1/files/folder?name=src",
+                { method: "DELETE" },
+            );
+            expect(res.status).toBe(404);
+            expect(await res.json()).toEqual({ error: "文件夹为空或不存在" });
+        });
+
+        it("删除成功清理存储与数据库", async () => {
+            asOwner();
+            vi.mocked(workRepo.listWorkFilesByPrefix).mockResolvedValue([
+                makeWorkFileRow({
+                    id: "file-1",
+                    key: "works/work-1/src/a.js",
+                    name: "src/a.js",
+                }),
+                makeWorkFileRow({
+                    id: "file-2",
+                    key: "works/work-1/src/b.js",
+                    name: "src/b.js",
+                }),
+            ]);
+            storage.store.set(
+                "works/work-1/src/a.js",
+                new TextEncoder().encode("a"),
+            );
+            storage.store.set(
+                "works/work-1/src/b.js",
+                new TextEncoder().encode("b"),
+            );
+            const res = await app().request(
+                "/api/works/work-1/files/folder?name=src",
+                { method: "DELETE" },
+            );
+            expect(res.status).toBe(200);
+            expect(await res.json()).toEqual({ ok: true, deleted: 2 });
+            expect(storage.store.has("works/work-1/src/a.js")).toBe(false);
+            expect(storage.store.has("works/work-1/src/b.js")).toBe(false);
+            expect(workRepo.deleteWorkFilesByIds).toHaveBeenCalledWith([
+                "file-1",
+                "file-2",
+            ]);
+        });
+    });
 });
 
 describe("versionRoutes", () => {
@@ -2184,6 +2401,91 @@ describe("userRoutes", () => {
                 givenSparks: 5,
                 receivedSparks: 9,
             });
+        });
+    });
+
+    describe("GET /:id", () => {
+        const profileRow = {
+            id: "user-2",
+            name: "李四",
+            image: "/api/storage/avatars/user-2/a.png",
+            bio: "你好",
+            createdAt: new Date("2026-01-01T00:00:00Z"),
+        };
+
+        it("未知用户返回 404", async () => {
+            vi.mocked(userRepo.findUserProfile).mockResolvedValue(undefined);
+            const res = await app().request("/api/users/ghost");
+            expect(res.status).toBe(404);
+            expect(await res.json()).toEqual({ error: "用户不存在" });
+        });
+
+        it("返回公开资料与统计", async () => {
+            vi.mocked(userRepo.findUserProfile).mockResolvedValue(profileRow);
+            vi.mocked(userRepo.countFollowers).mockResolvedValue(3);
+            vi.mocked(userRepo.countFollowing).mockResolvedValue(2);
+            const res = await app().request("/api/users/user-2");
+            expect(res.status).toBe(200);
+            expect(await res.json()).toEqual({
+                id: "user-2",
+                name: "李四",
+                image: "/api/storage/avatars/user-2/a.png",
+                bio: "你好",
+                createdAt: "2026-01-01T00:00:00.000Z",
+                followers: 3,
+                following: 2,
+                isFollowedByMe: false,
+            });
+        });
+
+        it("登录查看者已关注时 isFollowedByMe 为 true", async () => {
+            vi.mocked(userRepo.findUserProfile).mockResolvedValue(profileRow);
+            vi.mocked(userRepo.countFollowers).mockResolvedValue(0);
+            vi.mocked(userRepo.countFollowing).mockResolvedValue(0);
+            vi.mocked(userRepo.findFollow).mockResolvedValue({ id: "f1" });
+            const res = await app().request("/api/users/user-2");
+            expect(res.status).toBe(200);
+            const body = (await res.json()) as { isFollowedByMe: boolean };
+            expect(body.isFollowedByMe).toBe(true);
+            expect(userRepo.findFollow).toHaveBeenCalledWith(
+                "user-1",
+                "user-2",
+            );
+        });
+    });
+
+    describe("GET /:id/works", () => {
+        it("未知用户返回 404", async () => {
+            vi.mocked(userRepo.findUserProfile).mockResolvedValue(undefined);
+            const res = await app().request("/api/users/ghost/works");
+            expect(res.status).toBe(404);
+            expect(await res.json()).toEqual({ error: "用户不存在" });
+        });
+
+        it("返回该作者的已发布作品", async () => {
+            vi.mocked(userRepo.findUserProfile).mockResolvedValue({
+                id: "user-2",
+                name: "李四",
+                image: null,
+                bio: null,
+                createdAt: new Date("2026-01-01T00:00:00Z"),
+            });
+            vi.mocked(workRepo.listUserPublishedWorks).mockResolvedValue([
+                makeWorkSummaryRow({ id: "w1", sparked: 1 }),
+            ]);
+            const res = await app().request("/api/users/user-2/works");
+            expect(res.status).toBe(200);
+            expect(workRepo.listUserPublishedWorks).toHaveBeenCalledWith(
+                "user-2",
+                20,
+                "user-1",
+            );
+            const body = (await res.json()) as Array<{
+                id: string;
+                sparked: boolean;
+            }>;
+            expect(body).toHaveLength(1);
+            expect(body[0]).toMatchObject({ id: "w1", sparked: true });
         });
     });
 

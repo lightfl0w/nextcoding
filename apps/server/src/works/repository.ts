@@ -7,7 +7,7 @@ import {
     workFile,
     workVersion,
 } from "@nextcoding/db";
-import { and, count, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, like, sql } from "drizzle-orm";
 
 export type WorkSort = "latest" | "popular" | "weekly";
 
@@ -112,6 +112,26 @@ export function listPublishedWorks(
             ),
         )
         .orderBy(...sortOrders[sort])
+        .limit(limit);
+}
+
+/**
+ * 某作者发布的全部作品（最新在前）。
+ * @param authorId - 作者用户 ID。
+ * @param limit - 返回数量上限。
+ * @param viewerId - 当前查看者，用于计算 sparked。
+ */
+export function listUserPublishedWorks(
+    authorId: string,
+    limit: number,
+    viewerId?: string | null,
+) {
+    return db
+        .select({ ...summaryColumns, sparked: sparkedColumn(viewerId) })
+        .from(work)
+        .leftJoin(user, eq(work.userId, user.id))
+        .where(and(eq(work.userId, authorId), eq(work.status, "published")))
+        .orderBy(desc(work.createdAt))
         .limit(limit);
 }
 
@@ -292,6 +312,32 @@ export function bumpWorkFileVersion(fileId: string, size: number) {
 
 export function deleteWorkFile(fileId: string) {
     return db.delete(workFile).where(eq(workFile.id, fileId));
+}
+
+export function renameWorkFile(fileId: string, key: string, name: string) {
+    return db
+        .update(workFile)
+        .set({ key, name })
+        .where(eq(workFile.id, fileId));
+}
+
+export function listWorkFilesByPrefix(workId: string, folder: string) {
+    return db
+        .select()
+        .from(workFile)
+        .where(
+            and(
+                eq(workFile.workId, workId),
+                like(workFile.name, `${folder}/%`),
+            ),
+        );
+}
+
+export function deleteWorkFilesByIds(ids: string[]) {
+    if (ids.length === 0) {
+        return Promise.resolve();
+    }
+    return db.delete(workFile).where(inArray(workFile.id, ids));
 }
 
 export function listVersionSummaries(workId: string, limit: number) {

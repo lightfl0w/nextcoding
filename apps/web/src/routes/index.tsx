@@ -1,8 +1,9 @@
-import { Button, Label, toast } from "@heroui/react";
+import { Button, toast } from "@heroui/react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Compass, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useSWRConfig } from "swr";
 import { FeaturedWorks } from "~/components/FeaturedWorks";
+import { SectionHeading } from "~/components/ui/SectionHeading";
 import { useAuth } from "~/hooks/useAuth";
 import { createWork, myWorksKey } from "~/lib/api";
 
@@ -34,9 +35,9 @@ function Home() {
     };
 
     return (
-        <div className="p-8 w-full flex flex-col gap-8">
+        <div className="mx-auto w-full max-w-7xl p-8 flex flex-col gap-8">
             <section className="relative overflow-hidden rounded-3xl border border-default-200/70 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
-                <div className="relative z-10 px-8 py-14 flex flex-col items-start gap-6">
+                <div className="relative z-10 px-8 py-12 flex flex-col items-start gap-6">
                     <div className="flex items-center gap-4">
                         <img
                             src="/logo.png"
@@ -65,17 +66,16 @@ function Home() {
             </section>
 
             <section className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Compass className="size-4 text-foreground/50" />
-                        <Label className="text-base">推荐作品</Label>
-                    </div>
-                    <Link to="/discover">
-                        <Button variant="ghost" size="sm">
-                            查看全部
-                        </Button>
-                    </Link>
-                </div>
+                <SectionHeading
+                    title="推荐作品"
+                    action={
+                        <Link to="/discover">
+                            <Button variant="ghost" size="sm">
+                                查看全部
+                            </Button>
+                        </Link>
+                    }
+                />
                 <FeaturedWorks />
             </section>
         </div>

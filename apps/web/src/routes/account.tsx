@@ -13,9 +13,20 @@ import {
 } from "@heroui/react";
 import { authClient } from "@nextcoding/auth/client";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Camera, FileText, LogOut, Pencil, Plus, Sparkles } from "lucide-react";
+import {
+    Camera,
+    FileText,
+    LogIn,
+    LogOut,
+    Pencil,
+    Plus,
+    Sparkles,
+} from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { AvatarCropModal } from "~/components/AvatarCropModal";
+import { EmptyState } from "~/components/ui/EmptyState";
+import { PageHeader } from "~/components/ui/PageHeader";
+import { SectionHeading } from "~/components/ui/SectionHeading";
 import { useAuth } from "~/hooks/useAuth";
 import { useMyStats } from "~/hooks/useMyStats";
 import { useMyWorks } from "~/hooks/useMyWorks";
@@ -43,15 +54,11 @@ function AccountRoute() {
     }
 
     return (
-        <div className="p-8 w-full flex flex-col gap-6 max-w-3xl mx-auto">
-            <header className="flex flex-col gap-1">
-                <h1 className="text-2xl font-bold tracking-tight text-balance">
-                    我的账号
-                </h1>
-                <p className="text-sm text-foreground/60">
-                    管理你的资料、火花与作品
-                </p>
-            </header>
+        <div className="mx-auto w-full max-w-6xl p-8 flex flex-col gap-6">
+            <PageHeader
+                title="我的账号"
+                description="管理你的资料、火花与作品"
+            />
 
             <ProfileCard givenSparks={givenSparks} />
 
@@ -355,30 +362,24 @@ function MyWorksSection() {
 
     return (
         <section className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <FileText className="size-4 text-foreground/50" />
-                    <Label className="text-base">我的作品</Label>
-                </div>
-                <Button
-                    size="sm"
-                    variant="primary"
-                    className="gap-1.5"
-                    isDisabled={isCreating}
-                    onPress={createNew}
-                >
-                    <Plus className="size-3.5" />
-                    新建作品
-                </Button>
-            </div>
+            <SectionHeading
+                title="我的作品"
+                action={
+                    <Button
+                        size="sm"
+                        variant="primary"
+                        className="gap-1.5"
+                        isDisabled={isCreating}
+                        onPress={createNew}
+                    >
+                        <Plus className="size-3.5" />
+                        新建作品
+                    </Button>
+                }
+            />
 
             {works.length === 0 ? (
-                <Card className="p-0 shadow-none rounded-2xl border border-dashed border-default-300 bg-background">
-                    <Card.Content className="py-10 flex flex-col items-center gap-2 text-foreground/45">
-                        <FileText className="size-6" strokeWidth={1.5} />
-                        <p className="text-sm">还没有作品，发布第一个吧</p>
-                    </Card.Content>
-                </Card>
+                <EmptyState icon={FileText} title="还没有作品，发布第一个吧" />
             ) : (
                 <div className="flex flex-col gap-2">
                     {works.map((work) => (
@@ -451,7 +452,7 @@ function WorkRowLink({ work }: { work: OwnedWork }) {
         <Link
             to={work.status === "draft" ? "/work/$id/edit" : "/work/$id"}
             params={{ id: work.id }}
-            className="group flex items-center gap-3 rounded-xl border border-default-200/70 bg-background px-4 py-3 transition-all hover:-translate-y-0.5 hover:border-default-300 hover:shadow-md min-w-0"
+            className="group flex items-center gap-3 rounded-xl border border-default-200/70 bg-background px-4 py-3 transition-colors hover:border-default-300 min-w-0"
         >
             <Chip
                 size="sm"
@@ -475,8 +476,16 @@ function WorkRowLink({ work }: { work: OwnedWork }) {
 
 function SignInPrompt() {
     return (
-        <div className="p-8 w-full flex flex-col items-center gap-3 py-24">
-            <p className="text-base font-medium">登录后查看你的账号</p>
+        <div className="p-8 w-full flex flex-col items-center gap-4 py-24">
+            <div className="size-12 rounded-full bg-default-100/70 flex items-center justify-center text-foreground/45">
+                <LogIn className="size-6" strokeWidth={1.5} />
+            </div>
+            <div className="flex flex-col items-center gap-1">
+                <p className="text-base font-medium">登录后查看你的账号</p>
+                <p className="text-xs text-foreground/45">
+                    管理资料、火花与你的作品
+                </p>
+            </div>
             <Link to="/auth" search={{ mode: "login", redirect: "/account" }}>
                 <Button variant="primary">去登录</Button>
             </Link>

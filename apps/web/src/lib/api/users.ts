@@ -1,4 +1,5 @@
 import { getJson, HttpError, postForm } from "./http";
+import type { UserProfile, Work } from "./types";
 
 export interface MyStats {
     givenSparks: number;
@@ -15,11 +16,46 @@ export function myStatsPath(): string {
 }
 
 /**
+ * 公开用户资料的请求路径。
+ * @param userId - 目标用户 ID。
+ */
+export function userPath(userId: string): string {
+    return `/api/users/${userId}`;
+}
+
+/**
+ * 某用户已发布作品的请求路径。
+ * @param userId - 目标用户 ID。
+ * @param limit - 数量上限。
+ */
+export function userWorksPath(userId: string, limit: number): string {
+    return `/api/users/${userId}/works?limit=${limit}`;
+}
+
+/**
  * 当前用户的火花统计。
  * @returns 送出的与收到的火花数。
  */
 export function fetchMyStats(): Promise<MyStats> {
     return getJson<MyStats>(myStatsPath());
+}
+
+/**
+ * 获取某用户的公开资料。
+ * @param userId - 目标用户 ID。
+ * @throws 用户不存在时抛 404 的 {@link HttpError}。
+ */
+export function fetchUser(userId: string): Promise<UserProfile> {
+    return getJson<UserProfile>(userPath(userId));
+}
+
+/**
+ * 获取某用户已发布的作品。
+ * @param userId - 目标用户 ID。
+ * @param limit - 数量上限。
+ */
+export function fetchUserWorks(userId: string, limit: number): Promise<Work[]> {
+    return getJson<Work[]>(userWorksPath(userId, limit));
 }
 
 function avatarUploadPath(): string {
