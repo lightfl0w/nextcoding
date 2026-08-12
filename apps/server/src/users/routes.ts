@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { type AuthenticatedEnv, requireSession } from "../http/guards.js";
 import { jsonError } from "../http/responses.js";
+import { getStorage } from "../storage/storageClient.js";
 import {
     countGivenSparks,
     countReceivedSparks,
@@ -10,6 +11,31 @@ import {
     insertFollow,
 } from "./repository.js";
 
+const ALLOWED_IMAGE_TYPES = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+]);
+
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024;
+
+const EXT_BY_MIME: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+};
+
+function avatarStorageKey(userId: string, ext: string): string {
+    const id = crypto.randomUUID().replace(/-/g, "");
+    return `avatars/${userId}/${id}.${ext}`;
+}
+
+function publicStorageUrl(key: string): string {
+    return `/api/storage/${key.split("/").map(encodeURIComponent).join("/")}`;
+}
+
 export const userRoutes = new Hono<AuthenticatedEnv>()
     .get("/me/stats", requireSession, async (c) => {
         const userId = c.get("userId");
@@ -18,6 +44,36 @@ export const userRoutes = new Hono<AuthenticatedEnv>()
             countReceivedSparks(userId),
         ]);
         return c.json({ givenSparks, receivedSparks });
+    })
+    .post("/me/avatar", requireSession, async (c) => {
+        const userId = c.get("userId");
+        let form: FormData;
+        try {
+            form = await c.req.formData();
+        } catch {
+            return jsonError(c, "无效的表单数据", 400);
+        }
+
+        const file = form.get("file");
+        if (!(file instanceof Blob) || file.size === 0) {
+            return jsonError(c, "请选择上传的图片文件", 400);
+        }
+        if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+            return jsonError(
+                c,
+                "不支持的图片格式，仅允许 JPG、PNG、WebP、GIF",
+                400,
+            );
+        }
+        if (file.size > MAX_AVATAR_SIZE) {
+            return jsonError(c, "图片过大，不能超过 5 MB", 400);
+        }
+
+        const ext = EXT_BY_MIME[file.type];
+        const key = avatarStorageKey(userId, ext);
+        await getStorage().put(key, file, { contentType: file.type });
+
+        return c.json({ key, url: publicStorageUrl(key) }, 201);
     })
     .post("/:id/follow", requireSession, async (c) => {
         const targetId = c.req.param("id");

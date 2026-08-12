@@ -118,9 +118,9 @@ export function formatOutputLines(
 
 /**
  * 拼接「不支持运行」提示。
- * @param names - 项目文件名列表。
+ * @param names - 文件名列表。
  * @param emptyHint - 列表为空时返回的提示。
- * @returns 完整提示文案。
+ * @returns 完整提示文案；单个文件时省略「等文件」。
  */
 export function unsupportedRuntimeMessage(
     names: string[],
@@ -129,5 +129,6 @@ export function unsupportedRuntimeMessage(
     if (names.length === 0) {
         return emptyHint;
     }
-    return `「${names[0]}」等文件暂不支持在线运行，请使用 ${SUPPORTED_RUNTIMES}`;
+    const quoted = `「${names[0]}」`;
+    return `${quoted}${names.length === 1 ? "" : "等文件"}暂不支持在线运行，请使用 ${SUPPORTED_RUNTIMES}`;
 }

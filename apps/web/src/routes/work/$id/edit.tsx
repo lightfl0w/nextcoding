@@ -97,7 +97,12 @@ function WorkEditorRoute() {
 
     const diff = useDiffPreview({ workId, activeKey, readDraft });
     const versionHistory = useVersionHistory(workId);
-    const runner = useEditorRun({ files, readDraft, loadContent });
+    const runner = useEditorRun({
+        files,
+        activeKey,
+        readDraft,
+        loadContent,
+    });
     const source = useWorkSource(workId);
 
     const runLabel = useMemo(

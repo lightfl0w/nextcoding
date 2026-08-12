@@ -100,7 +100,7 @@ export function WorkActions({
                         className="size-4"
                         fill={sparked ? "currentColor" : "none"}
                     />
-                    {sparked ? "已送出火花" : "送火花"}
+                    "送火花"
                 </Button>
                 <Button
                     variant="outline"

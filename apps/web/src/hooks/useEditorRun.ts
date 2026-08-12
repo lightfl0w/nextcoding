@@ -6,6 +6,7 @@ import { detectRuntime, toSources, unsupportedRuntimeMessage } from "~/lib/run";
 
 interface EditorRunOptions {
     files: WorkFile[];
+    activeKey: string | null;
     readDraft: (key: string) => string | null;
     loadContent: (key: string) => Promise<string>;
 }
@@ -13,12 +14,14 @@ interface EditorRunOptions {
 /**
  * 编辑页运行。
  * @param options.files - 当前文件列表。
+ * @param options.activeKey - 当前焦点文件的 key。
  * @param options.readDraft - 读取某文件的草稿内容。
  * @param options.loadContent - 从服务器加载文件内容。
- * @remarks 源码优先取草稿，其次从服务器读取。
+ * @remarks 优先运行当前焦点文件；未打开文件时退回按项目识别入口。
  */
 export function useEditorRun({
     files,
+    activeKey,
     readDraft,
     loadContent,
 }: EditorRunOptions) {
@@ -36,16 +39,25 @@ export function useEditorRun({
         cancelInput,
     } = useRunPanel();
 
-    const runtime = useMemo(
-        () => detectRuntime(files.map((file) => file.name)),
-        [files],
+    const activeFile = useMemo(
+        () => files.find((file) => file.key === activeKey) ?? null,
+        [files, activeKey],
     );
+
+    const runtime = useMemo(() => {
+        if (activeFile) {
+            return detectRuntime([activeFile.name]);
+        }
+        return detectRuntime(files.map((file) => file.name));
+    }, [activeFile, files]);
 
     const start = useCallback(async () => {
         if (!runtime) {
             toast.warning(
                 unsupportedRuntimeMessage(
-                    files.map((file) => file.name),
+                    activeFile
+                        ? [activeFile.name]
+                        : files.map((file) => file.name),
                     "还没有文件可运行，请先新建文件",
                 ),
             );
@@ -55,7 +67,7 @@ export function useEditorRun({
         const sources = await collectSources(files, readDraft, loadContent);
         openPanel();
         await run(sources, runtime.entryPoint, runtime.language);
-    }, [files, runtime, readDraft, loadContent, run, openPanel]);
+    }, [activeFile, files, runtime, readDraft, loadContent, run, openPanel]);
 
     return {
         runtime,

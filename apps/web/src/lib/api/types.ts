@@ -3,10 +3,7 @@ export interface Author {
     name: string | null;
     image: string | null;
     bio: string | null;
-
-    /** 粉丝数（仅详情接口附带） */
     followers?: number;
-    /** 当前用户是否已关注（仅详情接口附带） */
     followedByMe?: boolean;
 }
 
@@ -20,7 +17,6 @@ export interface Work {
     likes: number;
     sparks: number;
 
-    /** 当前用户是否已送过火花（列表接口按登录态附带） */
     sparked?: boolean;
     createdAt: string;
     author: Author;
@@ -55,7 +51,6 @@ export interface SnapshotFile {
     name: string;
     contentType: string | null;
     content: string;
-    /** base64 表示二进制文件内容未解码 */
     encoding?: "base64";
 }
 

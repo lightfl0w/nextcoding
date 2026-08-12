@@ -11,7 +11,8 @@
             "**",
             "!apps/web/src/routeTree.gen.ts",
             "!**/dist",
-            "!**/data"
+            "!**/data",
+            "!**/.turbo"
         ]
     },
     "formatter": {

@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "test": "turbo run test",
         "dev": "turbo run dev",
         "lint": "biome check .",
         "lint:fix": "biome check . --fix",
@@ -14,6 +14,10 @@
     "author": "",
     "license": "ISC",
     "type": "module",
+    "workspaces": [
+        "packages/*",
+        "apps/*"
+    ],
     "packageManager": "pnpm@11.21.0",
     "devDependencies": {
         "@biomejs/biome": "2.5.7",

@@ -49,6 +49,9 @@ Thumbs.db
 coverage/
 .nyc_output/
 
+# Vite 原生 config loader 可能写出的转译副本
+vitest.config.js
+
 .turbo/
 .cache/
 

@@ -13,12 +13,13 @@ import {
 } from "@heroui/react";
 import { authClient } from "@nextcoding/auth/client";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { FileText, LogOut, Pencil, Plus, Sparkles } from "lucide-react";
-import { useCallback, useState } from "react";
+import { Camera, FileText, LogOut, Pencil, Plus, Sparkles } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+import { AvatarCropModal } from "~/components/AvatarCropModal";
 import { useAuth } from "~/hooks/useAuth";
 import { useMyStats } from "~/hooks/useMyStats";
 import { useMyWorks } from "~/hooks/useMyWorks";
-import { createWork, type OwnedWork } from "~/lib/api";
+import { createWork, type OwnedWork, uploadAvatar } from "~/lib/api";
 import { formatDate } from "~/lib/format";
 
 export const Route = createFileRoute("/account")({
@@ -74,7 +75,7 @@ function ProfileCard({ givenSparks }: { givenSparks: number }) {
         editDialogState.open();
     };
 
-    const saveProfile = async () => {
+    const saveProfile = async (nextImage?: string) => {
         const trimmedName = name.trim();
         if (!trimmedName) {
             return;
@@ -82,7 +83,7 @@ function ProfileCard({ givenSparks }: { givenSparks: number }) {
         try {
             const { error } = await authClient.updateUser({
                 name: trimmedName,
-                image: image.trim(),
+                image: (nextImage ?? image).trim(),
                 bio: bio.trim(),
             });
             if (error) {
@@ -138,7 +139,6 @@ function ProfileCard({ givenSparks }: { givenSparks: number }) {
                 image={image}
                 bio={bio}
                 onNameChange={setName}
-                onImageChange={setImage}
                 onBioChange={setBio}
                 onSave={saveProfile}
             />
@@ -146,13 +146,14 @@ function ProfileCard({ givenSparks }: { givenSparks: number }) {
     );
 }
 
+const AVATAR_ACCEPT = "image/png,image/jpeg,image/webp,image/gif";
+
 function ProfileEditModal({
     state,
     name,
     image,
     bio,
     onNameChange,
-    onImageChange,
     onBioChange,
     onSave,
 }: {
@@ -161,70 +162,176 @@ function ProfileEditModal({
     image: string;
     bio: string;
     onNameChange: (value: string) => void;
-    onImageChange: (value: string) => void;
     onBioChange: (value: string) => void;
-    onSave: () => void;
+    onSave: (nextImage?: string) => void;
 }) {
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const [localPreview, setLocalPreview] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
+
+    const effectiveAvatarSrc = localPreview ?? image;
+
+    const handlePickFile = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        event.target.value = "";
+        if (!file) {
+            return;
+        }
+        if (!file.type.startsWith("image/")) {
+            toast.danger("请选择图片文件");
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            toast.danger("图片不能超过 5 MB");
+            return;
+        }
+        setPendingCropFile(file);
+    };
+
+    const handleCropped = async (croppedFile: File) => {
+        if (localPreview) {
+            URL.revokeObjectURL(localPreview);
+        }
+        const preview = URL.createObjectURL(croppedFile);
+        setLocalPreview(preview);
+        setPendingCropFile(null);
+        setIsUploading(true);
+        try {
+            const result = await uploadAvatar(croppedFile);
+            await onSave(result.url);
+        } catch (err) {
+            toast.danger((err as Error).message);
+        } finally {
+            URL.revokeObjectURL(preview);
+            setLocalPreview(null);
+            setIsUploading(false);
+        }
+    };
+
+    const handleCropCancel = () => {
+        setPendingCropFile(null);
+    };
+
     return (
-        <Modal state={state}>
-            <Modal.Backdrop />
-            <Modal.Container>
-                <Modal.Dialog className="sm:max-w-[400px]">
-                    <Modal.CloseTrigger />
-                    <Modal.Header>
-                        <Modal.Heading>修改资料</Modal.Heading>
-                    </Modal.Header>
-                    <Modal.Body className="flex flex-col gap-4">
-                        <div className="flex flex-col gap-1.5">
-                            <Label>昵称</Label>
-                            <Input
-                                autoFocus
-                                placeholder="你的昵称"
-                                value={name}
-                                onChange={(event) =>
-                                    onNameChange(event.target.value)
-                                }
-                                onKeyDown={(event) =>
-                                    event.key === "Enter" && onSave()
-                                }
-                            />
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                            <Label>头像地址</Label>
-                            <Input
-                                placeholder="图片链接（可选）"
-                                value={image}
-                                onChange={(event) =>
-                                    onImageChange(event.target.value)
-                                }
-                            />
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                            <Label>简介</Label>
-                            <TextArea
-                                placeholder="介绍一下自己（可选）"
-                                value={bio}
-                                onChange={(event) =>
-                                    onBioChange(event.target.value)
-                                }
-                            />
-                        </div>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button slot="close" variant="tertiary">
-                            取消
-                        </Button>
-                        <Button
-                            variant="primary"
-                            isDisabled={!name.trim()}
-                            onPress={onSave}
-                        >
-                            保存
-                        </Button>
-                    </Modal.Footer>
-                </Modal.Dialog>
-            </Modal.Container>
-        </Modal>
+        <>
+            <Modal state={state}>
+                <Modal.Backdrop>
+                    <Modal.Container>
+                        <Modal.Dialog className="sm:max-w-[440px]">
+                            <Modal.CloseTrigger />
+                            <Modal.Header>
+                                <Modal.Heading>修改资料</Modal.Heading>
+                            </Modal.Header>
+                            <Modal.Body className="flex flex-col gap-4">
+                                <div className="flex flex-col gap-2 items-center">
+                                    <Label>头像</Label>
+                                    <div className="relative">
+                                        <Avatar
+                                            size="lg"
+                                            className="size-24 ring-2 ring-default-200"
+                                        >
+                                            {effectiveAvatarSrc ? (
+                                                <Avatar.Image
+                                                    alt="头像预览"
+                                                    src={effectiveAvatarSrc}
+                                                />
+                                            ) : null}
+                                            <Avatar.Fallback className="text-2xl">
+                                                {name
+                                                    ? name
+                                                          .trim()
+                                                          .charAt(0)
+                                                          .toUpperCase()
+                                                    : "?"}
+                                            </Avatar.Fallback>
+                                        </Avatar>
+                                    </div>
+                                    <div className="flex flex-wrap items-center justify-center gap-2">
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept={AVATAR_ACCEPT}
+                                            className="hidden"
+                                            onChange={handleFileChange}
+                                        />
+                                        <Button
+                                            size="sm"
+                                            variant="secondary"
+                                            className="gap-1.5"
+                                            onPress={handlePickFile}
+                                            isDisabled={isUploading}
+                                        >
+                                            {isUploading ? (
+                                                <Spinner
+                                                    size="sm"
+                                                    className="!size-3.5"
+                                                />
+                                            ) : (
+                                                <Camera className="size-3.5" />
+                                            )}
+                                            {isUploading
+                                                ? "应用中"
+                                                : "选择图片"}
+                                        </Button>
+                                    </div>
+                                    <p className="text-[11px] text-foreground/40">
+                                        支持 JPG、PNG、WebP、GIF，最大 5 MB
+                                    </p>
+                                </div>
+
+                                <div className="flex flex-col gap-1.5">
+                                    <Label>昵称</Label>
+                                    <Input
+                                        autoFocus
+                                        placeholder="你的昵称"
+                                        value={name}
+                                        onChange={(event) =>
+                                            onNameChange(event.target.value)
+                                        }
+                                        onKeyDown={(event) =>
+                                            event.key === "Enter" && onSave()
+                                        }
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <Label>简介</Label>
+                                    <TextArea
+                                        placeholder="介绍一下自己（可选）"
+                                        value={bio}
+                                        onChange={(event) =>
+                                            onBioChange(event.target.value)
+                                        }
+                                    />
+                                </div>
+                            </Modal.Body>
+                            <Modal.Footer>
+                                <Button slot="close" variant="tertiary">
+                                    取消
+                                </Button>
+                                <Button
+                                    variant="primary"
+                                    isDisabled={!name.trim()}
+                                    onPress={() => onSave()}
+                                >
+                                    保存
+                                </Button>
+                            </Modal.Footer>
+                        </Modal.Dialog>
+                    </Modal.Container>
+                </Modal.Backdrop>
+            </Modal>
+
+            <AvatarCropModal
+                file={pendingCropFile}
+                onCrop={handleCropped}
+                onCancel={handleCropCancel}
+            />
+        </>
     );
 }
 
