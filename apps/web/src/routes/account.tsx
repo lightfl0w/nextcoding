@@ -7,6 +7,7 @@ import {
     Label,
     Modal,
     Spinner,
+    TextArea,
     toast,
     useOverlayState,
 } from "@heroui/react";
@@ -15,8 +16,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { FileText, LogOut, Pencil, Plus, Sparkles } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useAuth } from "~/hooks/useAuth";
+import { useMyStats } from "~/hooks/useMyStats";
 import { useMyWorks } from "~/hooks/useMyWorks";
-import { createWork } from "~/lib/api";
+import { createWork, type OwnedWork } from "~/lib/api";
 import { formatDate } from "~/lib/format";
 
 export const Route = createFileRoute("/account")({
@@ -25,6 +27,7 @@ export const Route = createFileRoute("/account")({
 
 function AccountRoute() {
     const { user, isPending } = useAuth();
+    const { givenSparks } = useMyStats();
 
     if (isPending) {
         return (
@@ -49,23 +52,25 @@ function AccountRoute() {
                 </p>
             </header>
 
-            <ProfileCard />
+            <ProfileCard givenSparks={givenSparks} />
 
             <MyWorksSection />
         </div>
     );
 }
 
-function ProfileCard() {
+function ProfileCard({ givenSparks }: { givenSparks: number }) {
     const { user, refetch } = useAuth();
     const navigate = useNavigate();
     const editDialogState = useOverlayState();
     const [name, setName] = useState(user?.name ?? "");
     const [image, setImage] = useState(user?.image ?? "");
+    const [bio, setBio] = useState(user?.bio ?? "");
 
     const openEdit = () => {
         setName(user?.name ?? "");
         setImage(user?.image ?? "");
+        setBio(user?.bio ?? "");
         editDialogState.open();
     };
 
@@ -78,6 +83,7 @@ function ProfileCard() {
             const { error } = await authClient.updateUser({
                 name: trimmedName,
                 image: image.trim(),
+                bio: bio.trim(),
             });
             if (error) {
                 throw new Error(error.message ?? "更新失败");
@@ -99,38 +105,14 @@ function ProfileCard() {
         <>
             <Card className="p-0 shadow-none rounded-2xl border border-default-200/70">
                 <Card.Content className="p-5 flex flex-col gap-4">
-                    <div className="flex items-center gap-3">
-                        <Avatar size="lg">
-                            {user?.image ? (
-                                <Avatar.Image
-                                    alt={user.name}
-                                    src={user.image}
-                                />
-                            ) : null}
-                            <Avatar.Fallback>
-                                {(user?.name ?? "?").charAt(0).toUpperCase()}
-                            </Avatar.Fallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-                            <div className="flex items-center gap-2">
-                                <span className="text-base font-semibold truncate">
-                                    {user?.name ?? "未命名"}
-                                </span>
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    isIconOnly
-                                    className="size-6 min-w-0"
-                                    onPress={openEdit}
-                                    aria-label="修改资料"
-                                >
-                                    <Pencil className="size-3.5" />
-                                </Button>
-                            </div>
-                            <span className="text-xs text-foreground/50 truncate">
-                                {user?.email}
-                            </span>
-                        </div>
+                    <ProfileIdentity user={user} onEdit={openEdit} />
+
+                    <div className="flex items-center gap-1.5 text-sm text-foreground/80">
+                        <Sparkles className="size-4 text-warning" />
+                        <span className="font-medium tabular-nums">
+                            {givenSparks}
+                        </span>
+                        <span className="text-foreground/50">个火花</span>
                     </div>
 
                     <div className="flex items-center justify-between text-xs text-foreground/50">
@@ -154,8 +136,10 @@ function ProfileCard() {
                 state={editDialogState}
                 name={name}
                 image={image}
+                bio={bio}
                 onNameChange={setName}
                 onImageChange={setImage}
+                onBioChange={setBio}
                 onSave={saveProfile}
             />
         </>
@@ -166,15 +150,19 @@ function ProfileEditModal({
     state,
     name,
     image,
+    bio,
     onNameChange,
     onImageChange,
+    onBioChange,
     onSave,
 }: {
     state: ReturnType<typeof useOverlayState>;
     name: string;
     image: string;
+    bio: string;
     onNameChange: (value: string) => void;
     onImageChange: (value: string) => void;
+    onBioChange: (value: string) => void;
     onSave: () => void;
 }) {
     return (
@@ -208,6 +196,16 @@ function ProfileEditModal({
                                 value={image}
                                 onChange={(event) =>
                                     onImageChange(event.target.value)
+                                }
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            <Label>简介</Label>
+                            <TextArea
+                                placeholder="介绍一下自己（可选）"
+                                value={bio}
+                                onChange={(event) =>
+                                    onBioChange(event.target.value)
                                 }
                             />
                         </div>
@@ -277,43 +275,94 @@ function MyWorksSection() {
             ) : (
                 <div className="flex flex-col gap-2">
                     {works.map((work) => (
-                        <Link
-                            key={work.id}
-                            to={
-                                work.status === "draft"
-                                    ? "/work/$id/edit"
-                                    : "/work/$id"
-                            }
-                            params={{ id: work.id }}
-                            className="group flex items-center gap-3 rounded-xl border border-default-200/70 bg-background px-4 py-3 transition-all hover:-translate-y-0.5 hover:border-default-300 hover:shadow-md min-w-0"
-                        >
-                            <Chip
-                                size="sm"
-                                variant={
-                                    work.status === "published"
-                                        ? "primary"
-                                        : "soft"
-                                }
-                            >
-                                {work.status === "published"
-                                    ? "已发布"
-                                    : "草稿"}
-                            </Chip>
-                            <span className="flex-1 truncate text-sm font-medium">
-                                {work.title}
-                            </span>
-                            <span className="flex items-center gap-1 text-xs text-foreground/55 tabular-nums">
-                                <Sparkles className="size-3 text-warning" />
-                                {work.sparks}
-                            </span>
-                            <span className="text-xs text-foreground/40 shrink-0">
-                                {formatDate(work.updatedAt)}
-                            </span>
-                        </Link>
+                        <WorkRowLink key={work.id} work={work} />
                     ))}
                 </div>
             )}
         </section>
+    );
+}
+
+interface ProfileIdentityUser {
+    name: string;
+    image?: string | null;
+    email?: string | null;
+}
+
+/**
+ * 头像与昵称信息行。
+ * @param props.user - 当前用户。
+ * @param props.onEdit - 打开修改资料弹窗。
+ */
+function ProfileIdentity({
+    user,
+    onEdit,
+}: {
+    user: ProfileIdentityUser | null;
+    onEdit: () => void;
+}) {
+    return (
+        <div className="flex items-center gap-3">
+            <Avatar size="lg">
+                {user?.image ? (
+                    <Avatar.Image alt={user.name} src={user.image} />
+                ) : null}
+                <Avatar.Fallback>
+                    {(user?.name ?? "?").charAt(0).toUpperCase()}
+                </Avatar.Fallback>
+            </Avatar>
+            <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                <div className="flex items-center gap-2">
+                    <span className="text-base font-semibold truncate">
+                        {user?.name ?? "未命名"}
+                    </span>
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        isIconOnly
+                        className="size-6 min-w-0"
+                        onPress={onEdit}
+                        aria-label="修改资料"
+                    >
+                        <Pencil className="size-3.5" />
+                    </Button>
+                </div>
+                <span className="text-xs text-foreground/50 truncate">
+                    {user?.email}
+                </span>
+            </div>
+        </div>
+    );
+}
+
+/**
+ * 作品列表行。
+ * @param props.work - 作品数据。
+ */
+function WorkRowLink({ work }: { work: OwnedWork }) {
+    return (
+        <Link
+            to={work.status === "draft" ? "/work/$id/edit" : "/work/$id"}
+            params={{ id: work.id }}
+            className="group flex items-center gap-3 rounded-xl border border-default-200/70 bg-background px-4 py-3 transition-all hover:-translate-y-0.5 hover:border-default-300 hover:shadow-md min-w-0"
+        >
+            <Chip
+                size="sm"
+                variant={work.status === "published" ? "primary" : "soft"}
+            >
+                {work.status === "published" ? "已发布" : "草稿"}
+            </Chip>
+            <span className="flex-1 truncate text-sm font-medium">
+                {work.title}
+            </span>
+            <span className="flex items-center gap-1 text-xs text-foreground/55 tabular-nums">
+                <Sparkles className="size-3 text-warning" />
+                {work.sparks}
+            </span>
+            <span className="text-xs text-foreground/40 shrink-0">
+                {formatDate(work.updatedAt)}
+            </span>
+        </Link>
     );
 }
 

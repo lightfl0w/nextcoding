@@ -59,3 +59,9 @@ body {
     }
     /* biome-ignore-end lint/complexity/noImportantStyles: reduced-motion 覆盖完成 */
 }
+
+.wterm {
+    /* biome-ignore-start lint/complexity/noImportantStyles: wterm */
+    box-shadow: none !important;
+    /* biome-ignore-end lint/complexity/noImportantStyles: wterm */
+}

@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import type { AuthenticatedEnv } from "../../http/guards.js";
 import {
     type JsonBody,
     jsonError,
@@ -15,7 +16,7 @@ import {
     toBase64,
     toText,
 } from "../content.js";
-import { type AuthenticatedEnv, requireWorkAuthor } from "../guards.js";
+import { requireWorkAuthor } from "../guards.js";
 import { exceedsFileSizeLimit, fileSizeLimitMessage } from "../limits.js";
 import { fileStorageKey, isValidFileName } from "../naming.js";
 import {

@@ -25,6 +25,8 @@ const summaryColumns = {
     createdAt: work.createdAt,
     authorId: user.id,
     authorName: user.name,
+    authorImage: user.image,
+    authorBio: user.bio,
 };
 
 const detailColumns = {
@@ -41,6 +43,8 @@ const commentColumns = {
     createdAt: workComment.createdAt,
     authorId: user.id,
     authorName: user.name,
+    authorImage: user.image,
+    authorBio: user.bio,
 };
 
 const sortOrders = {
@@ -57,6 +61,24 @@ function sparkedColumn(userId?: string | null) {
     return sql<number>`exists(
         select 1 from spark
         where spark.work_id = ${work.id} and spark.user_id = ${userId}
+    )`;
+}
+
+function followerCountColumn() {
+    return sql<number>`(
+        select count(*) from follow
+        where follow.following_id = ${work.userId}
+    )`;
+}
+
+function followingColumn(viewerId?: string | null) {
+    if (!viewerId) {
+        return sql<number>`0`;
+    }
+    return sql<number>`exists(
+        select 1 from follow
+        where follow.following_id = ${work.userId}
+        and follow.follower_id = ${viewerId}
     )`;
 }
 
@@ -139,9 +161,13 @@ export function listOwnedWorks(userId: string, limit: number) {
         .limit(limit);
 }
 
-export async function findWorkDetail(workId: string) {
+export async function findWorkDetail(workId: string, viewerId?: string | null) {
     const [row] = await db
-        .select(detailColumns)
+        .select({
+            ...detailColumns,
+            followerCount: followerCountColumn(),
+            isFollowing: followingColumn(viewerId),
+        })
         .from(work)
         .leftJoin(user, eq(work.userId, user.id))
         .where(eq(work.id, workId));

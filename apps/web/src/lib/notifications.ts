@@ -46,6 +46,49 @@ export function formatTimeOfDay(timestamp: number | string | Date): string {
 }
 
 /**
+ * 统计通知数量。
+ * @param items - 通知列表。
+ * @returns 各类总数与未读数。
+ */
+export function countNotifications(
+    items: AppNotification[],
+): NotificationCounts {
+    const counts: NotificationCounts = {
+        total: 0,
+        unread: 0,
+        spark: 0,
+        remix: 0,
+        comment: 0,
+        sparkUnread: 0,
+        remixUnread: 0,
+        commentUnread: 0,
+    };
+    for (const item of items) {
+        counts.total += 1;
+        if (!item.read) {
+            counts.unread += 1;
+        }
+        if (item.type === "spark") {
+            counts.spark += 1;
+            if (!item.read) {
+                counts.sparkUnread += 1;
+            }
+        } else if (item.type === "remix") {
+            counts.remix += 1;
+            if (!item.read) {
+                counts.remixUnread += 1;
+            }
+        } else {
+            counts.comment += 1;
+            if (!item.read) {
+                counts.commentUnread += 1;
+            }
+        }
+    }
+    return counts;
+}
+
+/**
  * 按时间分组。
  * @param items - 通知列表。
  * @returns 今天/昨天/本周/更早 四组，空组不输出。

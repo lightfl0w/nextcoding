@@ -64,6 +64,8 @@ export function listDirectRemixes(workId: string, limit = 50) {
             createdAt: work.createdAt,
             authorId: user.id,
             authorName: user.name,
+            authorImage: user.image,
+            authorBio: user.bio,
         })
         .from(remix)
         .innerJoin(work, eq(work.id, remix.forkId))

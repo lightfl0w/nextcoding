@@ -43,6 +43,20 @@
             "when": 1786451424838,
             "tag": "0005_dapper_pete_wisdom",
             "breakpoints": true
+        },
+        {
+            "idx": 6,
+            "version": "6",
+            "when": 1786492074511,
+            "tag": "0006_nostalgic_inhumans",
+            "breakpoints": true
+        },
+        {
+            "idx": 7,
+            "version": "6",
+            "when": 1786492903875,
+            "tag": "0007_freezing_infant_terrible",
+            "breakpoints": true
         }
     ]
 }

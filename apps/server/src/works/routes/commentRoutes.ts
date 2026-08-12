@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { type AuthenticatedEnv, requireSession } from "../../http/guards.js";
 import {
     type JsonBody,
     jsonError,
@@ -6,7 +7,6 @@ import {
     readString,
     readTrimmed,
 } from "../../http/responses.js";
-import { type AuthenticatedEnv, requireSession } from "../guards.js";
 import { COMMENT_MAX_LENGTH, COMMENT_PAGE_SIZE } from "../limits.js";
 import {
     findComment,

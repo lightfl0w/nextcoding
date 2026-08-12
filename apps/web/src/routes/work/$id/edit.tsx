@@ -1,4 +1,4 @@
-import { Spinner, toast } from "@heroui/react";
+import { Spinner } from "@heroui/react";
 import {
     createFileRoute,
     useNavigate,
@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-router";
 import type * as Monaco from "monaco-editor";
 import { useTheme } from "next-themes";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 
 import { MonacoWrapper } from "~/components/editor/MonacoWrapper";
@@ -18,24 +18,20 @@ import { FileExplorer } from "~/components/workEditor/FileExplorer";
 import { VersionHistoryPanel } from "~/components/workEditor/VersionHistoryPanel";
 import { type DiffPreview, useDiffPreview } from "~/hooks/useDiffPreview";
 import { useDraftSaver } from "~/hooks/useDraftSaver";
+import { useEditableTitle } from "~/hooks/useEditableTitle";
 import { useEditorRun } from "~/hooks/useEditorRun";
+import { useEditorSettings } from "~/hooks/useEditorSettings";
 import { useFileActions } from "~/hooks/useFileActions";
 import { useFileContent } from "~/hooks/useFileContent";
 import { useFileTabs } from "~/hooks/useFileTabs";
+import { useMonaco } from "~/hooks/useMonaco";
 import { useMonacoDrafts } from "~/hooks/useMonacoDrafts";
+import { usePublishWork } from "~/hooks/usePublishWork";
 import { useVersionHistory } from "~/hooks/useVersionHistory";
 import { useWork } from "~/hooks/useWork";
 import { useWorkFiles } from "~/hooks/useWorkFiles";
 import { useWorkSource } from "~/hooks/useWorkRemixes";
-import type { WorkFile } from "~/lib/api";
-import {
-    fileContentPath,
-    publishWork,
-    readFileContent,
-    updateWorkTitle,
-    workPath,
-} from "~/lib/api";
-import { loadMonaco } from "~/lib/editor";
+import { fileContentPath, readFileContent } from "~/lib/api";
 import { languageLabel } from "~/lib/run";
 
 export const Route = createFileRoute("/work/$id/edit")({
@@ -48,35 +44,16 @@ function WorkEditorRoute() {
     const { data: work, mutate: mutateWork } = useWork(workId);
     const theme = useResolvedEditorTheme();
     const monaco = useMonaco();
+    const { fontSize, fontFamily, setFontSize, setFontFamily } =
+        useEditorSettings();
     const [editor, setEditor] =
         useState<Monaco.editor.IStandaloneCodeEditor | null>(null);
     const [versionMessage, setVersionMessage] = useState("");
-    const [title, setTitle] = useState("");
-
-    useEffect(() => {
-        if (work) {
-            setTitle(work.title);
-        }
-    }, [work?.title, work]);
-
-    const saveTitle = useCallback(async () => {
-        const trimmed = title.trim();
-        if (!work || !trimmed || trimmed === work.title) {
-            return;
-        }
-        try {
-            await updateWorkTitle(workId, trimmed);
-            setTitle(trimmed);
-            mutateWork(
-                (current) =>
-                    current ? { ...current, title: trimmed } : current,
-                false,
-            );
-        } catch (error) {
-            toast.danger((error as Error).message);
-            setTitle(work.title);
-        }
-    }, [title, work, workId, mutateWork]);
+    const { title, setTitle, saveTitle } = useEditableTitle({
+        work,
+        workId,
+        mutateWork,
+    });
 
     const { files, isLoading, reload } = useWorkFiles(workId);
     const { activeKey, openKeys, selectFile, openFile, closeFile } =
@@ -101,27 +78,13 @@ function WorkEditorRoute() {
         activeContent,
     });
 
-    const publishWorkAction = useCallback(async () => {
-        if (files.length === 0) {
-            toast.warning("发布前请先创建文件");
-            return;
-        }
-        const hasContent = files.some(
-            (file) => fileContentLength(file, readDraft) > 0,
-        );
-        if (!hasContent) {
-            toast.warning("请至少在一个文件里填写内容后再发布");
-            return;
-        }
-        try {
-            await publishWork(workId);
-            await mutate(workPath(workId));
-            toast.success("作品已发布");
-            navigate({ to: "/work/$id", params: { id: workId } });
-        } catch (error) {
-            toast.danger((error as Error).message);
-        }
-    }, [workId, navigate, files, readDraft, mutate]);
+    const { publishWorkAction } = usePublishWork({
+        workId,
+        files,
+        readDraft,
+        mutate,
+        navigate,
+    });
 
     const { dirtyKeys, isSaving, scheduleSave, trackFile, forgetFile } =
         useDraftSaver({
@@ -223,6 +186,10 @@ function WorkEditorRoute() {
                 onRun={runner.start}
                 onPublishVersion={publish}
                 onPublishWork={publishWorkAction}
+                fontSize={fontSize}
+                fontFamily={fontFamily}
+                onFontSizeChange={setFontSize}
+                onFontFamilyChange={setFontFamily}
             />
 
             <div className="flex-1 flex min-h-0">
@@ -252,6 +219,8 @@ function WorkEditorRoute() {
                         <MemoEditorSurface
                             monaco={monaco}
                             theme={theme}
+                            fontSize={fontSize}
+                            fontFamily={fontFamily}
                             hasFiles={files.length > 0}
                             activeKey={activeKey}
                             preview={diff.preview}
@@ -288,6 +257,8 @@ function WorkEditorRoute() {
 function EditorSurface({
     monaco,
     theme,
+    fontSize,
+    fontFamily,
     hasFiles,
     activeKey,
     preview,
@@ -297,6 +268,8 @@ function EditorSurface({
 }: {
     monaco: typeof Monaco | null;
     theme: "light" | "dark";
+    fontSize: number;
+    fontFamily: string;
     hasFiles: boolean;
     activeKey: string | null;
     preview: DiffPreview | null;
@@ -319,6 +292,8 @@ function EditorSurface({
             <DiffView
                 monaco={monaco}
                 theme={theme}
+                fontSize={fontSize}
+                fontFamily={fontFamily}
                 original={preview.original}
                 modified={preview.modified}
                 label={`v${preview.version}（对比当前草稿）`}
@@ -331,6 +306,8 @@ function EditorSurface({
         <MonacoWrapper
             monaco={monaco}
             theme={theme}
+            fontSize={fontSize}
+            fontFamily={fontFamily}
             onReady={onEditorReady}
             onDispose={onEditorDispose}
         />
@@ -343,32 +320,6 @@ function useLatestRef<T>(value: T) {
     const ref = useRef(value);
     ref.current = value;
     return ref;
-}
-
-function fileContentLength(
-    file: WorkFile,
-    readDraft: (key: string) => string | null,
-): number {
-    const draft = readDraft(file.key);
-    return draft === null ? file.size : draft.length;
-}
-
-function useMonaco() {
-    const [monaco, setMonaco] = useState<typeof Monaco | null>(null);
-
-    useEffect(() => {
-        let subscribed = true;
-        loadMonaco().then((instance) => {
-            if (subscribed) {
-                setMonaco(instance);
-            }
-        });
-        return () => {
-            subscribed = false;
-        };
-    }, []);
-
-    return monaco;
 }
 
 function useResolvedEditorTheme(): "light" | "dark" {

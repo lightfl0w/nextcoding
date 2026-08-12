@@ -1,6 +1,13 @@
 export interface Author {
     id: string | null;
     name: string | null;
+    image: string | null;
+    bio: string | null;
+
+    /** 粉丝数（仅详情接口附带） */
+    followers?: number;
+    /** 当前用户是否已关注（仅详情接口附带） */
+    followedByMe?: boolean;
 }
 
 export interface Work {

@@ -6,6 +6,8 @@ import { useEffect, useRef } from "react";
 interface DiffViewProps {
     monaco: typeof Monaco | null;
     theme: "light" | "dark";
+    fontSize: number;
+    fontFamily: string;
     original: string;
     modified: string;
     label: string;
@@ -15,13 +17,19 @@ interface DiffViewProps {
 export function DiffView({
     monaco,
     theme,
+    fontSize,
+    fontFamily,
     original,
     modified,
     label,
     onClose,
 }: DiffViewProps) {
     const containerRef = useRef<HTMLDivElement>(null);
+    const diffEditorRef = useRef<Monaco.editor.IStandaloneDiffEditor | null>(
+        null,
+    );
 
+    // biome-ignore lint/correctness/useExhaustiveDependencies: 字号/字体由下方 effect 单独更新，不在此重建对比编辑器
     useEffect(() => {
         const container = containerRef.current;
         if (!monaco || !container) {
@@ -34,18 +42,31 @@ export function DiffView({
             automaticLayout: true,
             theme: theme === "dark" ? "vs-dark" : "vs",
             readOnly: true,
+            fontSize,
+            fontFamily,
+            lineHeight: Math.round(fontSize * 1.5),
         });
         diffEditor.setModel({
             original: originalModel,
             modified: modifiedModel,
         });
+        diffEditorRef.current = diffEditor;
 
         return () => {
             diffEditor.dispose();
             originalModel.dispose();
             modifiedModel.dispose();
+            diffEditorRef.current = null;
         };
     }, [monaco, original, modified, theme]);
+
+    useEffect(() => {
+        diffEditorRef.current?.updateOptions({
+            fontSize,
+            fontFamily,
+            lineHeight: Math.round(fontSize * 1.5),
+        });
+    }, [fontSize, fontFamily]);
 
     return (
         <div className="relative h-full w-full">

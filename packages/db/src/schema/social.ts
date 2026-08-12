@@ -84,6 +84,26 @@ export const notification = sqliteTable(
     ],
 );
 
+export const follow = sqliteTable(
+    "follow",
+    {
+        id: text("id").primaryKey(),
+        followerId: text("follower_id")
+            .notNull()
+            .references(() => user.id, { onDelete: "cascade" }),
+        followingId: text("following_id")
+            .notNull()
+            .references(() => user.id, { onDelete: "cascade" }),
+        createdAt: integer("created_at", { mode: "timestamp_ms" })
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+            .notNull(),
+    },
+    (table) => [
+        uniqueIndex("follow_unique").on(table.followerId, table.followingId),
+        index("follow_followingId_idx").on(table.followingId),
+    ],
+);
+
 export const sparkRelations = relations(spark, ({ one }) => ({
     work: one(work, { fields: [spark.workId], references: [work.id] }),
     user: one(user, { fields: [spark.userId], references: [user.id] }),
@@ -114,5 +134,16 @@ export const notificationRelations = relations(notification, ({ one }) => ({
     comment: one(workComment, {
         fields: [notification.commentId],
         references: [workComment.id],
+    }),
+}));
+
+export const followRelations = relations(follow, ({ one }) => ({
+    follower: one(user, {
+        fields: [follow.followerId],
+        references: [user.id],
+    }),
+    following: one(user, {
+        fields: [follow.followingId],
+        references: [user.id],
     }),
 }));

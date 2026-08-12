@@ -18,6 +18,16 @@ export const auth = betterAuth({
         },
     }),
 
+    user: {
+        additionalFields: {
+            bio: {
+                type: "string",
+                required: false,
+                input: true,
+            },
+        },
+    },
+
     emailAndPassword: {
         enabled: true,
         minPasswordLength: 8,

@@ -17,6 +17,8 @@
         "@nextcoding/auth": "workspace:*",
         "@tailwindcss/vite": "^4.1.18",
         "@tanstack/react-router": "latest",
+        "@wterm/dom": "^0.3.3",
+        "@wterm/react": "^0.3.3",
         "clientbox": "^0.2.2",
         "lucide-react": "^1.29.0",
         "monaco-editor": "^0.56.0",

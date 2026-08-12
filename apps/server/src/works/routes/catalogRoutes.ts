@@ -1,12 +1,12 @@
 import { Hono } from "hono";
-import { jsonError, readJsonBody, readTrimmed } from "../../http/responses.js";
-import { getStorage } from "../../storage/storageClient.js";
 import {
     type AuthenticatedEnv,
     readSession,
     requireSession,
-    requireWorkAuthor,
-} from "../guards.js";
+} from "../../http/guards.js";
+import { jsonError, readJsonBody, readTrimmed } from "../../http/responses.js";
+import { getStorage } from "../../storage/storageClient.js";
+import { requireWorkAuthor } from "../guards.js";
 import {
     exceedsFileSizeLimit,
     fileSizeLimitMessage,
@@ -55,8 +55,10 @@ catalogRoutes.get("/mine", requireSession, async (c) => {
 
 catalogRoutes.get("/:id", async (c) => {
     const workId = c.req.param("id");
+    const session = await readSession(c);
+    const viewerId = session?.user?.id ?? null;
     const [detail, files] = await Promise.all([
-        findWorkDetail(workId),
+        findWorkDetail(workId, viewerId),
         listWorkFiles(workId),
     ]);
     if (!detail) {

@@ -3,6 +3,8 @@ import { parseTags } from "./tags.js";
 interface AuthoredRow {
     authorId: string | null;
     authorName: string | null;
+    authorImage: string | null;
+    authorBio: string | null;
 }
 
 interface WorkSummaryRow extends AuthoredRow {
@@ -21,6 +23,8 @@ interface WorkDetailRow extends WorkSummaryRow {
     userId: string;
     status: "draft" | "published";
     updatedAt: Date;
+    followerCount: number | null;
+    isFollowing: number | null;
 }
 
 interface CommentRow extends AuthoredRow {
@@ -69,12 +73,18 @@ export function toWorkSummary(row: WorkSummaryRow) {
 }
 
 export function toWorkDetail<TFile>(row: WorkDetailRow, files: TFile[]) {
+    const summary = toWorkSummary(row);
     return {
-        ...toWorkSummary(row),
+        ...summary,
         userId: row.userId,
         status: row.status,
         updatedAt: row.updatedAt,
         files,
+        author: {
+            ...summary.author,
+            followers: row.followerCount ?? 0,
+            followedByMe: Boolean(row.isFollowing),
+        },
     };
 }
 
@@ -115,5 +125,10 @@ export function toOwnedWork(row: OwnedWorkRow) {
 }
 
 function toAuthor(row: AuthoredRow) {
-    return { id: row.authorId, name: row.authorName };
+    return {
+        id: row.authorId,
+        name: row.authorName,
+        image: row.authorImage,
+        bio: row.authorBio,
+    };
 }

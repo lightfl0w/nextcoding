@@ -1,19 +1,17 @@
-import { Tabs } from "@heroui/react";
+import { toast } from "@heroui/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { EmptyNotifications } from "~/components/messages/EmptyNotifications";
 import { MessagesHeader } from "~/components/messages/MessagesHeader";
 import {
     MessagesSidebar,
     MobileTypeFilter,
 } from "~/components/messages/MessagesSidebar";
-import { NotificationList } from "~/components/messages/NotificationList";
-import { NotificationsSkeleton } from "~/components/messages/NotificationsSkeleton";
+import { NotificationFeed } from "~/components/messages/NotificationFeed";
 import { useNotifications } from "~/hooks/useNotifications";
 import { markNotificationsRead } from "~/lib/api";
 import {
+    countNotifications,
     groupNotifications,
-    type NotificationCounts,
     type NotificationFilter,
     type NotificationTypeFilter,
 } from "~/lib/notifications";
@@ -27,38 +25,10 @@ function MessageCenterRoute() {
     const [readFilter, setReadFilter] = useState<NotificationFilter>("all");
     const [typeFilter, setTypeFilter] = useState<NotificationTypeFilter>("all");
 
-    const counts: NotificationCounts = useMemo(() => {
-        const total = notifications.length;
-        const unread = notifications.filter((item) => !item.read).length;
-        const sparkUnread = notifications.filter(
-            (item) => !item.read && item.type === "spark",
-        ).length;
-        const remixUnread = notifications.filter(
-            (item) => !item.read && item.type === "remix",
-        ).length;
-        const commentUnread = notifications.filter(
-            (item) => !item.read && item.type === "comment",
-        ).length;
-        const spark = notifications.filter(
-            (item) => item.type === "spark",
-        ).length;
-        const remix = notifications.filter(
-            (item) => item.type === "remix",
-        ).length;
-        const comment = notifications.filter(
-            (item) => item.type === "comment",
-        ).length;
-        return {
-            total,
-            unread,
-            spark,
-            remix,
-            comment,
-            sparkUnread,
-            remixUnread,
-            commentUnread,
-        };
-    }, [notifications]);
+    const counts = useMemo(
+        () => countNotifications(notifications),
+        [notifications],
+    );
 
     const filtered = useMemo(() => {
         return notifications.filter((item) => {
@@ -82,7 +52,9 @@ function MessageCenterRoute() {
                     current.map((item) => ({ ...item, read: true })),
                 false,
             );
-        } catch {}
+        } catch (error) {
+            toast.danger((error as Error).message);
+        }
     };
 
     return (
@@ -102,55 +74,15 @@ function MessageCenterRoute() {
                         />
                     </div>
 
-                    <Tabs
-                        selectedKey={readFilter}
-                        onSelectionChange={(key) =>
-                            setReadFilter(key as NotificationFilter)
-                        }
-                        className="w-full"
-                    >
-                        <Tabs.ListContainer>
-                            <Tabs.List aria-label="通知筛选">
-                                <Tabs.Tab
-                                    id="all"
-                                    className="flex items-center gap-1.5"
-                                >
-                                    全部
-                                    {counts.total > 0 && (
-                                        <span className="text-xs text-foreground/45 tabular-nums">
-                                            {counts.total}
-                                        </span>
-                                    )}
-                                    <Tabs.Indicator />
-                                </Tabs.Tab>
-                                <Tabs.Tab
-                                    id="unread"
-                                    className="flex items-center gap-1.5"
-                                >
-                                    未读
-                                    {counts.unread > 0 && (
-                                        <span className="min-w-4 h-4 px-1 rounded-full bg-danger text-background text-[10px] font-semibold flex items-center justify-center tabular-nums">
-                                            {counts.unread}
-                                        </span>
-                                    )}
-                                    <Tabs.Indicator />
-                                </Tabs.Tab>
-                            </Tabs.List>
-                        </Tabs.ListContainer>
-
-                        <Tabs.Panel className="pt-2" id={readFilter}>
-                            {isLoading ? (
-                                <NotificationsSkeleton />
-                            ) : filtered.length === 0 ? (
-                                <EmptyNotifications
-                                    readFilter={readFilter}
-                                    typeFilter={typeFilter}
-                                />
-                            ) : (
-                                <NotificationList groups={groups} />
-                            )}
-                        </Tabs.Panel>
-                    </Tabs>
+                    <NotificationFeed
+                        isLoading={isLoading}
+                        filtered={filtered}
+                        groups={groups}
+                        counts={counts}
+                        readFilter={readFilter}
+                        typeFilter={typeFilter}
+                        onReadFilterChange={setReadFilter}
+                    />
                 </main>
 
                 <div className="order-1 md:order-2">

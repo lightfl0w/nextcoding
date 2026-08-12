@@ -100,6 +100,23 @@ export function languageLabel(language: Language): string {
 }
 
 /**
+ * 终端输出格式化。
+ * @param lines - 输出行。
+ * @returns 以 `\r\n` 拼接的文本，stderr 行包上 ANSI 红色转义。
+ */
+export function formatOutputLines(
+    lines: ReadonlyArray<{ stream: "stdout" | "stderr"; text: string }>,
+): string {
+    return `${lines
+        .map((line) =>
+            line.stream === "stderr"
+                ? `\x1b[31m${line.text}\x1b[0m`
+                : line.text,
+        )
+        .join("\r\n")}\r\n`;
+}
+
+/**
  * 拼接「不支持运行」提示。
  * @param names - 项目文件名列表。
  * @param emptyHint - 列表为空时返回的提示。

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
+import { type AuthenticatedEnv, requireSession } from "../../http/guards.js";
 import { jsonError } from "../../http/responses.js";
-import { type AuthenticatedEnv, requireSession } from "../guards.js";
 import { findPublishedWorkOwnerId } from "../repository.js";
 import {
     bumpWorkSparks,

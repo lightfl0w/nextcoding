@@ -25,6 +25,41 @@ function toOutputLines(
 }
 
 /**
+ * 把运行失败转成合成结果。
+ * @param message - 错误信息。
+ * @returns exitCode 为 1 的 RunResult。
+ */
+function toErrorResult(message: string): RunResult {
+    return {
+        stdout: "",
+        stderr: "",
+        error: message,
+        exitCode: 1,
+        duration: 0,
+    };
+}
+
+/**
+ * 追加非流式运行的完整输出。
+ * @param res - 运行结果。
+ * @param append - 输出追加函数。
+ */
+function appendUnstreamed(
+    res: RunResult,
+    append: (stream: OutputLine["stream"], text: string) => void,
+): void {
+    if (res.stdout) {
+        append("stdout", res.stdout);
+    }
+    if (res.stderr) {
+        append("stderr", res.stderr);
+    }
+    if (res.error) {
+        append("stderr", res.error);
+    }
+}
+
+/**
  * clientbox 运行器封装。
  * @remarks 输出按行流式追加，只保留最近 500 行；交互式输入依赖页面跨源隔离。
  */
@@ -75,7 +110,7 @@ export function useCodeRunner() {
             setOutput([]);
             setAwaitingInput(false);
             inputResolverRef.current = null;
-            if (!boxRef.current) {
+            if (boxRef.current === null) {
                 boxRef.current = new ClientBox();
             }
             const box = boxRef.current;
@@ -92,32 +127,18 @@ export function useCodeRunner() {
                         streamed = true;
                         append("stderr", chunk);
                     },
-                    // 未跨源隔离时传 onInput 会导致整个运行报错，仅在可用时启用
+
                     ...(crossOriginIsolated ? { onInput: requestInput } : {}),
                 });
                 if (!streamed) {
-                    if (res.stdout) {
-                        append("stdout", res.stdout);
-                    }
-                    if (res.stderr) {
-                        append("stderr", res.stderr);
-                    }
-                    if (res.error) {
-                        append("stderr", res.error);
-                    }
+                    appendUnstreamed(res, append);
                 }
                 setResult(res);
             } catch (err) {
                 const message =
                     err instanceof Error ? err.message : String(err);
                 append("stderr", message);
-                setResult({
-                    stdout: "",
-                    stderr: "",
-                    error: message,
-                    exitCode: 1,
-                    duration: 0,
-                });
+                setResult(toErrorResult(message));
             } finally {
                 setRunning(false);
                 setAwaitingInput(false);

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { type AuthenticatedEnv, requireSession } from "../guards.js";
+import { type AuthenticatedEnv, requireSession } from "../../http/guards.js";
 import { toNotification } from "../serializers.js";
 import {
     countUnreadNotifications,
