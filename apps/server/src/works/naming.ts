@@ -15,6 +15,10 @@ export function snapshotStorageKey(workId: string, version: number): string {
     return `works/${workId}/snapshots/v${version}.json`;
 }
 
+export function blobStorageKey(workId: string, hash: string): string {
+    return `works/${workId}/blobs/${hash}`;
+}
+
 export function fileNameFromKey(key: string): string {
     return key.split("/").pop() || key;
 }

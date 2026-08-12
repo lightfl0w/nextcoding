@@ -91,7 +91,6 @@ export function AvatarCropModal({
         return () => {
             URL.revokeObjectURL(url);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [file, state.open]);
 
     const onCropComplete = useCallback(

@@ -11,6 +11,7 @@ import {
 } from "../naming.js";
 import {
     bumpWorkFileVersion,
+    deleteWorkFile,
     findVersion,
     insertVersion,
     insertWorkFiles,
@@ -21,8 +22,9 @@ import {
 } from "../repository.js";
 import {
     captureFiles,
-    decodeSnapshotFile,
     parseSnapshot,
+    resolveSnapshotFileBytes,
+    resolveSnapshotFileContent,
     type Snapshot,
     type SnapshotFile,
     serializeSnapshot,
@@ -53,7 +55,19 @@ versionRoutes.get("/:id/versions/:version", async (c) => {
         return jsonError(c, "快照数据丢失", 500);
     }
 
-    return c.json(parseSnapshot(raw));
+    const workId = c.req.param("id");
+    const snapshot = parseSnapshot(raw);
+    const files = await Promise.all(
+        snapshot.files.map(async (file) => {
+            const resolved = await resolveSnapshotFileContent(workId, file);
+            return {
+                ...file,
+                content: resolved.content,
+                encoding: resolved.encoding,
+            };
+        }),
+    );
+    return c.json({ ...snapshot, files });
 });
 
 versionRoutes.post("/:id/versions", requireWorkAuthor, async (c) => {
@@ -123,10 +137,12 @@ versionRoutes.post(
 );
 
 async function restoreFiles(workId: string, files: SnapshotFile[]) {
-    const payloads = files.map((file) => ({
-        file,
-        bytes: decodeSnapshotFile(file),
-    }));
+    const payloads = await Promise.all(
+        files.map(async (file) => ({
+            file,
+            bytes: await resolveSnapshotFileBytes(workId, file),
+        })),
+    );
 
     const existingByKey = await mapWorkFilesByKey(
         workId,
@@ -168,6 +184,30 @@ async function restoreFiles(workId: string, files: SnapshotFile[]) {
 
     await Promise.all(revivals);
     await insertWorkFiles(additions);
+    await removeStaleFiles(
+        workId,
+        new Set(payloads.map(({ file }) => file.key)),
+    );
+}
+
+/**
+ * 删除当前存在但快照中不存在的文件，让回滚精确还原到该版本。
+ * @param workId - 作品 ID。
+ * @param snapshotKeys - 快照中的文件 key 集合。
+ */
+async function removeStaleFiles(
+    workId: string,
+    snapshotKeys: ReadonlySet<string>,
+) {
+    const current = await listWorkFiles(workId);
+    const stale = current.filter((file) => !snapshotKeys.has(file.key));
+    if (stale.length === 0) {
+        return;
+    }
+
+    const storage = getStorage();
+    await Promise.all(stale.map((file) => storage.delete(file.key)));
+    await Promise.all(stale.map((file) => deleteWorkFile(file.id)));
 }
 
 async function readSnapshotBytes(

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { Hono } from "hono";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -94,6 +95,7 @@ import {
     fileSizeLimitMessage,
 } from "../src/works/limits.js";
 import {
+    blobStorageKey,
     fileNameFromKey,
     fileStorageKey,
     isValidFileName,
@@ -133,6 +135,15 @@ import {
 
 const mockGetSession = vi.mocked(auth.api.getSession);
 const storage = createMemoryStorage();
+
+/**
+ * 计算内容的 SHA-256 十六进制。
+ * @param bytes - 原始字节。
+ * @returns 与快照引用一致的哈希。
+ */
+function sha256Hex(bytes: Uint8Array): string {
+    return createHash("sha256").update(bytes).digest("hex");
+}
 
 beforeEach(() => {
     vi.resetAllMocks();
@@ -255,6 +266,10 @@ describe("naming 模块", () => {
             expect(snapshotStorageKey("w1", 3)).toBe(
                 "works/w1/snapshots/v3.json",
             );
+        });
+
+        it("blobStorageKey 按作品与哈希组织", () => {
+            expect(blobStorageKey("w1", "abc")).toBe("works/w1/blobs/abc");
         });
 
         it("fileNameFromKey 取最后一段", () => {
@@ -577,42 +592,53 @@ describe("responses 模块", () => {
 
 describe("snapshot 模块", () => {
     function storageReturning(bytes: Uint8Array | null) {
+        storage.store.clear();
         vi.mocked(getStorage).mockReturnValue({
+            ...storage,
             get: vi.fn().mockResolvedValue(bytes),
         } as never);
     }
 
     describe("captureFiles", () => {
-        it("文本文件存为 UTF-8 文本", async () => {
-            storageReturning(new TextEncoder().encode("console.log(1)"));
+        it("写入内容寻址 blob 并以哈希引用", async () => {
+            const bytes = new TextEncoder().encode("console.log(1)");
+            storageReturning(bytes);
             const files = await captureFiles([makeWorkFileRow()]);
-            expect(files).toEqual([
-                {
-                    key: "works/work-1/main.js",
-                    name: "main.js",
-                    contentType: "text/javascript",
-                    content: "console.log(1)",
-                },
-            ]);
+            const hash = sha256Hex(bytes);
+            expect(files[0]).toEqual({
+                key: "works/work-1/main.js",
+                name: "main.js",
+                contentType: "text/javascript",
+                size: 14,
+                hash,
+            });
+            expect(storage.store.get(`works/work-1/blobs/${hash}`)).toEqual(
+                bytes,
+            );
         });
 
-        it("二进制文件存为 base64 并标记 encoding", async () => {
-            const bytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+        it("相同内容复用同一 blob", async () => {
+            const bytes = new TextEncoder().encode("same");
             storageReturning(bytes);
             const files = await captureFiles([
-                makeWorkFileRow({ contentType: "image/png" }),
+                makeWorkFileRow(),
+                makeWorkFileRow({
+                    id: "file-2",
+                    key: "works/work-1/b.js",
+                    name: "b.js",
+                }),
             ]);
-            expect(files[0]).toMatchObject({
-                encoding: "base64",
-                content: toBase64(bytes),
-            });
+            expect(files[0].hash).toBe(files[1].hash);
+            expect(
+                storage.store.has(`works/work-1/blobs/${files[0].hash}`),
+            ).toBe(true);
         });
 
-        it("存储中缺失的内容回退为空串", async () => {
+        it("存储中缺失的内容回退为空字节", async () => {
             storageReturning(null);
             const files = await captureFiles([makeWorkFileRow()]);
-            expect(files[0].content).toBe("");
-            expect(files[0].encoding).toBeUndefined();
+            expect(files[0].size).toBe(0);
+            expect(files[0].hash).toBe(sha256Hex(new Uint8Array(0)));
         });
     });
 
@@ -1690,6 +1716,48 @@ describe("versionRoutes", () => {
             expect(res.status).toBe(200);
             expect(await res.json()).toEqual(snapshot);
         });
+
+        it("哈希引用条目按 blob 解析出内容", async () => {
+            vi.mocked(workRepo.findVersion).mockResolvedValue(makeVersionRow());
+            const bytes = new TextEncoder().encode("hello");
+            const hash = sha256Hex(bytes);
+            const snapshot = {
+                version: 1,
+                message: null,
+                createdAt: 0,
+                files: [
+                    {
+                        key: "works/work-1/main.js",
+                        name: "main.js",
+                        contentType: "text/javascript",
+                        size: 5,
+                        hash,
+                    },
+                ],
+            };
+            storage.store.set(
+                "works/work-1/snapshots/v1.json",
+                new TextEncoder().encode(JSON.stringify(snapshot)),
+            );
+            storage.store.set(`works/work-1/blobs/${hash}`, bytes);
+            const res = await app().request("/api/works/work-1/versions/1");
+            expect(res.status).toBe(200);
+            expect(await res.json()).toEqual({
+                version: 1,
+                message: null,
+                createdAt: 0,
+                files: [
+                    {
+                        key: "works/work-1/main.js",
+                        name: "main.js",
+                        contentType: "text/javascript",
+                        size: 5,
+                        hash,
+                        content: "hello",
+                    },
+                ],
+            });
+        });
     });
 
     describe("POST /:id/versions", () => {
@@ -1741,10 +1809,20 @@ describe("versionRoutes", () => {
             expect(stored).toBeTruthy();
             const parsed = JSON.parse(new TextDecoder().decode(stored)) as {
                 version: number;
-                files: Array<{ content: string }>;
+                files: Array<{ key: string; hash: string; size: number }>;
             };
+            const bytes = new TextEncoder().encode("hello");
             expect(parsed.version).toBe(3);
-            expect(parsed.files[0].content).toBe("hello");
+            expect(parsed.files[0]).toEqual({
+                key: "works/work-1/main.js",
+                name: "main.js",
+                contentType: "text/javascript",
+                size: 5,
+                hash: sha256Hex(bytes),
+            });
+            expect(
+                storage.store.get(`works/work-1/blobs/${sha256Hex(bytes)}`),
+            ).toEqual(bytes);
         });
 
         it("空 message 存为 null", async () => {
@@ -1833,6 +1911,7 @@ describe("versionRoutes", () => {
                     ["works/work-1/a.js", makeWorkFileRow({ id: "f-a" })],
                 ]),
             );
+            vi.mocked(workRepo.listWorkFiles).mockResolvedValue([]);
 
             const res = await app().request(
                 "/api/works/work-1/versions/1/restore",
@@ -1861,6 +1940,96 @@ describe("versionRoutes", () => {
             expect(storage.store.get("works/work-1/b.js")).toEqual(
                 new TextEncoder().encode("bbb"),
             );
+        });
+
+        it("回滚删除快照中不存在的当前文件", async () => {
+            asOwner();
+            vi.mocked(workRepo.findVersion).mockResolvedValue(makeVersionRow());
+            vi.mocked(workRepo.mapWorkFilesByKey).mockResolvedValue(new Map());
+            vi.mocked(workRepo.listWorkFiles).mockResolvedValue([
+                makeWorkFileRow({
+                    id: "f-stale",
+                    key: "works/work-1/old.js",
+                    name: "old.js",
+                }),
+            ]);
+            const snapshot = {
+                version: 1,
+                message: null,
+                createdAt: 0,
+                files: [
+                    {
+                        key: "works/work-1/main.js",
+                        name: "main.js",
+                        contentType: null,
+                        content: "hi",
+                    },
+                ],
+            };
+            storage.store.set(
+                "works/work-1/snapshots/v1.json",
+                new TextEncoder().encode(JSON.stringify(snapshot)),
+            );
+            storage.store.set(
+                "works/work-1/old.js",
+                new TextEncoder().encode("orphan"),
+            );
+
+            const res = await app().request(
+                "/api/works/work-1/versions/1/restore",
+                {
+                    method: "POST",
+                },
+            );
+            expect(res.status).toBe(200);
+            expect(workRepo.deleteWorkFile).toHaveBeenCalledWith("f-stale");
+            expect(storage.store.has("works/work-1/old.js")).toBe(false);
+            expect(storage.store.get("works/work-1/main.js")).toEqual(
+                new TextEncoder().encode("hi"),
+            );
+        });
+
+        it("回滚按哈希引用解析 blob 内容", async () => {
+            asOwner();
+            vi.mocked(workRepo.findVersion).mockResolvedValue(makeVersionRow());
+            vi.mocked(workRepo.mapWorkFilesByKey).mockResolvedValue(new Map());
+            vi.mocked(workRepo.listWorkFiles).mockResolvedValue([]);
+            const bytes = new TextEncoder().encode("from-blob");
+            const hash = sha256Hex(bytes);
+            const snapshot = {
+                version: 1,
+                message: null,
+                createdAt: 0,
+                files: [
+                    {
+                        key: "works/work-1/main.js",
+                        name: "main.js",
+                        contentType: null,
+                        size: 9,
+                        hash,
+                    },
+                ],
+            };
+            storage.store.set(
+                "works/work-1/snapshots/v1.json",
+                new TextEncoder().encode(JSON.stringify(snapshot)),
+            );
+            storage.store.set(`works/work-1/blobs/${hash}`, bytes);
+
+            const res = await app().request(
+                "/api/works/work-1/versions/1/restore",
+                {
+                    method: "POST",
+                },
+            );
+            expect(res.status).toBe(200);
+            expect(storage.store.get("works/work-1/main.js")).toEqual(bytes);
+            expect(workRepo.insertWorkFiles).toHaveBeenCalledWith([
+                expect.objectContaining({
+                    key: "works/work-1/main.js",
+                    size: 9,
+                }),
+            ]);
         });
     });
 });
