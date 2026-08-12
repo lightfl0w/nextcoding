@@ -38,6 +38,9 @@ export function createMemoryStorage(): MemoryStorage {
         async delete(key) {
             store.delete(key);
         },
+        async list(prefix) {
+            return [...store.keys()].filter((key) => key.startsWith(prefix));
+        },
     };
 }
 

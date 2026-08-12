@@ -71,7 +71,18 @@ export const userRoutes = new Hono<AuthenticatedEnv>()
 
         const ext = EXT_BY_MIME[file.type];
         const key = avatarStorageKey(userId, ext);
-        await getStorage().put(key, file, { contentType: file.type });
+        const storage = getStorage();
+        await storage.put(key, file, { contentType: file.type });
+
+        try {
+            const prefix = `avatars/${userId}/`;
+            const staleKeys = (await storage.list(prefix)).filter(
+                (k) => k !== key,
+            );
+            await Promise.all(staleKeys.map((k) => storage.delete(k)));
+        } catch (err) {
+            console.error(`清理旧头像失败: ${userId}`, err);
+        }
 
         return c.json({ key, url: publicStorageUrl(key) }, 201);
     })

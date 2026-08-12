@@ -69,6 +69,7 @@ export function AvatarCropModal({
 }) {
     const state = useOverlayState();
     const [imageSrc, setImageSrc] = useState<string | null>(null);
+    const [imageError, setImageError] = useState(false);
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -82,6 +83,7 @@ export function AvatarCropModal({
         }
         const url = URL.createObjectURL(file);
         setImageSrc(url);
+        setImageError(false);
         setCrop({ x: 0, y: 0 });
         setZoom(1);
         croppedAreaRef.current = null;
@@ -127,11 +129,16 @@ export function AvatarCropModal({
     useEffect(() => {
         if (!imageSrc) {
             imageElRef.current = null;
+            setImageError(false);
             return;
         }
         const img = new Image();
         img.onload = () => {
             imageElRef.current = img;
+        };
+        img.onerror = () => {
+            imageElRef.current = null;
+            setImageError(true);
         };
         img.src = imageSrc;
     }, [imageSrc]);
@@ -149,7 +156,7 @@ export function AvatarCropModal({
                             </Modal.Heading>
                         </Modal.Header>
                         <Modal.Body className="flex flex-col gap-4">
-                            {imageSrc && (
+                            {imageSrc && !imageError && (
                                 <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-default-100">
                                     <Cropper
                                         image={imageSrc}
@@ -164,6 +171,11 @@ export function AvatarCropModal({
                                         minZoom={1}
                                         maxZoom={3}
                                     />
+                                </div>
+                            )}
+                            {imageError && (
+                                <div className="w-full aspect-square rounded-xl overflow-hidden bg-default-100 flex items-center justify-center text-sm text-foreground/60">
+                                    图片无法读取，请重新选择
                                 </div>
                             )}
                             <div className="flex flex-col gap-1.5">

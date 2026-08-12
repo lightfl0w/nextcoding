@@ -10,6 +10,11 @@ export interface StorageAdapter {
     ): Promise<void>;
     get(key: string): Promise<Uint8Array | null>;
     delete(key: string): Promise<void>;
+    /**
+     * 列出指定前缀下的全部对象 key。
+     * @param prefix - key 前缀，如 "avatars/user-1/"。
+     */
+    list(prefix: string): Promise<string[]>;
 }
 
 export function createStorage(): StorageAdapter {

@@ -1,4 +1,4 @@
-import { del, put } from "@vercel/blob";
+import { del, list, put } from "@vercel/blob";
 import type { StorageAdapter } from "./index.js";
 
 export class VercelBlobStorage implements StorageAdapter {
@@ -33,5 +33,21 @@ export class VercelBlobStorage implements StorageAdapter {
     }
     async delete(key: string) {
         await del(key, { token: this.token });
+    }
+    async list(prefix: string) {
+        const keys: string[] = [];
+        let cursor: string | undefined;
+        do {
+            const res = await list({
+                prefix,
+                cursor,
+                token: this.token,
+            });
+            for (const blob of res.blobs) {
+                keys.push(blob.pathname);
+            }
+            cursor = res.cursor;
+        } while (cursor);
+        return keys;
     }
 }

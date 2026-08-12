@@ -68,6 +68,7 @@ import {
     readString,
     readTrimmed,
 } from "../src/http/responses.js";
+import { storageRoutes } from "../src/storage/routes.js";
 import { getStorage } from "../src/storage/storageClient.js";
 import * as userRepo from "../src/users/repository.js";
 import { userRoutes } from "../src/users/routes.js";
@@ -2124,6 +2125,44 @@ describe("notificationRoutes", () => {
     });
 });
 
+describe("storageRoutes", () => {
+    function app() {
+        return new Hono().route("/api/storage", storageRoutes);
+    }
+
+    it("缺少 key 返回 400", async () => {
+        const res = await app().request("/api/storage/");
+        expect(res.status).toBe(400);
+        expect(await res.json()).toEqual({ error: "缺少 key" });
+    });
+
+    it("文件不存在返回 404", async () => {
+        const res = await app().request("/api/storage/missing.png");
+        expect(res.status).toBe(404);
+        expect(await res.json()).toEqual({ error: "文件不存在" });
+    });
+
+    it("按扩展名推断 content-type 并返回内容", async () => {
+        storage.store.set(
+            "avatars/u1/a.png",
+            new TextEncoder().encode("png-bytes"),
+        );
+        const res = await app().request("/api/storage/avatars/u1/a.png");
+        expect(res.status).toBe(200);
+        expect(res.headers.get("content-type")).toBe("image/png");
+        expect(await res.text()).toBe("png-bytes");
+    });
+
+    it("存储 get 抛错时返回 500", async () => {
+        vi.mocked(getStorage).mockReturnValue({
+            get: vi.fn().mockRejectedValue(new Error("s3 unavailable")),
+        } as never);
+        const res = await app().request("/api/storage/avatars/u1/a.png");
+        expect(res.status).toBe(500);
+        expect(await res.json()).toEqual({ error: "存储服务暂不可用" });
+    });
+});
+
 describe("userRoutes", () => {
     function app() {
         return new Hono().route("/api/users", userRoutes);
@@ -2213,6 +2252,32 @@ describe("userRoutes", () => {
             expect(body.url).toBe(`/api/storage/${body.key}`);
             expect(storage.store.has(body.key)).toBe(true);
             expect(storage.putCalls[0].contentType).toBe("image/png");
+        });
+
+        it("上传成功后清理该用户的旧头像，不影响其他用户", async () => {
+            storage.store.set(
+                "avatars/user-1/old-1.png",
+                new TextEncoder().encode("old"),
+            );
+            storage.store.set(
+                "avatars/user-1/old-2.png",
+                new TextEncoder().encode("old"),
+            );
+            storage.store.set(
+                "avatars/user-2/a.png",
+                new TextEncoder().encode("other"),
+            );
+
+            const res = await avatarRequest(
+                new File(["png-data"], "a.png", { type: "image/png" }),
+            );
+            expect(res.status).toBe(201);
+            const body = (await res.json()) as { key: string };
+
+            expect(storage.store.has(body.key)).toBe(true);
+            expect(storage.store.has("avatars/user-1/old-1.png")).toBe(false);
+            expect(storage.store.has("avatars/user-1/old-2.png")).toBe(false);
+            expect(storage.store.has("avatars/user-2/a.png")).toBe(true);
         });
     });
 
