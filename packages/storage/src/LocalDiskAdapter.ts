@@ -1,5 +1,12 @@
 import type { Dirent } from "node:fs";
-import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import {
+    mkdir,
+    readdir,
+    readFile,
+    rm,
+    stat,
+    writeFile,
+} from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import type { StorageAdapter } from "./index.js";
 
@@ -43,6 +50,13 @@ export class LocalDiskStorage implements StorageAdapter {
         const base = resolve(this.root);
         const dir = this.resolveSafe(prefix);
         const keys: string[] = [];
+
+        const info = await stat(dir).catch(() => null);
+        if (info?.isFile()) {
+            keys.push(relative(base, dir).split(sep).join("/"));
+            return keys;
+        }
+
         const walk = async (current: string): Promise<void> => {
             let entries: Dirent[];
             try {
