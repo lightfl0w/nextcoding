@@ -14,7 +14,7 @@ export function WorkDetailHeader({
     canEdit,
 }: WorkDetailHeaderProps) {
     return (
-        <header className="sticky top-0 z-30 px-4 sm:px-6 lg:px-10 py-3 border-b border-default-200 bg-background/70 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 flex items-center gap-3 min-w-0">
+        <header className="sticky top-0 z-30 px-4 sm:px-6 lg:px-10 py-3 border-b border-default-200 bg-background-secondary/30 backdrop-blur-xl flex items-center gap-3 min-w-0">
             <Link
                 to="/discover"
                 title="返回发现页"

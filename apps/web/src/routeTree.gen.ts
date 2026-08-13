@@ -19,6 +19,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as UserIdIndexRouteImport } from './routes/user/$id/index'
 import { Route as WorkIdIndexRouteImport } from './routes/work/$id/index'
 import { Route as WorkIdEditRouteImport } from './routes/work/$id/edit'
+import { Route as WorkNewEditRouteImport } from './routes/work/new/edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +71,11 @@ const WorkIdEditRoute = WorkIdEditRouteImport.update({
   path: '/work/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WorkNewEditRoute = WorkNewEditRouteImport.update({
+  id: '/work/new/edit',
+  path: '/work/new/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/work/$id/edit': typeof WorkIdEditRoute
+  '/work/new/edit': typeof WorkNewEditRoute
   '/user/$id/': typeof UserIdIndexRoute
   '/work/$id/': typeof WorkIdIndexRoute
 }
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/work/$id/edit': typeof WorkIdEditRoute
+  '/work/new/edit': typeof WorkNewEditRoute
   '/user/$id': typeof UserIdIndexRoute
   '/work/$id': typeof WorkIdIndexRoute
 }
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/work/$id/edit': typeof WorkIdEditRoute
+  '/work/new/edit': typeof WorkNewEditRoute
   '/user/$id/': typeof UserIdIndexRoute
   '/work/$id/': typeof WorkIdIndexRoute
 }
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/reset-password'
     | '/work/$id/edit'
+    | '/work/new/edit'
     | '/user/$id/'
     | '/work/$id/'
   fileRoutesByTo: FileRoutesByTo
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/reset-password'
     | '/work/$id/edit'
+    | '/work/new/edit'
     | '/user/$id'
     | '/work/$id'
   id:
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/reset-password'
     | '/work/$id/edit'
+    | '/work/new/edit'
     | '/user/$id/'
     | '/work/$id/'
   fileRoutesById: FileRoutesById
@@ -156,6 +168,7 @@ export interface RootRouteChildren {
   MessagesRoute: typeof MessagesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   WorkIdEditRoute: typeof WorkIdEditRoute
+  WorkNewEditRoute: typeof WorkNewEditRoute
   UserIdIndexRoute: typeof UserIdIndexRoute
   WorkIdIndexRoute: typeof WorkIdIndexRoute
 }
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/work/new/edit': {
+      id: '/work/new/edit'
+      path: '/work/new/edit'
+      fullPath: '/work/new/edit'
+      preLoaderRoute: typeof WorkNewEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -244,6 +264,7 @@ const rootRouteChildren: RootRouteChildren = {
   MessagesRoute: MessagesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   WorkIdEditRoute: WorkIdEditRoute,
+  WorkNewEditRoute: WorkNewEditRoute,
   UserIdIndexRoute: UserIdIndexRoute,
   WorkIdIndexRoute: WorkIdIndexRoute,
 }

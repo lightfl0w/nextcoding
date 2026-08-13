@@ -57,7 +57,7 @@ export const WorkCard = memo(function WorkCard({ work }: { work: Work }) {
                         <div className="flex items-center gap-2.5 text-xs text-foreground/60 tabular-nums">
                             <button
                                 type="button"
-                                title={sparked ? "已经送过火花" : "送火花"}
+                                title={sparked ? "已经送过火花" : "火花"}
                                 onClick={handleSparkClick}
                                 className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 transition-colors ${
                                     sparked

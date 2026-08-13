@@ -22,12 +22,13 @@ export function useWorkRemixes(workId: string) {
 
 /**
  * 作品的源头。
- * @param workId - 作品 ID。
+ * @param workId - 作品 ID；`null`（待创建模式）时为 `null`。
  * @returns 被谁二创而来；独立作品为 `null`。
  */
-export function useWorkSource(workId: string) {
-    const { data } = useSWR(workSourcePath(workId), () =>
-        fetchWorkSource(workId),
+export function useWorkSource(workId: string | null) {
+    const { data } = useSWR(
+        workId === null ? null : workSourcePath(workId),
+        () => fetchWorkSource(workId as string),
     );
     return data ?? null;
 }

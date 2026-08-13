@@ -386,6 +386,6 @@ cd apps/web && bun node_modules/typescript/bin/tsc --noEmit -p tsconfig.json
 cd apps/server && bun node_modules/typescript/bin/tsc --noEmit -p tsconfig.json
 ```
 
-- biome：142 个文件，必须 0 报错。
+- biome：必须 0 报错。
 - tsc：web 与 server 均必须退出码 0。
 - 两条都通过才可提交。

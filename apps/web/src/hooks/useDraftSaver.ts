@@ -53,19 +53,25 @@ function scheduleTimer(
 }
 
 interface DraftSaverOptions {
-    workId: string;
+    workId: string | null;
     files: WorkFile[];
     readDraft: (key: string) => string | null;
     replaceDraft: (key: string, content: string) => void;
     loadContent: (key: string) => Promise<string>;
+    /**
+     * 是否开启自动保存。关闭时只记录脏状态，
+     * 内容需通过「保存草稿」手动调用 flushSave/flushAll 落盘。
+     */
+    autoSave: boolean;
 }
 
 /**
- * 自动保存。
- * @param options.workId - 作品 ID。
+ * 草稿保存。
+ * @param options.workId - 作品 ID；`null`（待创建模式）时不调度保存，内容留在内存。
  * @param options.readDraft - 读取某文件的草稿内容。
  * @param options.loadContent - 从服务器加载文件内容。
- * @remarks 内容变化防抖提交；版本冲突时拉服务器内容覆盖草稿。
+ * @param options.autoSave - 是否自动保存；默认关闭。
+ * @remarks 开启时内容变化防抖提交；关闭时需手动 flush。版本冲突时拉服务器内容覆盖草稿。
  */
 export function useDraftSaver({
     workId,
@@ -73,11 +79,13 @@ export function useDraftSaver({
     readDraft,
     replaceDraft,
     loadContent,
+    autoSave,
 }: DraftSaverOptions) {
     const [dirtyKeys, setDirtyKeys] = useState<ReadonlySet<string>>(NO_KEYS);
     const [isSaving, setIsSaving] = useState(false);
     const versionsRef = useRef(new Map<string, number>());
     const timersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+    const dirtyRef = useRef(new Set<string>());
 
     useEffect(() => {
         for (const file of files) {
@@ -96,6 +104,7 @@ export function useDraftSaver({
     );
 
     const markSaved = useCallback((key: string) => {
+        dirtyRef.current.delete(key);
         setDirtyKeys((current) => {
             if (!current.has(key)) {
                 return current;
@@ -106,8 +115,19 @@ export function useDraftSaver({
         });
     }, []);
 
+    const markDirty = useCallback((key: string) => {
+        dirtyRef.current.add(key);
+        setDirtyKeys((current) =>
+            current.has(key) ? current : new Set(current).add(key),
+        );
+    }, []);
+
     const saveFile = useCallback(
         async (key: string) => {
+            if (workId === null) {
+                markSaved(key);
+                return;
+            }
             setIsSaving(true);
             try {
                 const content = readDraft(key);
@@ -139,15 +159,19 @@ export function useDraftSaver({
 
     const scheduleSave = useCallback(
         (key: string) => {
-            setDirtyKeys((current) =>
-                current.has(key) ? current : new Set(current).add(key),
-            );
+            if (workId === null) {
+                return;
+            }
+            markDirty(key);
+            if (!autoSave) {
+                return;
+            }
             const delay = saveDelayMs(readDraft(key)?.length ?? 0);
             scheduleTimer(timersRef, key, delay, () => {
                 void saveFile(key);
             });
         },
-        [saveFile, readDraft],
+        [workId, autoSave, markDirty, saveFile, readDraft],
     );
 
     const trackFile = useCallback((key: string, version: number) => {
@@ -168,17 +192,24 @@ export function useDraftSaver({
     );
 
     const flushSave = useCallback(
-        (key: string) => {
+        async (key: string) => {
             const pending = timersRef.current.get(key);
-            if (!pending) {
-                return Promise.resolve();
+            if (pending) {
+                clearTimeout(pending);
+                timersRef.current.delete(key);
             }
-            clearTimeout(pending);
-            timersRef.current.delete(key);
-            return saveFile(key);
+            if (!dirtyRef.current.has(key)) {
+                return;
+            }
+            await saveFile(key);
         },
         [saveFile],
     );
+
+    const flushAll = useCallback(async () => {
+        const keys = [...dirtyRef.current];
+        await Promise.all(keys.map((key) => flushSave(key)));
+    }, [flushSave]);
 
     return {
         dirtyKeys,
@@ -187,5 +218,6 @@ export function useDraftSaver({
         trackFile,
         forgetFile,
         flushSave,
+        flushAll,
     };
 }

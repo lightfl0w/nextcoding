@@ -1,20 +1,17 @@
-import { Button, toast } from "@heroui/react";
+import { Button } from "@heroui/react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
-import { useSWRConfig } from "swr";
 import { FeaturedWorks } from "~/components/FeaturedWorks";
 import { SectionHeading } from "~/components/ui/SectionHeading";
 import { useAuth } from "~/hooks/useAuth";
-import { createWork, myWorksKey } from "~/lib/api";
 
 export const Route = createFileRoute("/")({ component: Home });
 
 function Home() {
     const navigate = useNavigate();
-    const { isLoggedIn, user } = useAuth();
-    const { mutate } = useSWRConfig();
+    const { isLoggedIn } = useAuth();
 
-    const submitCreate = async () => {
+    const submitCreate = () => {
         if (!isLoggedIn) {
             navigate({
                 to: "/auth",
@@ -23,15 +20,7 @@ function Home() {
             return;
         }
 
-        try {
-            const { id } = await createWork(`${user?.name} 的作品`);
-            if (user) {
-                await mutate(myWorksKey(user.id));
-            }
-            navigate({ to: "/work/$id/edit", params: { id } });
-        } catch (err) {
-            toast.danger((err as Error).message);
-        }
+        navigate({ to: "/work/new/edit" });
     };
 
     return (

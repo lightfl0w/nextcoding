@@ -15,9 +15,6 @@ export function UserInfo() {
     if (!user) {
         return (
             <div className="flex flex-col gap-2">
-                <p className="text-xs text-foreground/45">
-                    登录后发布作品、送火花
-                </p>
                 <Button
                     variant="secondary"
                     fullWidth
@@ -70,7 +67,7 @@ export function UserInfo() {
                         onAction={() => authClient.signOut()}
                         textValue="退出登录"
                     >
-                        <Label>退出登录</Label>
+                        <Label className="text-danger">退出登录</Label>
                     </Dropdown.Item>
                 </Dropdown.Menu>
             </Dropdown.Popover>

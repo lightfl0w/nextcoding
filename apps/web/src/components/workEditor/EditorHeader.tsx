@@ -1,6 +1,6 @@
-import { Button, Chip, Input } from "@heroui/react";
+import { Button, Checkbox, Chip, Input, useOverlayState } from "@heroui/react";
 import { Link } from "@tanstack/react-router";
-import { GitFork, Play, Rocket, Settings2, Upload, X } from "lucide-react";
+import { Bookmark, GitFork, Play, Rocket, Settings2, X } from "lucide-react";
 import { useState } from "react";
 import {
     EDITOR_FONT_OPTIONS,
@@ -8,6 +8,7 @@ import {
     EDITOR_FONT_SIZE_MIN,
 } from "~/hooks/useEditorSettings";
 import type { WorkSource } from "~/lib/api";
+import { SaveDraftModal } from "./SaveDraftModal";
 
 interface EditorHeaderProps {
     fileCount: number;
@@ -16,19 +17,19 @@ interface EditorHeaderProps {
     isComparing: boolean;
     title: string;
     isPublished: boolean;
-    versionMessage: string;
     source: WorkSource | null;
     fontSize: number;
     fontFamily: string;
+    autoSaveDraft: boolean;
     onTitleChange: (value: string) => void;
     onTitleSave: () => void;
-    onVersionMessageChange: (value: string) => void;
     onExitCompare: () => void;
     onRun: () => void;
-    onPublishVersion: () => void;
+    onSaveDraft: (message: string) => void;
     onPublishWork: () => void;
     onFontSizeChange: (value: number) => void;
     onFontFamilyChange: (value: string) => void;
+    onAutoSaveDraftChange: (value: boolean) => void;
 }
 
 const SELECT_CLASS =
@@ -41,20 +42,21 @@ export function EditorHeader({
     isComparing,
     title,
     isPublished,
-    versionMessage,
     source,
     fontSize,
     fontFamily,
+    autoSaveDraft,
     onTitleChange,
     onTitleSave,
-    onVersionMessageChange,
     onExitCompare,
     onRun,
-    onPublishVersion,
+    onSaveDraft,
     onPublishWork,
     onFontSizeChange,
     onFontFamilyChange,
+    onAutoSaveDraftChange,
 }: EditorHeaderProps) {
+    const draftState = useOverlayState();
     return (
         <header className="flex items-center gap-2 border-b border-default-200 px-4 py-2 shrink-0">
             <Link
@@ -121,20 +123,13 @@ export function EditorHeader({
                 </Button>
             )}
 
-            <Input
-                className="w-56"
-                placeholder="版本说明（可选）"
-                value={versionMessage}
-                onChange={(event) => onVersionMessageChange(event.target.value)}
-                onKeyDown={(event) =>
-                    event.key === "Enter" && onPublishVersion()
-                }
-            />
             <EditorSettingsMenu
                 fontSize={fontSize}
                 fontFamily={fontFamily}
+                autoSaveDraft={autoSaveDraft}
                 onFontSizeChange={onFontSizeChange}
                 onFontFamilyChange={onFontFamilyChange}
+                onAutoSaveDraftChange={onAutoSaveDraftChange}
             />
             <Button
                 size="sm"
@@ -146,9 +141,9 @@ export function EditorHeader({
                 <Play className="size-3.5" />
                 {isRunning ? "运行中…" : "运行"}
             </Button>
-            <Button size="sm" onPress={onPublishVersion} className="gap-1.5">
-                <Upload className="size-3.5" />
-                发布版本
+            <Button size="sm" onPress={draftState.open} className="gap-1.5">
+                <Bookmark className="size-3.5" />
+                保存草稿
             </Button>
             {isPublished ? (
                 <Chip size="sm" variant="primary" className="gap-1">
@@ -166,6 +161,11 @@ export function EditorHeader({
                     发布
                 </Button>
             )}
+            <SaveDraftModal
+                state={draftState}
+                isSaving={isSaving}
+                onConfirm={onSaveDraft}
+            />
         </header>
     );
 }
@@ -174,20 +174,26 @@ export function EditorHeader({
  * 编辑器设置弹层。
  * @param props.fontSize - 当前字号。
  * @param props.fontFamily - 当前字体。
+ * @param props.autoSaveDraft - 是否自动保存草稿。
  * @param props.onFontSizeChange - 修改字号。
  * @param props.onFontFamilyChange - 修改字体。
+ * @param props.onAutoSaveDraftChange - 切换自动保存草稿。
  * @remarks 自持展开状态，点击遮罩关闭。
  */
 function EditorSettingsMenu({
     fontSize,
     fontFamily,
+    autoSaveDraft,
     onFontSizeChange,
     onFontFamilyChange,
+    onAutoSaveDraftChange,
 }: {
     fontSize: number;
     fontFamily: string;
+    autoSaveDraft: boolean;
     onFontSizeChange: (value: number) => void;
     onFontFamilyChange: (value: string) => void;
+    onAutoSaveDraftChange: (value: boolean) => void;
 }) {
     const [settingsOpen, setSettingsOpen] = useState(false);
     const fontSizes = Array.from(
@@ -215,7 +221,7 @@ function EditorSettingsMenu({
                         className="fixed inset-0 z-40 cursor-default"
                     />
                     <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-default-200 bg-background p-3 flex flex-col gap-3 shadow-lg">
-                        <label className="flex flex-col gap-1 text-xs text-foreground/60">
+                        <label className="flex flex-col gap-1 text-xs">
                             字号
                             <select
                                 value={fontSize}
@@ -231,7 +237,7 @@ function EditorSettingsMenu({
                                 ))}
                             </select>
                         </label>
-                        <label className="flex flex-col gap-1 text-xs text-foreground/60">
+                        <label className="flex flex-col gap-1 text-xs">
                             字体
                             <select
                                 value={fontFamily}
@@ -253,6 +259,19 @@ function EditorSettingsMenu({
                                 ))}
                             </select>
                         </label>
+                        <Checkbox
+                            isSelected={autoSaveDraft}
+                            onChange={(selected) =>
+                                onAutoSaveDraftChange(selected)
+                            }
+                        >
+                            <Checkbox.Content>
+                                <Checkbox.Control>
+                                    <Checkbox.Indicator />
+                                </Checkbox.Control>
+                                自动保存草稿
+                            </Checkbox.Content>
+                        </Checkbox>
                     </div>
                 </>
             )}

@@ -30,7 +30,7 @@ import { SectionHeading } from "~/components/ui/SectionHeading";
 import { useAuth } from "~/hooks/useAuth";
 import { useMyStats } from "~/hooks/useMyStats";
 import { useMyWorks } from "~/hooks/useMyWorks";
-import { createWork, type OwnedWork, uploadAvatar } from "~/lib/api";
+import { type OwnedWork, uploadAvatar } from "~/lib/api";
 import { formatDate } from "~/lib/format";
 
 export const Route = createFileRoute("/account")({
@@ -229,7 +229,7 @@ function ProfileEditModal({
             <Modal state={state}>
                 <Modal.Backdrop>
                     <Modal.Container>
-                        <Modal.Dialog className="sm:max-w-[440px]">
+                        <Modal.Dialog className="sm:max-w-110">
                             <Modal.CloseTrigger />
                             <Modal.Header>
                                 <Modal.Heading>修改资料</Modal.Heading>
@@ -276,7 +276,7 @@ function ProfileEditModal({
                                             {isUploading ? (
                                                 <Spinner
                                                     size="sm"
-                                                    className="!size-3.5"
+                                                    className="size-3.5"
                                                 />
                                             ) : (
                                                 <Camera className="size-3.5" />
@@ -343,22 +343,12 @@ function ProfileEditModal({
 }
 
 function MyWorksSection() {
-    const { works, mutate: mutateMyWorks } = useMyWorks();
+    const { works } = useMyWorks();
     const navigate = useNavigate();
-    const [isCreating, setIsCreating] = useState(false);
 
-    const createNew = useCallback(async () => {
-        setIsCreating(true);
-        try {
-            const { id } = await createWork("未命名作品");
-            await mutateMyWorks();
-            navigate({ to: "/work/$id/edit", params: { id } });
-        } catch (err) {
-            toast.danger((err as Error).message);
-        } finally {
-            setIsCreating(false);
-        }
-    }, [navigate, mutateMyWorks]);
+    const createNew = useCallback(() => {
+        navigate({ to: "/work/new/edit" });
+    }, [navigate]);
 
     return (
         <section className="flex flex-col gap-4">
@@ -369,7 +359,6 @@ function MyWorksSection() {
                         size="sm"
                         variant="primary"
                         className="gap-1.5"
-                        isDisabled={isCreating}
                         onPress={createNew}
                     >
                         <Plus className="size-3.5" />

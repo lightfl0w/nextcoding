@@ -25,7 +25,7 @@ export const VersionHistoryPanel = memo(function VersionHistoryPanel({
                 <div className="flex flex-col items-center gap-2 py-6 text-foreground/40">
                     <History className="size-5" strokeWidth={1.5} />
                     <p className="text-xs text-center px-2">
-                        还没有版本，点右上角「发布版本」
+                        还没有版本，点右上角「保存草稿」
                     </p>
                 </div>
             ) : (

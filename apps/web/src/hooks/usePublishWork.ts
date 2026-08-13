@@ -9,11 +9,13 @@ type Navigate = ReturnType<typeof useNavigate>;
 type GlobalMutate = ReturnType<typeof useSWRConfig>["mutate"];
 
 interface PublishWorkOptions {
-    workId: string;
+    workId: string | null;
     files: WorkFile[];
     readDraft: (key: string) => string | null;
     mutate: GlobalMutate;
     navigate: Navigate;
+    /** 待创建模式：把本地文件持久化为新作品，返回新 workId；失败返回 `null`。 */
+    persistPending: () => Promise<string | null>;
 }
 
 /**
@@ -32,11 +34,12 @@ function contentLength(
 
 /**
  * 发布作品。
- * @param options.workId - 作品 ID。
+ * @param options.workId - 作品 ID；`null`（待创建模式）时先经 `persistPending` 创建作品。
  * @param options.files - 作品文件。
  * @param options.readDraft - 读取草稿内容。
  * @param options.mutate - 全局缓存更新。
  * @param options.navigate - 跳转函数。
+ * @param options.persistPending - 待创建模式的持久化回调。
  * @returns 发布处理函数。
  * @remarks 无文件或全空时提示并中断，发布成功后跳转详情页。
  */
@@ -46,6 +49,7 @@ export function usePublishWork({
     readDraft,
     mutate,
     navigate,
+    persistPending,
 }: PublishWorkOptions) {
     const publishWorkAction = useCallback(async () => {
         if (files.length === 0) {
@@ -60,14 +64,18 @@ export function usePublishWork({
             return;
         }
         try {
-            await publishWork(workId);
-            await mutate(workPath(workId));
+            const targetId = workId ?? (await persistPending());
+            if (targetId === null) {
+                return;
+            }
+            await publishWork(targetId);
+            await mutate(workPath(targetId));
             toast.success("作品已发布");
-            navigate({ to: "/work/$id", params: { id: workId } });
+            navigate({ to: "/work/$id", params: { id: targetId } });
         } catch (error) {
             toast.danger((error as Error).message);
         }
-    }, [workId, navigate, files, readDraft, mutate]);
+    }, [workId, navigate, files, readDraft, mutate, persistPending]);
 
     return { publishWorkAction };
 }

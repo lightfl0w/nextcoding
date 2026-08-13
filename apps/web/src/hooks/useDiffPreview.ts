@@ -9,14 +9,14 @@ export interface DiffPreview {
 }
 
 interface DiffPreviewOptions {
-    workId: string;
+    workId: string | null;
     activeKey: string | null;
     readDraft: (key: string) => string | null;
 }
 
 /**
  * 版本对比。
- * @param options.workId - 作品 ID。
+ * @param options.workId - 作品 ID；`null`（待创建模式）时不可对比。
  * @param options.activeKey - 当前打开的文件 key。
  * @param options.readDraft - 读取某文件的草稿内容。
  * @remarks 对比的是快照里的原始内容与当前草稿。
@@ -37,14 +37,14 @@ export function useDiffPreview({
 
     const compareWith = useCallback(
         (version: number) => {
-            if (!activeKey) {
+            if (workId === null || !activeKey) {
                 toast.warning("请先打开一个文件再对比");
                 return;
             }
             setPreview(null);
             setPreviewVersion(version);
         },
-        [activeKey],
+        [workId, activeKey],
     );
 
     useEffect(() => {

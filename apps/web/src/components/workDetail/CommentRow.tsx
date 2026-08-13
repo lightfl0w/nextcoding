@@ -32,6 +32,10 @@ export function CommentRow({
             }`}
         >
             <Avatar size="sm" className="shrink-0">
+                <Avatar.Image
+                    src={comment.author.image ?? ""}
+                    alt={authorName}
+                />
                 <Avatar.Fallback>
                     {authorName.charAt(0).toUpperCase()}
                 </Avatar.Fallback>
@@ -48,7 +52,7 @@ export function CommentRow({
                         {formatDate(comment.createdAt)}
                     </span>
                 </div>
-                <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap break-words">
+                <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap wrap-break-word">
                     {comment.content}
                 </p>
                 {canReply && (
