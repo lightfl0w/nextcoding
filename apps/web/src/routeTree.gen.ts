@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as DraftsRouteImport } from './routes/drafts'
@@ -20,6 +21,11 @@ import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TemplatesRouteImport } from './routes/templates'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminCommentsRouteImport } from './routes/admin/comments'
+import { Route as AdminTagsRouteImport } from './routes/admin/tags'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminWorksRouteImport } from './routes/admin/works'
 import { Route as MessagesIdRouteImport } from './routes/messages/$id'
 import { Route as TagsIndexRouteImport } from './routes/tags/index'
 import { Route as TagsSlugRouteImport } from './routes/tags/$slug'
@@ -41,6 +47,11 @@ const AboutRoute = AboutRouteImport.update({
 const AccountRoute = AccountRouteImport.update({
   id: '/account',
   path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -83,6 +94,31 @@ const TemplatesRoute = TemplatesRouteImport.update({
   path: '/templates',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCommentsRoute = AdminCommentsRouteImport.update({
+  id: '/comments',
+  path: '/comments',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTagsRoute = AdminTagsRouteImport.update({
+  id: '/tags',
+  path: '/tags',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminWorksRoute = AdminWorksRouteImport.update({
+  id: '/works',
+  path: '/works',
+  getParentRoute: () => AdminRoute,
+} as any)
 const MessagesIdRoute = MessagesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -123,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/discover': typeof DiscoverRoute
   '/drafts': typeof DraftsRoute
@@ -131,8 +168,13 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/templates': typeof TemplatesRoute
+  '/admin/comments': typeof AdminCommentsRoute
+  '/admin/tags': typeof AdminTagsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin/works': typeof AdminWorksRoute
   '/messages/$id': typeof MessagesIdRoute
   '/tags/$slug': typeof TagsSlugRoute
+  '/admin/': typeof AdminIndexRoute
   '/tags/': typeof TagsIndexRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
@@ -151,8 +193,13 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/templates': typeof TemplatesRoute
+  '/admin/comments': typeof AdminCommentsRoute
+  '/admin/tags': typeof AdminTagsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin/works': typeof AdminWorksRoute
   '/messages/$id': typeof MessagesIdRoute
   '/tags/$slug': typeof TagsSlugRoute
+  '/admin': typeof AdminIndexRoute
   '/tags': typeof TagsIndexRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
@@ -164,6 +211,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/discover': typeof DiscoverRoute
   '/drafts': typeof DraftsRoute
@@ -172,8 +220,13 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/templates': typeof TemplatesRoute
+  '/admin/comments': typeof AdminCommentsRoute
+  '/admin/tags': typeof AdminTagsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin/works': typeof AdminWorksRoute
   '/messages/$id': typeof MessagesIdRoute
   '/tags/$slug': typeof TagsSlugRoute
+  '/admin/': typeof AdminIndexRoute
   '/tags/': typeof TagsIndexRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
@@ -186,6 +239,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/admin'
     | '/auth'
     | '/discover'
     | '/drafts'
@@ -194,8 +248,13 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/templates'
+    | '/admin/comments'
+    | '/admin/tags'
+    | '/admin/users'
+    | '/admin/works'
     | '/messages/$id'
     | '/tags/$slug'
+    | '/admin/'
     | '/tags/'
     | '/work/$id/edit'
     | '/work/new/edit'
@@ -214,8 +273,13 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/templates'
+    | '/admin/comments'
+    | '/admin/tags'
+    | '/admin/users'
+    | '/admin/works'
     | '/messages/$id'
     | '/tags/$slug'
+    | '/admin'
     | '/tags'
     | '/work/$id/edit'
     | '/work/new/edit'
@@ -226,6 +290,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/admin'
     | '/auth'
     | '/discover'
     | '/drafts'
@@ -234,8 +299,13 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/templates'
+    | '/admin/comments'
+    | '/admin/tags'
+    | '/admin/users'
+    | '/admin/works'
     | '/messages/$id'
     | '/tags/$slug'
+    | '/admin/'
     | '/tags/'
     | '/work/$id/edit'
     | '/work/new/edit'
@@ -247,6 +317,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AccountRoute: typeof AccountRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   DiscoverRoute: typeof DiscoverRoute
   DraftsRoute: typeof DraftsRoute
@@ -284,6 +355,13 @@ declare module '@tanstack/react-router' {
       path: '/account'
       fullPath: '/account'
       preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -342,6 +420,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TemplatesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/comments': {
+      id: '/admin/comments'
+      path: '/comments'
+      fullPath: '/admin/comments'
+      preLoaderRoute: typeof AdminCommentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/tags': {
+      id: '/admin/tags'
+      path: '/tags'
+      fullPath: '/admin/tags'
+      preLoaderRoute: typeof AdminTagsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/works': {
+      id: '/admin/works'
+      path: '/works'
+      fullPath: '/admin/works'
+      preLoaderRoute: typeof AdminWorksRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/messages/$id': {
       id: '/messages/$id'
       path: '/$id'
@@ -394,6 +507,24 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminCommentsRoute: typeof AdminCommentsRoute
+  AdminTagsRoute: typeof AdminTagsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminWorksRoute: typeof AdminWorksRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminCommentsRoute: AdminCommentsRoute,
+  AdminTagsRoute: AdminTagsRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminWorksRoute: AdminWorksRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface MessagesRouteChildren {
   MessagesIdRoute: typeof MessagesIdRoute
 }
@@ -410,6 +541,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AccountRoute: AccountRoute,
+  AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   DiscoverRoute: DiscoverRoute,
   DraftsRoute: DraftsRoute,

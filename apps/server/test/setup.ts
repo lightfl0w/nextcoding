@@ -125,6 +125,38 @@ vi.mock("../src/achievements/repository.js", () => ({
     unlockAchievement: vi.fn(),
 }));
 
+vi.mock("../src/admin/repository.js", () => ({
+    ADMIN_PAGE_SIZE_DEFAULT: 20,
+    ADMIN_PAGE_SIZE_MAX: 50,
+    banUser: vi.fn(),
+    clampPage: vi.fn((raw?: string) => {
+        const page = Number(raw);
+        return Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1;
+    }),
+    clampPageSize: vi.fn((raw?: string) => {
+        const size = Number(raw);
+        if (!Number.isFinite(size) || size <= 0) {
+            return 20;
+        }
+        return Math.min(Math.floor(size), 50);
+    }),
+    deleteComment: vi.fn(),
+    deleteTag: vi.fn(),
+    deleteUser: vi.fn(),
+    deleteWork: vi.fn(),
+    findAdminCommentById: vi.fn(),
+    findAdminTagById: vi.fn(),
+    findAdminUserById: vi.fn(),
+    findAdminWorkById: vi.fn(),
+    getDashboardStats: vi.fn(),
+    listAdminTags: vi.fn(),
+    listComments: vi.fn(),
+    listUsers: vi.fn(),
+    listWorks: vi.fn(),
+    setUserRole: vi.fn(),
+    unbanUser: vi.fn(),
+}));
+
 vi.mock("../src/settings/repository.js", () => ({
     findOrCreateSettings: vi.fn(),
     updateSettings: vi.fn(),

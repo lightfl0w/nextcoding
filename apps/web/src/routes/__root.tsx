@@ -16,7 +16,8 @@ function RootComponent() {
     const isAuthPage =
         pathname.startsWith("/auth") || pathname.startsWith("/reset-password");
     const isEditor = /^\/work\/[^/]+\/edit$/.test(pathname);
-    const fullscreen = isAuthPage || isEditor;
+    const isAdmin = pathname.startsWith("/admin");
+    const fullscreen = isAuthPage || isEditor || isAdmin;
 
     const isWorkDetail = /^\/work\/[^/]+$/.test(pathname);
     const hasOwnAside = isWorkDetail || pathname.startsWith("/messages");

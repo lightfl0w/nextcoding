@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { achievementRoutes } from "./achievements/routes.js";
 import { activityFeedRoutes, activityUserRoutes } from "./activities/routes.js";
+import { adminRoutes } from "./admin/routes.js";
 import { messageRoutes } from "./messages/routes.js";
 import { settingsRoutes } from "./settings/routes.js";
 import { storageRoutes } from "./storage/routes.js";
@@ -39,6 +40,7 @@ app.use(
 );
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 app.route("/api/achievements", achievementRoutes);
+app.route("/api/admin", adminRoutes);
 app.route("/api/tags", tagRoutes);
 app.route("/api/users", userRoutes);
 app.route("/api/users", activityUserRoutes);

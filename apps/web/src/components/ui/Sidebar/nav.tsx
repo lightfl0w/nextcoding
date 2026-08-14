@@ -9,8 +9,10 @@ import {
     Info,
     Layout,
     type LucideIcon,
+    ShieldCheck,
     Tags,
 } from "lucide-react";
+import { useAuth } from "~/hooks/useAuth";
 import { useUnreadCount } from "~/hooks/useUnreadCount";
 
 type NavItem =
@@ -22,6 +24,7 @@ export function Nav() {
         select: (s) => s.location.pathname,
     });
     const { count } = useUnreadCount();
+    const { user } = useAuth();
 
     const isActive = (href: string) =>
         href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -35,6 +38,9 @@ export function Nav() {
         { label: "草稿", href: "/drafts", icon: FilePenLine },
         { label: "消息", href: "/messages", icon: Bell, badge: count },
         { label: "关于", href: "/about", icon: Info },
+        ...(user?.role === "admin"
+            ? [{ label: "管理后台", href: "/admin", icon: ShieldCheck }]
+            : []),
     ];
 
     return (

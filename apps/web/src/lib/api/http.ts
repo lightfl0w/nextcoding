@@ -100,9 +100,7 @@ async function unwrapJson<T>(response: Response, action?: string): Promise<T> {
             if (typeof body === "object" && body !== null && "error" in body) {
                 message = body.error as string;
             }
-        } catch {
-
-        }
+        } catch {}
         throw new HttpError(response.status, message);
     }
     return response.json() as Promise<T>;

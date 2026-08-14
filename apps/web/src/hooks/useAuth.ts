@@ -6,10 +6,17 @@ import { authClient } from "@nextcoding/auth/client";
  */
 export function useAuth() {
     const { data: session, isPending, refetch } = authClient.useSession();
+    const rawUser = session?.user ?? null;
+    const user = rawUser
+        ? {
+              ...rawUser,
+              role: (rawUser as { role?: string | null }).role ?? null,
+          }
+        : null;
     return {
-        user: session?.user ?? null,
+        user,
         isPending,
-        isLoggedIn: !!session?.user,
+        isLoggedIn: !!user,
         refetch,
     };
 }
