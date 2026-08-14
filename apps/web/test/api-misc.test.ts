@@ -156,7 +156,7 @@ describe("api/sparks", () => {
         vi.mocked(fetch).mockResolvedValue(jsonResponse({}, 409));
         await expect(giveSpark("w1")).rejects.toMatchObject({
             status: 409,
-            message: "送火花失败: 409",
+            message: "送火花失败",
         });
     });
 });

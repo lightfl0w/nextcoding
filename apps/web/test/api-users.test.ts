@@ -55,7 +55,7 @@ describe("api/users", () => {
             );
             await expect(fetchUser("ghost")).rejects.toMatchObject({
                 status: 404,
-                message: "请求失败: 404",
+                message: "用户不存在",
             });
         });
     });
@@ -107,7 +107,7 @@ describe("api/users", () => {
             const file = new File(["x"], "a.png", { type: "image/png" });
             await expect(uploadAvatar(file)).rejects.toMatchObject({
                 status: 400,
-                message: "图片过大: 400",
+                message: "图片过大",
             });
         });
 
@@ -116,7 +116,7 @@ describe("api/users", () => {
             const file = new File(["x"], "a.png", { type: "image/png" });
             await expect(uploadAvatar(file)).rejects.toMatchObject({
                 status: 500,
-                message: "上传失败: 500",
+                message: "上传失败",
             });
         });
 
@@ -127,7 +127,7 @@ describe("api/users", () => {
             const file = new File(["x"], "a.png", { type: "image/png" });
             await expect(uploadAvatar(file)).rejects.toMatchObject({
                 status: 500,
-                message: "上传失败: 500",
+                message: "上传失败",
             });
         });
     });
@@ -164,7 +164,7 @@ describe("api/follows", () => {
         vi.mocked(fetch).mockResolvedValue(jsonResponse({}, 409));
         await expect(followUser("u2")).rejects.toMatchObject({
             status: 409,
-            message: "关注失败: 409",
+            message: "关注失败",
         });
     });
 });

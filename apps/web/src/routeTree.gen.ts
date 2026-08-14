@@ -14,8 +14,15 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DiscoverRouteImport } from './routes/discover'
+import { Route as DraftsRouteImport } from './routes/drafts'
+import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as TemplatesRouteImport } from './routes/templates'
+import { Route as MessagesIdRouteImport } from './routes/messages/$id'
+import { Route as TagsIndexRouteImport } from './routes/tags/index'
+import { Route as TagsSlugRouteImport } from './routes/tags/$slug'
 import { Route as UserIdIndexRouteImport } from './routes/user/$id/index'
 import { Route as WorkIdIndexRouteImport } from './routes/work/$id/index'
 import { Route as WorkIdEditRouteImport } from './routes/work/$id/edit'
@@ -46,6 +53,16 @@ const DiscoverRoute = DiscoverRouteImport.update({
   path: '/discover',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DraftsRoute = DraftsRouteImport.update({
+  id: '/drafts',
+  path: '/drafts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaderboardRoute = LeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MessagesRoute = MessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
@@ -54,6 +71,31 @@ const MessagesRoute = MessagesRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TemplatesRoute = TemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesIdRoute = MessagesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => MessagesRoute,
+} as any)
+const TagsIndexRoute = TagsIndexRouteImport.update({
+  id: '/tags/',
+  path: '/tags/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TagsSlugRoute = TagsSlugRouteImport.update({
+  id: '/tags/$slug',
+  path: '/tags/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UserIdIndexRoute = UserIdIndexRouteImport.update({
@@ -83,8 +125,15 @@ export interface FileRoutesByFullPath {
   '/account': typeof AccountRoute
   '/auth': typeof AuthRoute
   '/discover': typeof DiscoverRoute
-  '/messages': typeof MessagesRoute
+  '/drafts': typeof DraftsRoute
+  '/leaderboard': typeof LeaderboardRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
+  '/templates': typeof TemplatesRoute
+  '/messages/$id': typeof MessagesIdRoute
+  '/tags/$slug': typeof TagsSlugRoute
+  '/tags/': typeof TagsIndexRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
   '/user/$id/': typeof UserIdIndexRoute
@@ -96,8 +145,15 @@ export interface FileRoutesByTo {
   '/account': typeof AccountRoute
   '/auth': typeof AuthRoute
   '/discover': typeof DiscoverRoute
-  '/messages': typeof MessagesRoute
+  '/drafts': typeof DraftsRoute
+  '/leaderboard': typeof LeaderboardRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
+  '/templates': typeof TemplatesRoute
+  '/messages/$id': typeof MessagesIdRoute
+  '/tags/$slug': typeof TagsSlugRoute
+  '/tags': typeof TagsIndexRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
   '/user/$id': typeof UserIdIndexRoute
@@ -110,8 +166,15 @@ export interface FileRoutesById {
   '/account': typeof AccountRoute
   '/auth': typeof AuthRoute
   '/discover': typeof DiscoverRoute
-  '/messages': typeof MessagesRoute
+  '/drafts': typeof DraftsRoute
+  '/leaderboard': typeof LeaderboardRoute
+  '/messages': typeof MessagesRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
+  '/templates': typeof TemplatesRoute
+  '/messages/$id': typeof MessagesIdRoute
+  '/tags/$slug': typeof TagsSlugRoute
+  '/tags/': typeof TagsIndexRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
   '/user/$id/': typeof UserIdIndexRoute
@@ -125,8 +188,15 @@ export interface FileRouteTypes {
     | '/account'
     | '/auth'
     | '/discover'
+    | '/drafts'
+    | '/leaderboard'
     | '/messages'
     | '/reset-password'
+    | '/settings'
+    | '/templates'
+    | '/messages/$id'
+    | '/tags/$slug'
+    | '/tags/'
     | '/work/$id/edit'
     | '/work/new/edit'
     | '/user/$id/'
@@ -138,8 +208,15 @@ export interface FileRouteTypes {
     | '/account'
     | '/auth'
     | '/discover'
+    | '/drafts'
+    | '/leaderboard'
     | '/messages'
     | '/reset-password'
+    | '/settings'
+    | '/templates'
+    | '/messages/$id'
+    | '/tags/$slug'
+    | '/tags'
     | '/work/$id/edit'
     | '/work/new/edit'
     | '/user/$id'
@@ -151,8 +228,15 @@ export interface FileRouteTypes {
     | '/account'
     | '/auth'
     | '/discover'
+    | '/drafts'
+    | '/leaderboard'
     | '/messages'
     | '/reset-password'
+    | '/settings'
+    | '/templates'
+    | '/messages/$id'
+    | '/tags/$slug'
+    | '/tags/'
     | '/work/$id/edit'
     | '/work/new/edit'
     | '/user/$id/'
@@ -165,8 +249,14 @@ export interface RootRouteChildren {
   AccountRoute: typeof AccountRoute
   AuthRoute: typeof AuthRoute
   DiscoverRoute: typeof DiscoverRoute
-  MessagesRoute: typeof MessagesRoute
+  DraftsRoute: typeof DraftsRoute
+  LeaderboardRoute: typeof LeaderboardRoute
+  MessagesRoute: typeof MessagesRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SettingsRoute: typeof SettingsRoute
+  TemplatesRoute: typeof TemplatesRoute
+  TagsSlugRoute: typeof TagsSlugRoute
+  TagsIndexRoute: typeof TagsIndexRoute
   WorkIdEditRoute: typeof WorkIdEditRoute
   WorkNewEditRoute: typeof WorkNewEditRoute
   UserIdIndexRoute: typeof UserIdIndexRoute
@@ -210,6 +300,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DiscoverRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/drafts': {
+      id: '/drafts'
+      path: '/drafts'
+      fullPath: '/drafts'
+      preLoaderRoute: typeof DraftsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leaderboard': {
+      id: '/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/messages': {
       id: '/messages'
       path: '/messages'
@@ -222,6 +326,41 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/templates': {
+      id: '/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof TemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages/$id': {
+      id: '/messages/$id'
+      path: '/$id'
+      fullPath: '/messages/$id'
+      preLoaderRoute: typeof MessagesIdRouteImport
+      parentRoute: typeof MessagesRoute
+    }
+    '/tags/': {
+      id: '/tags/'
+      path: '/tags'
+      fullPath: '/tags/'
+      preLoaderRoute: typeof TagsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tags/$slug': {
+      id: '/tags/$slug'
+      path: '/tags/$slug'
+      fullPath: '/tags/$slug'
+      preLoaderRoute: typeof TagsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/user/$id/': {
@@ -255,14 +394,32 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface MessagesRouteChildren {
+  MessagesIdRoute: typeof MessagesIdRoute
+}
+
+const MessagesRouteChildren: MessagesRouteChildren = {
+  MessagesIdRoute: MessagesIdRoute,
+}
+
+const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
+  MessagesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AccountRoute: AccountRoute,
   AuthRoute: AuthRoute,
   DiscoverRoute: DiscoverRoute,
-  MessagesRoute: MessagesRoute,
+  DraftsRoute: DraftsRoute,
+  LeaderboardRoute: LeaderboardRoute,
+  MessagesRoute: MessagesRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
+  SettingsRoute: SettingsRoute,
+  TemplatesRoute: TemplatesRoute,
+  TagsSlugRoute: TagsSlugRoute,
+  TagsIndexRoute: TagsIndexRoute,
   WorkIdEditRoute: WorkIdEditRoute,
   WorkNewEditRoute: WorkNewEditRoute,
   UserIdIndexRoute: UserIdIndexRoute,

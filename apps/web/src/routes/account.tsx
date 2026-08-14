@@ -4,6 +4,7 @@ import {
     Card,
     Chip,
     Spinner,
+    Tabs,
     toast,
     useOverlayState,
 } from "@heroui/react";
@@ -15,10 +16,12 @@ import {
     LogOut,
     Pencil,
     Plus,
+    Settings,
     Sparkles,
 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { ProfileEditModal } from "~/components/account/ProfileEditModal";
+import { SettingsPanel } from "~/components/settings/SettingsPanel";
 import { EmptyState } from "~/components/ui/EmptyState";
 import { PageHeader } from "~/components/ui/PageHeader";
 import { SectionHeading } from "~/components/ui/SectionHeading";
@@ -34,7 +37,7 @@ export const Route = createFileRoute("/account")({
 
 function AccountRoute() {
     const { user, isPending } = useAuth();
-    const { givenSparks } = useMyStats();
+    const [tab, setTab] = useState("profile");
 
     if (isPending) {
         return (
@@ -52,11 +55,47 @@ function AccountRoute() {
         <div className="mx-auto w-full max-w-6xl p-8 flex flex-col gap-6">
             <PageHeader
                 title="我的账号"
-                description="管理你的资料、火花与作品"
+                description="管理你的资料、火花、作品与设置"
             />
 
-            <ProfileCard givenSparks={givenSparks} />
+            <Tabs
+                selectedKey={tab}
+                onSelectionChange={(key) => setTab(key as string)}
+                className="w-full"
+            >
+                <Tabs.ListContainer>
+                    <Tabs.List aria-label="账号设置">
+                        <Tabs.Tab
+                            id="profile"
+                            className="flex items-center gap-1.5"
+                        >
+                            <Sparkles className="size-4" />
+                            账号
+                            <Tabs.Indicator />
+                        </Tabs.Tab>
+                        <Tabs.Tab
+                            id="settings"
+                            className="flex items-center gap-1.5"
+                        >
+                            <Settings className="size-4" />
+                            设置
+                            <Tabs.Indicator />
+                        </Tabs.Tab>
+                    </Tabs.List>
+                </Tabs.ListContainer>
+            </Tabs>
 
+            {tab === "profile" && <ProfileTab />}
+            {tab === "settings" && <SettingsPanel />}
+        </div>
+    );
+}
+
+function ProfileTab() {
+    const { givenSparks } = useMyStats();
+    return (
+        <div className="flex flex-col gap-6">
+            <ProfileCard givenSparks={givenSparks} />
             <MyWorksSection />
         </div>
     );
@@ -152,8 +191,15 @@ function MyWorksSection() {
     const { works } = useMyWorks();
     const navigate = useNavigate();
 
+    const publishedWorks = works.filter((work) => work.status === "published");
+    const draftCount = works.length - publishedWorks.length;
+
     const createNew = useCallback(() => {
         navigate({ to: "/work/new/edit" });
+    }, [navigate]);
+
+    const goToDrafts = useCallback(() => {
+        navigate({ to: "/drafts" });
     }, [navigate]);
 
     return (
@@ -161,23 +207,39 @@ function MyWorksSection() {
             <SectionHeading
                 title="我的作品"
                 action={
-                    <Button
-                        size="sm"
-                        variant="primary"
-                        className="gap-1.5"
-                        onPress={createNew}
-                    >
-                        <Plus className="size-3.5" />
-                        新建作品
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            className="gap-1.5"
+                            onPress={goToDrafts}
+                        >
+                            <FileText className="size-3.5" />
+                            草稿
+                            {draftCount > 0 && (
+                                <span className="tabular-nums">
+                                    {draftCount}
+                                </span>
+                            )}
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="primary"
+                            className="gap-1.5"
+                            onPress={createNew}
+                        >
+                            <Plus className="size-3.5" />
+                            新建作品
+                        </Button>
+                    </div>
                 }
             />
 
-            {works.length === 0 ? (
-                <EmptyState icon={FileText} title="还没有作品，发布第一个吧" />
+            {publishedWorks.length === 0 ? (
+                <EmptyState icon={FileText} title="还没有已发布的作品" />
             ) : (
                 <div className="flex flex-col gap-2">
-                    {works.map((work) => (
+                    {publishedWorks.map((work) => (
                         <WorkRowLink key={work.id} work={work} />
                     ))}
                 </div>

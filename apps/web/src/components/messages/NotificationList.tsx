@@ -61,10 +61,7 @@ function NotificationRow({
                         : {})}
                     className="block rounded-2xl"
                 >
-                    <NotificationCard
-                        item={item}
-                        onMarkRead={onMarkRead}
-                    />
+                    <NotificationCard item={item} onMarkRead={onMarkRead} />
                 </Link>
             ) : (
                 <NotificationCard item={item} onMarkRead={onMarkRead} />
@@ -89,13 +86,16 @@ function NotificationCard({
     const tileColor = variant.tile;
     const Icon = variant.Icon;
 
+    const markIfUnread = () => {
+        if (!item.read) {
+            onMarkRead(item.id);
+        }
+    };
+
     return (
-        <div
-            onClick={() => {
-                if (!item.read) {
-                    onMarkRead(item.id);
-                }
-            }}
+        <button
+            type="button"
+            onClick={markIfUnread}
             className={`relative grid gap-3 md:gap-4 md:grid-cols-[88px_minmax(0,1fr)_auto] items-center px-4 py-3.5 rounded-2xl border border-default-200/60 transition-colors cursor-pointer hover:bg-default-100/60 ${
                 item.read ? "bg-background" : "bg-accent/5"
             }`}
@@ -162,6 +162,6 @@ function NotificationCard({
             ) : (
                 <span className="hidden md:block size-4 shrink-0" />
             )}
-        </div>
+        </button>
     );
 }

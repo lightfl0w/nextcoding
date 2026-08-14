@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { type AuthenticatedEnv, requireSession } from "../../http/guards.js";
 import { jsonError } from "../../http/responses.js";
+import { publishNewNotification } from "../notificationBus.js";
 import { findPublishedWorkOwnerId } from "../repository.js";
 import {
     bumpWorkSparks,
@@ -8,7 +9,6 @@ import {
     insertNotification,
     insertSpark,
 } from "../socialRepository.js";
-import { publishNewNotification } from "../notificationBus.js";
 
 export const sparkRoutes = new Hono<AuthenticatedEnv>();
 

@@ -13,15 +13,15 @@ setupFetchStub();
 
 describe("api/http", () => {
     describe("HttpError", () => {
-        it("携带状态码与动作信息", () => {
+        it("携带状态码与自定义消息", () => {
             const err = new HttpError(404, "加载失败");
             expect(err).toBeInstanceOf(Error);
             expect(err.status).toBe(404);
-            expect(err.message).toBe("加载失败: 404");
+            expect(err.message).toBe("加载失败");
             expect(err.name).toBe("HttpError");
         });
 
-        it("默认动作文案为请求失败", () => {
+        it("默认消息为请求失败", () => {
             expect(new HttpError(500).message).toBe("请求失败: 500");
         });
     });
@@ -60,6 +60,11 @@ describe("api/http", () => {
             vi.mocked(fetch).mockResolvedValue(
                 jsonResponse({ error: "x" }, 500),
             );
+            await expect(getJson("/api/x")).rejects.toThrow("x");
+        });
+
+        it("响应体无 error 时回退默认消息", async () => {
+            vi.mocked(fetch).mockResolvedValue(jsonResponse({}, 500));
             await expect(getJson("/api/x")).rejects.toThrow("请求失败: 500");
         });
     });
@@ -90,7 +95,19 @@ describe("api/http", () => {
             vi.mocked(fetch).mockResolvedValue(jsonResponse({}, 400));
             await expect(
                 mutateJson("/api/x", "POST", undefined, "保存"),
-            ).rejects.toMatchObject({ status: 400, message: "保存: 400" });
+            ).rejects.toMatchObject({ status: 400, message: "保存" });
+        });
+
+        it("失败时优先使用服务端错误消息", async () => {
+            vi.mocked(fetch).mockResolvedValue(
+                jsonResponse({ error: "内容太长了" }, 400),
+            );
+            await expect(
+                mutateJson("/api/x", "POST", undefined, "保存"),
+            ).rejects.toMatchObject({
+                status: 400,
+                message: "内容太长了",
+            });
         });
     });
 

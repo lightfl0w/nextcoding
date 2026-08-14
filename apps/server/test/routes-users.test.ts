@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
-import { getStorage } from "../src/storage/storageClient.js";
 import { storageRoutes } from "../src/storage/routes.js";
+import { getStorage } from "../src/storage/storageClient.js";
 import * as userRepo from "../src/users/repository.js";
 import { userRoutes } from "../src/users/routes.js";
 import * as workRepo from "../src/works/repository.js";
@@ -37,12 +37,14 @@ describe("storageRoutes", () => {
     });
 
     it("存储 get 抛错时返回 500", async () => {
+        vi.spyOn(console, "error").mockImplementation(() => {});
         vi.mocked(getStorage).mockReturnValue({
             get: vi.fn().mockRejectedValue(new Error("s3 unavailable")),
         } as never);
         const res = await app().request("/api/storage/avatars/u1/a.png");
         expect(res.status).toBe(500);
         expect(await res.json()).toEqual({ error: "存储服务暂不可用" });
+        vi.mocked(console.error).mockRestore();
     });
 });
 

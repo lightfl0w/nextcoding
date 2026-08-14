@@ -44,6 +44,12 @@ export const WorkCard = memo(function WorkCard({ work }: { work: Work }) {
                     <Card.Footer className="justify-between mt-auto">
                         <div className="flex items-center gap-1.5 min-w-0">
                             <Avatar size="sm">
+                                <Avatar.Image
+                                    src={work.author.image ?? ""}
+                                    alt={(work.author.name ?? "?")
+                                        .charAt(0)
+                                        .toUpperCase()}
+                                />
                                 <Avatar.Fallback>
                                     {(work.author.name ?? "?")
                                         .charAt(0)

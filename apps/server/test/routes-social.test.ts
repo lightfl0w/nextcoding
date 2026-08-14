@@ -1,17 +1,17 @@
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
 import {
+    type NotificationStreamEvent,
     publishNewNotification,
     publishToUser,
     subscribeUser,
-    type NotificationStreamEvent,
 } from "../src/works/notificationBus.js";
-import * as socialRepo from "../src/works/socialRepository.js";
 import * as workRepo from "../src/works/repository.js";
 import { commentRoutes } from "../src/works/routes/commentRoutes.js";
 import { notificationRoutes } from "../src/works/routes/notificationRoutes.js";
 import { remixRoutes } from "../src/works/routes/remixRoutes.js";
 import { sparkRoutes } from "../src/works/routes/sparkRoutes.js";
+import * as socialRepo from "../src/works/socialRepository.js";
 import { makeWorkSummaryRow } from "./helpers";
 import { mockGetSession, storage } from "./setup";
 
@@ -526,7 +526,7 @@ describe("notificationRoutes", () => {
 
         await publishNewNotification("user-1");
 
-        const reader = res.body!.getReader();
+        const reader = res.body?.getReader();
         const { value, done } = await reader.read();
         expect(done).toBe(false);
         expect(new TextDecoder().decode(value)).toContain(
@@ -564,8 +564,10 @@ describe("notificationRoutes", () => {
             received.push(event),
         );
         unsubscribe();
-        publishToUser("user-1", { type: "unread", payload: { unreadCount: 0 } });
+        publishToUser("user-1", {
+            type: "unread",
+            payload: { unreadCount: 0 },
+        });
         expect(received).toHaveLength(0);
     });
 });
-

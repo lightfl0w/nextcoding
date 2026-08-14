@@ -82,10 +82,7 @@ export function NotificationFeed({
                         typeFilter={typeFilter}
                     />
                 ) : (
-                    <NotificationList
-                        groups={groups}
-                        onMarkRead={onMarkRead}
-                    />
+                    <NotificationList groups={groups} onMarkRead={onMarkRead} />
                 )}
             </Tabs.Panel>
         </Tabs>

@@ -16,7 +16,7 @@ import {
     toBase64,
     toText,
 } from "../content.js";
-import { requireWorkAuthor, authorizeWorkRead } from "../guards.js";
+import { authorizeWorkRead, requireWorkAuthor } from "../guards.js";
 import { exceedsFileSizeLimit, fileSizeLimitMessage } from "../limits.js";
 import { fileStorageKey, isValidFileName } from "../naming.js";
 import {

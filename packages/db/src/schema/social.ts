@@ -60,7 +60,16 @@ export const notification = sqliteTable(
         userId: text("user_id")
             .notNull()
             .references(() => user.id, { onDelete: "cascade" }),
-        type: text("type", { enum: ["spark", "remix", "comment"] }).notNull(),
+        type: text("type", {
+            enum: [
+                "spark",
+                "remix",
+                "comment",
+                "follow",
+                "message",
+                "achievement",
+            ],
+        }).notNull(),
         actorId: text("actor_id").references(() => user.id, {
             onDelete: "set null",
         }),
@@ -70,6 +79,8 @@ export const notification = sqliteTable(
         commentId: text("comment_id").references(() => workComment.id, {
             onDelete: "cascade",
         }),
+        messageId: text("message_id"),
+        achievementId: text("achievement_id"),
         read: integer("read", { mode: "boolean" }).default(false).notNull(),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)

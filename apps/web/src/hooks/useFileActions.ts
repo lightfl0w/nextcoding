@@ -173,7 +173,9 @@ export function useFileActions({
                 return;
             }
             if (renamed.outcome !== "renamed") {
-                setNameError(outcomeError(renamed.outcome, RENAME_FAILED_MESSAGE));
+                setNameError(
+                    outcomeError(renamed.outcome, RENAME_FAILED_MESSAGE),
+                );
                 return;
             }
 
@@ -201,7 +203,15 @@ export function useFileActions({
             return;
         }
         await confirmRemoteRename(renamingFile, newName);
-    }, [renamingFile, renameDraft, flushDraft, local, confirmLocalRename, confirmRemoteRename]);
+    }, [
+        renamingFile,
+        renameDraft,
+        flushDraft,
+        local,
+        confirmLocalRename,
+        confirmRemoteRename,
+        cancelRename,
+    ]);
 
     const removeFolder = useCallback(
         async (folder: string) => {

@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { type AuthenticatedEnv, requireSession } from "../../http/guards.js";
-import { authorizeWorkRead } from "../guards.js";
 import {
     type JsonBody,
     jsonError,
@@ -8,7 +7,9 @@ import {
     readString,
     readTrimmed,
 } from "../../http/responses.js";
+import { authorizeWorkRead } from "../guards.js";
 import { COMMENT_MAX_LENGTH, COMMENT_PAGE_SIZE } from "../limits.js";
+import { publishNewNotification } from "../notificationBus.js";
 import {
     findComment,
     insertComment,
@@ -17,7 +18,6 @@ import {
 } from "../repository.js";
 import { toComment } from "../serializers.js";
 import { insertNotification } from "../socialRepository.js";
-import { publishNewNotification } from "../notificationBus.js";
 
 export const commentRoutes = new Hono<AuthenticatedEnv>();
 

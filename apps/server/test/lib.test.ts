@@ -1,12 +1,48 @@
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
-import { jsonError, readFlag, readJsonBody, readString, readTrimmed } from "../src/http/responses.js";
+import {
+    jsonError,
+    readFlag,
+    readJsonBody,
+    readString,
+    readTrimmed,
+} from "../src/http/responses.js";
 import { getStorage } from "../src/storage/storageClient.js";
-import { decodePayload, fromBase64, fromText, isBinaryPayload, toBase64, toText } from "../src/works/content.js";
-import { COMMENT_MAX_LENGTH, exceedsFileSizeLimit, fileSizeLimitMessage } from "../src/works/limits.js";
-import { blobStorageKey, fileNameFromKey, fileStorageKey, isValidFileName, parseVersionNumber, snapshotStorageKey } from "../src/works/naming.js";
-import { toComment, toNotification, toOwnedWork, toWorkDetail, toWorkSummary } from "../src/works/serializers.js";
-import { captureFiles, decodeSnapshotFile, parseSnapshot, serializeSnapshot, snapshotFilesOf } from "../src/works/snapshot.js";
+import {
+    decodePayload,
+    fromBase64,
+    fromText,
+    isBinaryPayload,
+    toBase64,
+    toText,
+} from "../src/works/content.js";
+import {
+    COMMENT_MAX_LENGTH,
+    exceedsFileSizeLimit,
+    fileSizeLimitMessage,
+} from "../src/works/limits.js";
+import {
+    blobStorageKey,
+    fileNameFromKey,
+    fileStorageKey,
+    isValidFileName,
+    parseVersionNumber,
+    snapshotStorageKey,
+} from "../src/works/naming.js";
+import {
+    toComment,
+    toNotification,
+    toOwnedWork,
+    toWorkDetail,
+    toWorkSummary,
+} from "../src/works/serializers.js";
+import {
+    captureFiles,
+    decodeSnapshotFile,
+    parseSnapshot,
+    serializeSnapshot,
+    snapshotFilesOf,
+} from "../src/works/snapshot.js";
 import { parseTags } from "../src/works/tags.js";
 import { makeWorkFileRow } from "./helpers";
 import { sha256Hex, storage } from "./setup";
@@ -568,4 +604,3 @@ describe("snapshot 模块", () => {
         });
     });
 });
-

@@ -9,8 +9,12 @@ const JSON_HEADERS = { "content-type": "application/json" };
 export class HttpError extends Error {
     readonly status: number;
 
-    constructor(status: number, action = "请求失败") {
-        super(`${action}: ${status}`);
+    /**
+     * @param status - HTTP 状态码。
+     * @param message - 优先用后端返回的错误消息；无则回退到场景描述 + 状态码。
+     */
+    constructor(status: number, message?: string) {
+        super(message ?? `请求失败: ${status}`);
         this.name = "HttpError";
         this.status = status;
     }
@@ -90,7 +94,16 @@ export async function mutateJson<T>(
 
 async function unwrapJson<T>(response: Response, action?: string): Promise<T> {
     if (!response.ok) {
-        throw new HttpError(response.status, action);
+        let message = action;
+        try {
+            const body = await response.json();
+            if (typeof body === "object" && body !== null && "error" in body) {
+                message = body.error as string;
+            }
+        } catch {
+
+        }
+        throw new HttpError(response.status, message);
     }
     return response.json() as Promise<T>;
 }

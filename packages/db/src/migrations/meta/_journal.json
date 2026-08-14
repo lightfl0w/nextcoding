@@ -57,6 +57,13 @@
             "when": 1786492903875,
             "tag": "0007_freezing_infant_terrible",
             "breakpoints": true
+        },
+        {
+            "idx": 8,
+            "version": "6",
+            "when": 1786706235236,
+            "tag": "0008_clever_mathemanic",
+            "breakpoints": true
         }
     ]
 }

@@ -1,4 +1,4 @@
-import { type TerminalHandle } from "@wterm/react";
+import type { TerminalHandle } from "@wterm/react";
 import { useCallback, useEffect, useRef } from "react";
 import type { OutputLine } from "~/hooks/useCodeRunner";
 import { formatOutputLines } from "~/lib/run";

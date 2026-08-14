@@ -64,14 +64,87 @@ vi.mock("../src/users/repository.js", () => ({
     insertFollow: vi.fn(),
 }));
 
+vi.mock("../src/tags/repository.js", () => ({
+    attachWorkTag: vi.fn(),
+    bumpTagWorkCount: vi.fn(),
+    detachWorkTags: vi.fn(),
+    ensureTag: vi.fn(),
+    findTagBySlug: vi.fn(),
+    listPopularTags: vi.fn(),
+    listTagWorks: vi.fn(),
+    listTags: vi.fn(),
+}));
+
+vi.mock("../src/bookmarks/repository.js", () => ({
+    deleteBookmark: vi.fn(),
+    findBookmark: vi.fn(),
+    findBookmarkVisibility: vi.fn(),
+    insertBookmark: vi.fn(),
+    listUserBookmarks: vi.fn(),
+}));
+
+vi.mock("../src/activities/repository.js", () => ({
+    ACTIVITY_PAGE_SIZE: 50,
+    findActivityVisibility: vi.fn(),
+    insertActivity: vi.fn(),
+    listFeedActivities: vi.fn(),
+    listUserActivities: vi.fn(),
+    userExists: vi.fn(),
+}));
+
+vi.mock("../src/messages/repository.js", () => ({
+    MESSAGE_PAGE_SIZE: 50,
+    countUnreadMessages: vi.fn(),
+    findConversation: vi.fn(),
+    findConversationBetween: vi.fn(),
+    findOrCreateConversation: vi.fn(),
+    findUserProfile: vi.fn(),
+    insertMessage: vi.fn(),
+    listConversations: vi.fn(),
+    listMessages: vi.fn(),
+    markConversationRead: vi.fn(),
+    userExists: vi.fn(),
+}));
+
+vi.mock("../src/messages/messageBus.js", () => ({
+    publishNewMessage: vi.fn(),
+    publishToUser: vi.fn(),
+    publishUnreadCount: vi.fn(),
+    subscribeUser: vi.fn(),
+}));
+
+vi.mock("../src/achievements/repository.js", () => ({
+    countUserFollowers: vi.fn(),
+    countUserReceivedSparks: vi.fn(),
+    countUserRemixes: vi.fn(),
+    countUserSparks: vi.fn(),
+    countUserWorks: vi.fn(),
+    findUserAchievement: vi.fn(),
+    listAchievements: vi.fn(),
+    listUserAchievements: vi.fn(),
+    unlockAchievement: vi.fn(),
+}));
+
+vi.mock("../src/settings/repository.js", () => ({
+    findOrCreateSettings: vi.fn(),
+    updateSettings: vi.fn(),
+}));
+
+vi.mock("../src/templates/repository.js", () => ({
+    bumpTemplateUseCount: vi.fn(),
+    createTemplate: vi.fn(),
+    findTemplate: vi.fn(),
+    listTemplates: vi.fn(),
+}));
+
 vi.mock("../src/storage/storageClient.js", () => ({
     getStorage: vi.fn(),
 }));
 
 import { auth } from "@nextcoding/auth";
 import { getStorage } from "../src/storage/storageClient.js";
-import * as socialRepo from "../src/works/socialRepository.js";
 import * as workRepo from "../src/works/repository.js";
+import * as socialRepo from "../src/works/socialRepository.js";
 import { createMemoryStorage, makeSession } from "./helpers";
 
 export const mockGetSession = vi.mocked(auth.api.getSession);

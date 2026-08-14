@@ -7,7 +7,7 @@ import {
     Spinner,
     TextArea,
     toast,
-    useOverlayState,
+    type useOverlayState,
 } from "@heroui/react";
 import { Camera } from "lucide-react";
 import { useRef, useState } from "react";
@@ -158,7 +158,10 @@ function AvatarField({
             <div className="flex flex-col gap-2 items-center">
                 <Label>头像</Label>
                 <div className="relative">
-                    <Avatar size="lg" className="size-24 ring-2 ring-default-200">
+                    <Avatar
+                        size="lg"
+                        className="size-24 ring-2 ring-default-200"
+                    >
                         {effectiveAvatarSrc ? (
                             <Avatar.Image
                                 alt="头像预览"

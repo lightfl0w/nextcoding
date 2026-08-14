@@ -109,6 +109,7 @@ function WorkDetailRoute() {
                 </div>
 
                 <WorkActions
+                    workId={workId}
                     views={work.views}
                     sparks={work.sparks}
                     commentCount={commentCount}
@@ -172,7 +173,7 @@ function WorkDetailRoute() {
                                 </p>
                             </SectionCard>
                         )}
-                        
+
                         <AuthorCard
                             author={work.author}
                             isSelf={follow.isSelf}

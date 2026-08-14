@@ -36,7 +36,7 @@ interface CommentRow extends AuthoredRow {
 
 interface NotificationRow {
     id: string;
-    type: "spark" | "remix" | "comment";
+    type: "spark" | "remix" | "comment" | "follow" | "message" | "achievement";
     read: boolean;
     createdAt: Date;
     actorId: string | null;

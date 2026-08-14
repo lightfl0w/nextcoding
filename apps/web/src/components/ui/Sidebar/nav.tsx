@@ -1,6 +1,16 @@
 import { Badge, Button } from "@heroui/react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Bell, Compass, Home, Info, type LucideIcon } from "lucide-react";
+import {
+    Bell,
+    Compass,
+    Crown,
+    FilePenLine,
+    Home,
+    Info,
+    Layout,
+    type LucideIcon,
+    Tags,
+} from "lucide-react";
 import { useUnreadCount } from "~/hooks/useUnreadCount";
 
 type NavItem =
@@ -19,6 +29,10 @@ export function Nav() {
     const items: NavItem[] = [
         { label: "首页", href: "/", icon: Home },
         { label: "发现", href: "/discover", icon: Compass },
+        { label: "标签", href: "/tags", icon: Tags },
+        { label: "模板", href: "/templates", icon: Layout },
+        { label: "排行榜", href: "/leaderboard", icon: Crown },
+        { label: "草稿", href: "/drafts", icon: FilePenLine },
         { label: "消息", href: "/messages", icon: Bell, badge: count },
         { label: "关于", href: "/about", icon: Info },
     ];

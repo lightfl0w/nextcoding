@@ -1,11 +1,15 @@
-import { Avatar, Button, Skeleton } from "@heroui/react";
+import { Avatar, Button, Skeleton, Tabs } from "@heroui/react";
 import { createFileRoute, useParams } from "@tanstack/react-router";
-import { UserX } from "lucide-react";
-import { SectionHeading } from "~/components/ui/SectionHeading";
+import { Activity, Award, Bookmark, FileText, UserX } from "lucide-react";
+import { useState } from "react";
+import { AchievementGrid } from "~/components/achievements/AchievementGrid";
+import { ActivityFeed } from "~/components/activities/ActivityFeed";
 import { WorksGrid } from "~/components/WorksGrid";
 import { useAuth } from "~/hooks/useAuth";
 import { useFollowUser } from "~/hooks/useFollowUser";
 import { useUser } from "~/hooks/useUser";
+import { useUserAchievements } from "~/hooks/useUserAchievements";
+import { useUserActivities } from "~/hooks/useUserActivities";
 import { useUserWorks } from "~/hooks/useUserWorks";
 import type { UserProfile } from "~/lib/api";
 import { formatCount, formatDate } from "~/lib/format";
@@ -78,8 +82,7 @@ function UserProfileRoute() {
             </header>
 
             <main className="max-w-6xl mx-auto px-8 py-8 w-full flex flex-col gap-4">
-                <SectionHeading title="TA 的作品" />
-                <UserWorks userId={userId} />
+                <UserProfileTabs userId={userId} isMe={isMe} />
             </main>
         </div>
     );
@@ -113,6 +116,64 @@ function StatValue({ label, value }: { label: string; value: number }) {
     );
 }
 
+function UserProfileTabs({ userId, isMe }: { userId: string; isMe: boolean }) {
+    const [tab, setTab] = useState("works");
+
+    return (
+        <div className="flex flex-col gap-4">
+            <Tabs
+                selectedKey={tab}
+                onSelectionChange={(key) => setTab(key as string)}
+                className="w-full"
+            >
+                <Tabs.ListContainer>
+                    <Tabs.List aria-label="用户资料标签">
+                        <Tabs.Tab
+                            id="works"
+                            className="flex items-center gap-1.5"
+                        >
+                            <FileText className="size-4" />
+                            作品
+                            <Tabs.Indicator />
+                        </Tabs.Tab>
+                        <Tabs.Tab
+                            id="activities"
+                            className="flex items-center gap-1.5"
+                        >
+                            <Activity className="size-4" />
+                            动态
+                            <Tabs.Indicator />
+                        </Tabs.Tab>
+                        {isMe && (
+                            <Tabs.Tab
+                                id="bookmarks"
+                                className="flex items-center gap-1.5"
+                            >
+                                <Bookmark className="size-4" />
+                                收藏
+                                <Tabs.Indicator />
+                            </Tabs.Tab>
+                        )}
+                        <Tabs.Tab
+                            id="achievements"
+                            className="flex items-center gap-1.5"
+                        >
+                            <Award className="size-4" />
+                            成就
+                            <Tabs.Indicator />
+                        </Tabs.Tab>
+                    </Tabs.List>
+                </Tabs.ListContainer>
+            </Tabs>
+
+            {tab === "works" && <UserWorks userId={userId} />}
+            {tab === "activities" && <UserActivities userId={userId} />}
+            {tab === "bookmarks" && isMe && <UserBookmarks userId={userId} />}
+            {tab === "achievements" && <UserAchievements userId={userId} />}
+        </div>
+    );
+}
+
 function UserWorks({ userId }: { userId: string }) {
     const { data: works, isLoading, error } = useUserWorks(userId);
     return (
@@ -123,6 +184,37 @@ function UserWorks({ userId }: { userId: string }) {
             placeholderCount={6}
             emptyText="TA 还没有发布作品"
         />
+    );
+}
+
+function UserActivities({ userId }: { userId: string }) {
+    const { activities, isLoading } = useUserActivities(userId, 50);
+    return (
+        <ActivityFeed
+            activities={activities}
+            isLoading={isLoading}
+            emptyText="暂无动态"
+        />
+    );
+}
+
+function UserBookmarks({ userId }: { userId: string }) {
+    const { data: works, isLoading, error } = useUserWorks(userId);
+    return (
+        <WorksGrid
+            works={works}
+            isLoading={isLoading}
+            error={error}
+            placeholderCount={6}
+            emptyText="暂无收藏"
+        />
+    );
+}
+
+function UserAchievements({ userId }: { userId: string }) {
+    const { achievements, isLoading } = useUserAchievements(userId);
+    return (
+        <AchievementGrid achievements={achievements} isLoading={isLoading} />
     );
 }
 

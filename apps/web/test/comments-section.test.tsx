@@ -123,7 +123,7 @@ describe("CommentsSection 折叠行为", () => {
             makeComment("d4", "r1"),
         ];
         const html = render(comments);
-        // 子评论(1 条) + 子子评论(4 条) = 5 条 > 3，折叠后只展示直接回复 r1
+
         expect(countOf(html, 'data-comment-id="c1"')).toBe(1);
         expect(countOf(html, 'data-reply="1"')).toBe(1);
         expect(html).toContain("展开全部 5 条回复");
@@ -140,7 +140,6 @@ describe("CommentsSection 折叠行为", () => {
             makeComment("d3", "r1"),
         ];
         const html = render(comments);
-        // 1 条直接回复 + 3 条子子回复 = 4 条 > 3，折叠后只展示 r1
         expect(countOf(html, 'data-reply="1"')).toBe(1);
         expect(html).toContain("展开全部 4 条回复");
         expect(html).not.toContain('data-comment-id="d1"');
@@ -153,7 +152,7 @@ describe("CommentsSection 折叠行为", () => {
             makeComment("d1", "r1"),
             makeComment("d2", "r1"),
         ]);
-        // 1 + 2 = 3 条，不超过阈值，完整展示
+
         expect(countOf(html, 'data-reply="1"')).toBe(3);
         expect(html).not.toContain("展开全部");
     });

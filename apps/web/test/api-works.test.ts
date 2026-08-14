@@ -87,7 +87,7 @@ describe("api/works", () => {
 
         it("其他失败抛出创建失败", async () => {
             vi.mocked(fetch).mockResolvedValue(jsonResponse({}, 400));
-            await expect(createWork("标题")).rejects.toThrow("创建失败: 400");
+            await expect(createWork("标题")).rejects.toThrow("创建失败");
         });
     });
 

@@ -16,10 +16,7 @@ const listenersByUser = new Map<string, Set<Listener>>();
 /**
  * 订阅某用户的实时通知事件，返回取消订阅函数。
  */
-export function subscribeUser(
-    userId: string,
-    listener: Listener,
-): () => void {
+export function subscribeUser(userId: string, listener: Listener): () => void {
     let set = listenersByUser.get(userId);
     if (!set) {
         set = new Set();
@@ -38,7 +35,12 @@ export function publishToUser(
     userId: string,
     event: NotificationStreamEvent,
 ): void {
-    listenersByUser.get(userId)?.forEach((listener) => listener(event));
+    const set = listenersByUser.get(userId);
+    if (set) {
+        for (const listener of set) {
+            listener(event);
+        }
+    }
 }
 
 /**

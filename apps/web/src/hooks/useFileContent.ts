@@ -8,9 +8,7 @@ import { fileContentPath, readFileContent } from "~/lib/api";
  */
 export function useFileContent(workId: string | null, key: string | null) {
     return useSWR(
-        workId === null || key === null
-            ? null
-            : fileContentPath(workId, key),
+        workId === null || key === null ? null : fileContentPath(workId, key),
         () => readFileContent(workId as string, key as string),
     );
 }

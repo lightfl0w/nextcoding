@@ -23,9 +23,7 @@ export function useEditableTitle({
     workId,
     mutateWork,
 }: EditableTitleOptions) {
-    const [title, setTitle] = useState(
-        workId === null ? "未命名作品" : "",
-    );
+    const [title, setTitle] = useState(workId === null ? "未命名作品" : "");
 
     useEffect(() => {
         if (work) {

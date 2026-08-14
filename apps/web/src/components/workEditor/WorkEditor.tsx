@@ -252,7 +252,7 @@ export function WorkEditor({ workId }: { workId: string | null }) {
 
     const shouldBlock = useCallback(
         () => workId === null && pending.hasFiles && !persistingRef.current,
-        [workId, pending.hasFiles],
+        [workId, pending.hasFiles, persistingRef.current],
     );
     const blocker = useBlocker({
         shouldBlockFn: shouldBlock,

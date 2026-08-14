@@ -7,11 +7,13 @@ import {
     Play,
     Sparkles,
 } from "lucide-react";
+import { BookmarkButton } from "~/components/bookmarks/BookmarkButton";
 import { formatCount } from "~/lib/format";
 import { languageLabel, type RuntimeInfo } from "~/lib/run";
 import { StatBadge } from "./StatBadge";
 
 interface WorkActionsProps {
+    workId: string;
     views: number;
     sparks: number;
     commentCount: number;
@@ -39,6 +41,7 @@ interface WorkActionsProps {
  * @remarks 提供 运行 / 送火花 / 二创 操作。
  */
 export function WorkActions({
+    workId,
     views,
     sparks,
     commentCount,
@@ -110,6 +113,7 @@ export function WorkActions({
                     <GitFork className="size-4" />
                     二创
                 </Button>
+                <BookmarkButton workId={workId} />
             </div>
         </div>
     );

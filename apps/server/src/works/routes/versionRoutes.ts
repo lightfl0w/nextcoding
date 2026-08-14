@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type { AuthenticatedEnv } from "../../http/guards.js";
 import { jsonError, readJsonBody, readTrimmed } from "../../http/responses.js";
 import { getStorage } from "../../storage/storageClient.js";
-import { requireWorkAuthor, authorizeWorkRead } from "../guards.js";
+import { authorizeWorkRead, requireWorkAuthor } from "../guards.js";
 import { VERSIONS_PAGE_SIZE } from "../limits.js";
 import {
     fileNameFromKey,
