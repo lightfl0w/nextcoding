@@ -6,7 +6,7 @@ import {
 } from "../../http/guards.js";
 import { jsonError, readJsonBody, readTrimmed } from "../../http/responses.js";
 import { getStorage } from "../../storage/storageClient.js";
-import { requireWorkAuthor } from "../guards.js";
+import { requireWorkAuthor, authorizeWorkRead } from "../guards.js";
 import {
     clampLimit,
     exceedsFileSizeLimit,
@@ -54,10 +54,13 @@ catalogRoutes.get("/mine", requireSession, async (c) => {
 
 catalogRoutes.get("/:id", async (c) => {
     const workId = c.req.param("id");
-    const session = await readSession(c);
-    const viewerId = session?.user?.id ?? null;
+    const access = await authorizeWorkRead(c, workId);
+    if (!access.ok) {
+        return jsonError(c, "作品不存在", 404);
+    }
+
     const [detail, files] = await Promise.all([
-        findWorkDetail(workId, viewerId),
+        findWorkDetail(workId, access.viewerId),
         listWorkFiles(workId),
     ]);
     if (!detail) {

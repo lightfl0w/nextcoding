@@ -9,7 +9,6 @@ const AUTOSAVE_DELAY_MS = 1000;
 const LARGE_FILE_SAVE_DELAY_MS = 5000;
 const NO_KEYS: ReadonlySet<string> = new Set<string>();
 
-/** 定时器映射的引用容器。 */
 interface TimerMapRef {
     current: Map<string, ReturnType<typeof setTimeout>>;
 }

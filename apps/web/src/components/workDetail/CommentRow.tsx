@@ -10,7 +10,8 @@ interface CommentRowProps {
     isReply?: boolean;
     canReply: boolean;
     focus?: boolean;
-    onReply: (name: string) => void;
+    replyToName?: string | null;
+    onReply?: (name: string) => void;
 }
 
 export function CommentRow({
@@ -18,9 +19,11 @@ export function CommentRow({
     isReply = false,
     canReply,
     focus = false,
+    replyToName,
     onReply,
 }: CommentRowProps) {
     const authorName = comment.author.name ?? ANONYMOUS_NAME;
+    const targetName = replyToName ?? ANONYMOUS_NAME;
 
     return (
         <div
@@ -46,7 +49,12 @@ export function CommentRow({
                         {authorName}
                     </span>
                     {isReply && (
-                        <span className="text-xs text-foreground/40">回复</span>
+                        <span className="text-xs text-foreground/40">
+                            回复{" "}
+                            <span className="text-primary/80">
+                                {targetName}
+                            </span>
+                        </span>
                     )}
                     <span className="text-xs text-foreground/40">
                         {formatDate(comment.createdAt)}
@@ -55,7 +63,7 @@ export function CommentRow({
                 <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap wrap-break-word">
                     {comment.content}
                 </p>
-                {canReply && (
+                {canReply && onReply && (
                     <button
                         type="button"
                         onClick={() => onReply(authorName)}

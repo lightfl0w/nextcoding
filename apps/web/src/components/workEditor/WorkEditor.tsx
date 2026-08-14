@@ -1,4 +1,4 @@
-import { AlertDialog, Button, Spinner, toast } from "@heroui/react";
+import { AlertDialog, Button, Spinner } from "@heroui/react";
 import { useBlocker, useNavigate } from "@tanstack/react-router";
 import { FileCode } from "lucide-react";
 import type * as Monaco from "monaco-editor";
@@ -24,19 +24,13 @@ import { useFileTabs } from "~/hooks/useFileTabs";
 import { useMonaco } from "~/hooks/useMonaco";
 import { useMonacoDrafts } from "~/hooks/useMonacoDrafts";
 import { usePendingFiles } from "~/hooks/usePendingFiles";
+import { usePersistPendingWork } from "~/hooks/usePersistPendingWork";
 import { usePublishWork } from "~/hooks/usePublishWork";
 import { useVersionHistory } from "~/hooks/useVersionHistory";
 import { useWork } from "~/hooks/useWork";
 import { useWorkFiles } from "~/hooks/useWorkFiles";
 import { useWorkSource } from "~/hooks/useWorkRemixes";
-import {
-    createWork,
-    createWorkFile,
-    fileContentPath,
-    publishVersion,
-    readFileContent,
-    saveFileContent,
-} from "~/lib/api";
+import { fileContentPath, readFileContent } from "~/lib/api";
 import { languageLabel } from "~/lib/run";
 
 /**
@@ -99,41 +93,12 @@ export function WorkEditor({ workId }: { workId: string | null }) {
         activeContent,
     });
 
-    /** 正在把待创建内容持久化时，放行后续跳转，避免离开提醒误拦截。 */
-    const persistingRef = useRef(false);
-
-    const persistPendingWork = useCallback(
-        async (message: string | null): Promise<string | null> => {
-            persistingRef.current = true;
-            try {
-                const { id } = await createWork(
-                    title.trim() || "未命名作品",
-                );
-                for (const file of pending.files) {
-                    const content = readDraft(file.key) ?? "";
-                    const created = await createWorkFile(id, file.name);
-                    if (created.outcome !== "created") {
-                        throw new Error(`创建文件失败：${file.name}`);
-                    }
-                    await saveFileContent(
-                        id,
-                        created.key,
-                        content,
-                        created.version,
-                    );
-                }
-                if (message !== null) {
-                    await publishVersion(id, message);
-                }
-                return id;
-            } catch (error) {
-                persistingRef.current = false;
-                toast.danger((error as Error).message);
-                return null;
-            }
-        },
-        [title, pending.files, readDraft],
-    );
+    const { persist: persistPendingWork, persistingRef } =
+        usePersistPendingWork({
+            title,
+            files: pending.files,
+            readDraft,
+        });
 
     const { publishWorkAction } = usePublishWork({
         workId,
@@ -276,7 +241,13 @@ export function WorkEditor({ workId }: { workId: string | null }) {
             await flushAll();
             await versionHistory.publish(trimmed);
         },
-        [workId, persistPendingWork, navigate, flushAll, versionHistory.publish],
+        [
+            workId,
+            persistPendingWork,
+            navigate,
+            flushAll,
+            versionHistory.publish,
+        ],
     );
 
     const shouldBlock = useCallback(
@@ -388,46 +359,61 @@ export function WorkEditor({ workId }: { workId: string | null }) {
                 onClear={runner.clear}
             />
 
-            <AlertDialog
-                isOpen={blocked}
-                onOpenChange={() => blocker.reset?.()}
-            >
-                <AlertDialog.Backdrop>
-                    <AlertDialog.Container>
-                        <AlertDialog.Dialog className="sm:max-w-[400px]">
-                            <AlertDialog.CloseTrigger />
-                            <AlertDialog.Header>
-                                <AlertDialog.Icon status="warning" />
-                                <AlertDialog.Heading>
-                                    放弃未保存的内容？
-                                </AlertDialog.Heading>
-                            </AlertDialog.Header>
-                            <AlertDialog.Body>
-                                <p>
-                                    作品尚未创建，离开后未保存的代码会丢失。确定要离开吗？
-                                </p>
-                            </AlertDialog.Body>
-                            <AlertDialog.Footer>
-                                <Button
-                                    slot="close"
-                                    variant="tertiary"
-                                    onPress={() => blocker.reset?.()}
-                                >
-                                    继续编辑
-                                </Button>
-                                <Button
-                                    slot="close"
-                                    variant="danger"
-                                    onPress={() => blocker.proceed?.()}
-                                >
-                                    仍要离开
-                                </Button>
-                            </AlertDialog.Footer>
-                        </AlertDialog.Dialog>
-                    </AlertDialog.Container>
-                </AlertDialog.Backdrop>
-            </AlertDialog>
+            <LeaveDraftDialog
+                blocked={blocked}
+                onStay={() => blocker.reset?.()}
+                onLeave={() => blocker.proceed?.()}
+            />
         </div>
+    );
+}
+
+function LeaveDraftDialog({
+    blocked,
+    onStay,
+    onLeave,
+}: {
+    blocked: boolean;
+    onStay: () => void;
+    onLeave: () => void;
+}) {
+    return (
+        <AlertDialog isOpen={blocked} onOpenChange={onStay}>
+            <AlertDialog.Backdrop>
+                <AlertDialog.Container>
+                    <AlertDialog.Dialog className="sm:max-w-[400px]">
+                        <AlertDialog.CloseTrigger />
+                        <AlertDialog.Header>
+                            <AlertDialog.Icon status="warning" />
+                            <AlertDialog.Heading>
+                                放弃未保存的内容？
+                            </AlertDialog.Heading>
+                        </AlertDialog.Header>
+                        <AlertDialog.Body>
+                            <p>
+                                作品尚未创建，离开后未保存的代码会丢失。确定要离开吗？
+                            </p>
+                        </AlertDialog.Body>
+                        <AlertDialog.Footer>
+                            <Button
+                                slot="close"
+                                variant="tertiary"
+                                onPress={onStay}
+                            >
+                                继续编辑
+                            </Button>
+                            <Button
+                                slot="close"
+                                variant="danger"
+                                onPress={onLeave}
+                            >
+                                仍要离开
+                            </Button>
+                        </AlertDialog.Footer>
+                    </AlertDialog.Dialog>
+                </AlertDialog.Container>
+            </AlertDialog.Backdrop>
+        </AlertDialog>
     );
 }
 

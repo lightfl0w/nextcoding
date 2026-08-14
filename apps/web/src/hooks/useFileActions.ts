@@ -1,6 +1,6 @@
 import { toast } from "@heroui/react";
 import { useCallback, useState } from "react";
-import type { CreatedFile, WorkFile } from "~/lib/api";
+import type { CreatedFile, RenamedFile, WorkFile } from "~/lib/api";
 import {
     createWorkFile,
     deleteFolder,
@@ -13,6 +13,19 @@ const CREATE_FAILED_MESSAGE = "创建失败，请检查文件名";
 const RENAME_FAILED_MESSAGE = "重命名失败，请检查文件名";
 const FILE_MISSING_MESSAGE = "文件不存在，可能已被删除";
 
+function outcomeError(
+    outcome: CreatedFile["outcome"] | RenamedFile["outcome"],
+    rejectedMessage: string,
+): string | null {
+    if (outcome === "duplicate") {
+        return DUPLICATE_NAME_MESSAGE;
+    }
+    if (outcome === "rejected") {
+        return rejectedMessage;
+    }
+    return null;
+}
+
 interface FileActionsOptions {
     workId: string | null;
     reload: () => Promise<unknown>;
@@ -21,7 +34,6 @@ interface FileActionsOptions {
     onFileRemoved: (key: string) => void;
     onFileRenamed: (oldKey: string, newKey: string, version: number) => void;
     onFolderRemoved: (folder: string) => void;
-    /** 待创建模式：作品未在服务器创建，文件操作在本地注册表执行。 */
     local?: {
         create: (name: string) => CreatedFile;
         rename: (key: string, newName: string) => boolean;
@@ -86,12 +98,8 @@ export function useFileActions({
         const created = local
             ? local.create(name)
             : await createWorkFile(workId as string, name);
-        if (created.outcome === "duplicate") {
-            setNameError(DUPLICATE_NAME_MESSAGE);
-            return;
-        }
-        if (created.outcome === "rejected") {
-            setNameError(CREATE_FAILED_MESSAGE);
+        if (created.outcome !== "created") {
+            setNameError(outcomeError(created.outcome, CREATE_FAILED_MESSAGE));
             return;
         }
 
@@ -138,6 +146,45 @@ export function useFileActions({
         setNameError(null);
     }, []);
 
+    const confirmLocalRename = useCallback(
+        async (file: WorkFile, newName: string) => {
+            if (!local?.rename(file.key, newName)) {
+                setNameError(DUPLICATE_NAME_MESSAGE);
+                return;
+            }
+            onFileRenamed(file.key, file.key, 1);
+            await reload();
+            cancelRename();
+            toast.success("文件已重命名");
+        },
+        [local, onFileRenamed, reload, cancelRename],
+    );
+
+    const confirmRemoteRename = useCallback(
+        async (file: WorkFile, newName: string) => {
+            const renamed = await renameWorkFile(
+                workId as string,
+                file.key,
+                newName,
+            );
+            if (renamed.outcome === "missing") {
+                toast.danger(FILE_MISSING_MESSAGE);
+                cancelRename();
+                return;
+            }
+            if (renamed.outcome !== "renamed") {
+                setNameError(outcomeError(renamed.outcome, RENAME_FAILED_MESSAGE));
+                return;
+            }
+
+            onFileRenamed(file.key, renamed.key, renamed.version);
+            await reload();
+            cancelRename();
+            toast.success("文件已重命名");
+        },
+        [workId, onFileRenamed, reload, cancelRename],
+    );
+
     const confirmRename = useCallback(async () => {
         if (!renamingFile) {
             return;
@@ -150,46 +197,11 @@ export function useFileActions({
 
         await flushDraft(renamingFile.key);
         if (local) {
-            if (!local.rename(renamingFile.key, newName)) {
-                setNameError(DUPLICATE_NAME_MESSAGE);
-                return;
-            }
-            onFileRenamed(renamingFile.key, renamingFile.key, 1);
-            await reload();
-            cancelRename();
-            toast.success("文件已重命名");
+            await confirmLocalRename(renamingFile, newName);
             return;
         }
-
-        const renamed = await renameWorkFile(workId as string, renamingFile.key, newName);
-        if (renamed.outcome === "duplicate") {
-            setNameError(DUPLICATE_NAME_MESSAGE);
-            return;
-        }
-        if (renamed.outcome === "missing") {
-            toast.danger(FILE_MISSING_MESSAGE);
-            cancelRename();
-            return;
-        }
-        if (renamed.outcome === "rejected") {
-            setNameError(RENAME_FAILED_MESSAGE);
-            return;
-        }
-
-        onFileRenamed(renamingFile.key, renamed.key, renamed.version);
-        await reload();
-        cancelRename();
-        toast.success("文件已重命名");
-    }, [
-        renamingFile,
-        renameDraft,
-        flushDraft,
-        local,
-        workId,
-        onFileRenamed,
-        reload,
-        cancelRename,
-    ]);
+        await confirmRemoteRename(renamingFile, newName);
+    }, [renamingFile, renameDraft, flushDraft, local, confirmLocalRename, confirmRemoteRename]);
 
     const removeFolder = useCallback(
         async (folder: string) => {

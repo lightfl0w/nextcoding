@@ -1,17 +1,18 @@
 import { Button, Spinner } from "@heroui/react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { MessageCircle } from "lucide-react";
-import {
-    COMMENT_MAX_LENGTH,
-    type ReplyTarget,
-} from "~/hooks/useCommentComposer";
+import { COMMENT_MAX_LENGTH } from "~/hooks/useCommentComposer";
+
+export interface ReplyTarget {
+    name: string;
+}
 
 interface CommentComposerProps {
     draft: string;
     isPosting: boolean;
-    replyTarget: ReplyTarget | null;
+    replyTarget?: ReplyTarget | null;
     onDraftChange: (value: string) => void;
-    onCancelReply: () => void;
+    onCancelReply?: () => void;
     onSubmit: () => void;
 }
 
@@ -61,7 +62,7 @@ export function CommentComposer({
                     className="gap-1.5"
                 >
                     {isPosting && <Spinner size="sm" color="current" />}
-                    {submitLabel(isPosting, replyTarget !== null)}
+                    {submitLabel(isPosting, replyTarget != null)}
                 </Button>
             </div>
         </div>

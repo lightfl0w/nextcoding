@@ -72,9 +72,10 @@ export class S3Adapter implements StorageAdapter {
                 }),
             );
             for (const obj of res.Contents ?? []) {
-                if (obj.Key) {
-                    keys.push(obj.Key);
+                if (!obj.Key) {
+                    continue;
                 }
+                keys.push(obj.Key);
             }
             continuationToken = res.NextContinuationToken;
         } while (continuationToken);

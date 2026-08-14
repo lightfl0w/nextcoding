@@ -1,16 +1,9 @@
-import { toast } from "@heroui/react";
-import { useLocation, useNavigate } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useSWRConfig } from "swr";
 import { useAuth } from "~/hooks/useAuth";
+import { useFollowToggle } from "~/hooks/useFollowToggle";
 import type { WorkDetail } from "~/lib/api";
-import { followUser, unfollowUser, workPath } from "~/lib/api";
-import { HttpError } from "~/lib/api/http";
-
-export const FOLLOW_SELF_MESSAGE = "不能关注自己";
-export const FOLLOW_SUCCESS_MESSAGE = "关注成功";
-export const UNFOLLOW_SUCCESS_MESSAGE = "已取消关注";
-export const FOLLOW_ALREADY_MESSAGE = "已经关注过了";
+import { workPath } from "~/lib/api";
 
 /**
  * 关注/取消关注作者。
@@ -19,47 +12,18 @@ export const FOLLOW_ALREADY_MESSAGE = "已经关注过了";
  * @remarks 成功后乐观更新 `workPath` 缓存里的 `author.followers` 与 `followedByMe`。
  */
 export function useFollowAuthor(work: WorkDetail | undefined) {
-    const { user, isLoggedIn } = useAuth();
-    const navigate = useNavigate();
-    const location = useLocation();
+    const { user } = useAuth();
     const { mutate } = useSWRConfig();
-    const [pending, setPending] = useState(false);
 
     const authorId = work?.author.id ?? null;
     const isSelf = !!user && !!work && user.id === work.userId;
+    const following = work?.author.followedByMe ?? false;
 
-    const toggleFollow = useCallback(async () => {
-        if (!work || !authorId) {
-            return;
-        }
-        if (!isLoggedIn) {
-            navigate({
-                to: "/auth",
-                search: { mode: "login", redirect: location.pathname },
-            });
-            return;
-        }
-        if (isSelf) {
-            toast.warning(FOLLOW_SELF_MESSAGE);
-            return;
-        }
-
-        setPending(true);
-        try {
-            const wasFollowing = work.author.followedByMe ?? false;
-            if (wasFollowing) {
-                await unfollowUser(authorId);
-            } else {
-                await followUser(authorId);
-            }
-            toast.success(
-                wasFollowing
-                    ? UNFOLLOW_SUCCESS_MESSAGE
-                    : FOLLOW_SUCCESS_MESSAGE,
-            );
+    const applyFollowState = useCallback(
+        (id: string, next: boolean) => {
             mutate(
-                workPath(work.id),
-                (current) => {
+                workPath(id),
+                (current: WorkDetail | undefined) => {
                     if (!current) {
                         return current;
                     }
@@ -67,33 +31,32 @@ export function useFollowAuthor(work: WorkDetail | undefined) {
                         ...current,
                         author: {
                             ...current.author,
-                            followedByMe: !wasFollowing,
+                            followedByMe: next,
                             followers:
                                 (current.author.followers ?? 0) +
-                                (wasFollowing ? -1 : 1),
+                                (next ? 1 : -1),
                         },
                     };
                 },
                 false,
             );
-        } catch (error) {
-            if (error instanceof HttpError && error.status === 409) {
-                toast.warning(FOLLOW_ALREADY_MESSAGE);
-            } else {
-                toast.danger((error as Error).message);
-            }
-        } finally {
-            setPending(false);
-        }
-    }, [
-        work,
-        authorId,
-        isLoggedIn,
-        isSelf,
-        navigate,
-        location.pathname,
-        mutate,
-    ]);
+        },
+        [mutate],
+    );
 
-    return { isSelf, pending, toggleFollow };
+    const follow = useFollowToggle({
+        targetId: authorId,
+        isSelf,
+        following,
+        onChanged: useCallback(
+            (next: boolean) => {
+                if (authorId) {
+                    applyFollowState(authorId, next);
+                }
+            },
+            [authorId, applyFollowState],
+        ),
+    });
+
+    return { isSelf, ...follow };
 }

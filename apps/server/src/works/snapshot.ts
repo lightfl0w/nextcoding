@@ -15,13 +15,9 @@ export interface SnapshotFile {
     key: string;
     name: string;
     contentType: string | null;
-    /** 旧格式内联内容；新格式下不存在。 */
     content?: string;
-    /** 旧格式内联内容的编码；纯文本省略。 */
     encoding?: "base64";
-    /** 新格式内容寻址引用，指向 `works/{workId}/blobs/{hash}`。 */
     hash?: string;
-    /** 新格式内容字节数。 */
     size?: number;
 }
 

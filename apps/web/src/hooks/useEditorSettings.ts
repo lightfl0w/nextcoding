@@ -45,7 +45,6 @@ function readFontFamily(): string {
         : DEFAULT_EDITOR_FONT_FAMILY;
 }
 
-/** 默认不自动保存草稿，仅当用户在设置里显式开启。 */
 function readAutoSaveDraft(): boolean {
     return localStorage.getItem(AUTO_SAVE_DRAFT_KEY) === "true";
 }

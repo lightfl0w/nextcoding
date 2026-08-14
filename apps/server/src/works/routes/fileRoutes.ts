@@ -16,7 +16,7 @@ import {
     toBase64,
     toText,
 } from "../content.js";
-import { requireWorkAuthor } from "../guards.js";
+import { requireWorkAuthor, authorizeWorkRead } from "../guards.js";
 import { exceedsFileSizeLimit, fileSizeLimitMessage } from "../limits.js";
 import { fileStorageKey, isValidFileName } from "../naming.js";
 import {
@@ -35,6 +35,11 @@ export const fileRoutes = new Hono<AuthenticatedEnv>();
 
 fileRoutes.get("/:id/files", async (c) => {
     const workId = c.req.param("id");
+    const access = await authorizeWorkRead(c, workId);
+    if (!access.ok) {
+        return jsonError(c, "作品不存在", 404);
+    }
+
     const [exists, files] = await Promise.all([
         workExists(workId),
         listWorkFiles(workId),
@@ -47,12 +52,18 @@ fileRoutes.get("/:id/files", async (c) => {
 });
 
 fileRoutes.get("/:id/files/content", async (c) => {
+    const workId = c.req.param("id");
+    const access = await authorizeWorkRead(c, workId);
+    if (!access.ok) {
+        return jsonError(c, "作品不存在", 404);
+    }
+
     const key = c.req.query("key");
     if (!key) {
         return jsonError(c, "缺少 key", 400);
     }
 
-    const file = await findWorkFileByKey(c.req.param("id"), key);
+    const file = await findWorkFileByKey(workId, key);
     if (!file) {
         return jsonError(c, "文件不存在", 404);
     }

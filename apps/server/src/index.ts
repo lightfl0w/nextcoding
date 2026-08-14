@@ -9,9 +9,28 @@ import { notificationRoutes } from "./works/routes/notificationRoutes.js";
 
 const PORT = Number(process.env.PORT) || 3000;
 
+const CORS_ORIGINS = (
+    process.env.CORS_ORIGINS ?? "http://localhost:5173,http://localhost:3000"
+)
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
 const app = new Hono();
 
-app.use(cors());
+app.use(
+    cors({
+        origin: (origin) => {
+            if (!origin || CORS_ORIGINS.includes(origin)) {
+                return origin;
+            }
+            return null;
+        },
+        credentials: true,
+        allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowHeaders: ["Content-Type", "Authorization"],
+    }),
+);
 app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 app.route("/api/users", userRoutes);
 app.route("/api/works", workRoutes);

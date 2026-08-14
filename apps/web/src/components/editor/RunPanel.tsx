@@ -1,13 +1,13 @@
 import { Button, Chip, Spinner } from "@heroui/react";
-import { Terminal, type TerminalHandle } from "@wterm/react";
+import { Terminal } from "@wterm/react";
 import type { RunResult } from "clientbox";
 import { Eraser, Terminal as TerminalIcon, X } from "lucide-react";
 import { useTheme } from "next-themes";
-import { memo, useCallback, useEffect, useRef } from "react";
+import { memo } from "react";
 import "@wterm/dom/css";
 
 import type { OutputLine } from "~/hooks/useCodeRunner";
-import { formatOutputLines } from "~/lib/run";
+import { useTerminalSession } from "~/hooks/useTerminalSession";
 
 /**
  * 运行输出终端。
@@ -50,88 +50,13 @@ export const RunPanel = memo(function RunPanel({
     onCancelInput: () => void;
 }) {
     const { resolvedTheme } = useTheme();
-    const termRef = useRef<TerminalHandle>(null);
-    const lineBufferRef = useRef("");
-    const writtenCountRef = useRef(0);
-    const outputRef = useRef(output);
-    outputRef.current = output;
-    const awaitingRef = useRef(awaitingInput);
-    awaitingRef.current = awaitingInput;
-    const submitInputRef = useRef(onSubmitInput);
-    submitInputRef.current = onSubmitInput;
-    const cancelInputRef = useRef(onCancelInput);
-    cancelInputRef.current = onCancelInput;
-
-    const writeOutput = useCallback((lines: OutputLine[]) => {
-        const term = termRef.current;
-        if (!term || lines.length === 0) {
-            return;
-        }
-        term.write(formatOutputLines(lines));
-    }, []);
-
-    useEffect(() => {
-        const term = termRef.current;
-        if (!term) {
-            return;
-        }
-        if (output.length === 0) {
-            if (writtenCountRef.current !== 0) {
-                writtenCountRef.current = 0;
-                term.write("\x1b[2J\x1b[3J\x1b[H");
-            }
-            return;
-        }
-        const pending = output.slice(writtenCountRef.current);
-        writtenCountRef.current = output.length;
-        writeOutput(pending);
-    }, [output, writeOutput]);
-
-    const handleReady = useCallback(() => {
-        const lines = outputRef.current;
-        if (lines.length > 0) {
-            writeOutput(lines);
-        }
-        writtenCountRef.current = lines.length;
-    }, [writeOutput]);
-
-    const handleData = useCallback((data: string) => {
-        if (!awaitingRef.current) {
-            return;
-        }
-        const term = termRef.current;
-        for (const ch of data) {
-            if (ch === "\r") {
-                const line = lineBufferRef.current;
-                lineBufferRef.current = "";
-                term?.write("\r\n");
-                submitInputRef.current(line);
-            } else if (ch === "\x7f") {
-                if (lineBufferRef.current.length > 0) {
-                    lineBufferRef.current = lineBufferRef.current.slice(0, -1);
-                    term?.write("\b \b");
-                }
-            } else if (ch === "\x1b") {
-                lineBufferRef.current = "";
-                cancelInputRef.current();
-            } else if (ch >= " ") {
-                lineBufferRef.current += ch;
-                term?.write(ch);
-            }
-        }
-    }, []);
-
-    useEffect(() => {
-        if (awaitingInput) {
-            termRef.current?.focus();
-        }
-    }, [awaitingInput]);
-
-    const handleClear = useCallback(() => {
-        writtenCountRef.current = 0;
-        termRef.current?.write("\x1b[2J\x1b[3J\x1b[H");
-        onClear();
-    }, [onClear]);
+    const terminal = useTerminalSession({
+        output,
+        awaitingInput,
+        onSubmitInput,
+        onCancelInput,
+        onClear,
+    });
 
     if (!open) {
         return null;
@@ -146,16 +71,16 @@ export const RunPanel = memo(function RunPanel({
                 awaitingInput={awaitingInput}
                 label={label}
                 result={result}
-                onClear={handleClear}
+                onClear={terminal.handleClear}
                 onClose={onClose}
             />
             <Terminal
-                ref={termRef}
+                ref={terminal.termRef}
                 theme={resolvedTheme === "dark" ? "monokai" : "light"}
                 autoResize
                 cursorBlink
-                onData={handleData}
-                onReady={handleReady}
+                onData={terminal.handleData}
+                onReady={terminal.handleReady}
                 className="flex-1 min-h-0 w-full"
             />
         </div>

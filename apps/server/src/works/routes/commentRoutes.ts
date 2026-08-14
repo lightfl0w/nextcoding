@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { type AuthenticatedEnv, requireSession } from "../../http/guards.js";
+import { authorizeWorkRead } from "../guards.js";
 import {
     type JsonBody,
     jsonError,
@@ -20,7 +21,13 @@ import { insertNotification } from "../socialRepository.js";
 export const commentRoutes = new Hono<AuthenticatedEnv>();
 
 commentRoutes.get("/:id/comments", async (c) => {
-    const rows = await listComments(c.req.param("id"), COMMENT_PAGE_SIZE);
+    const workId = c.req.param("id");
+    const access = await authorizeWorkRead(c, workId);
+    if (!access.ok) {
+        return jsonError(c, "作品不存在", 404);
+    }
+
+    const rows = await listComments(workId, COMMENT_PAGE_SIZE);
     return c.json(rows.map(toComment));
 });
 
@@ -93,9 +100,6 @@ async function resolveReplyTarget(
     const parent = await findComment(parentId);
     if (!parent || parent.workId !== workId) {
         return { ok: false, error: "父评论不存在" };
-    }
-    if (parent.parentId) {
-        return { ok: false, error: "只能回复一级评论" };
     }
     return { ok: true, userId: parent.userId };
 }

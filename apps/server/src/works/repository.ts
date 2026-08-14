@@ -202,6 +202,18 @@ export async function findWorkOwnerId(workId: string) {
     return row?.userId ?? null;
 }
 
+/**
+ * 查询作品的访问控制信息（作者与发布状态）。
+ * @param workId - 作品 ID。
+ */
+export async function findWorkAccess(workId: string) {
+    const [row] = await db
+        .select({ userId: work.userId, status: work.status })
+        .from(work)
+        .where(eq(work.id, workId));
+    return row ?? null;
+}
+
 export async function findPublishedWorkOwnerId(workId: string) {
     const [row] = await db
         .select({ userId: work.userId })

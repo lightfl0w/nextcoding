@@ -54,6 +54,12 @@ export const auth = betterAuth({
         },
     },
 
+    rateLimit: {
+        enabled: true,
+        window: Number(process.env.AUTH_RATE_LIMIT_WINDOW) || 60,
+        max: Number(process.env.AUTH_RATE_LIMIT_MAX) || 100,
+    },
+
     trustedOrigins: ["http://localhost:5173", "http://localhost:3000"],
 
     advanced: {

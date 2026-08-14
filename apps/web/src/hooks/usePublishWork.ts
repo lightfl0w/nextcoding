@@ -14,7 +14,6 @@ interface PublishWorkOptions {
     readDraft: (key: string) => string | null;
     mutate: GlobalMutate;
     navigate: Navigate;
-    /** 待创建模式：把本地文件持久化为新作品，返回新 workId；失败返回 `null`。 */
     persistPending: () => Promise<string | null>;
 }
 

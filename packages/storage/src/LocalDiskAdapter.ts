@@ -57,23 +57,28 @@ export class LocalDiskStorage implements StorageAdapter {
             return keys;
         }
 
-        const walk = async (current: string): Promise<void> => {
-            let entries: Dirent[];
-            try {
-                entries = await readdir(current, { withFileTypes: true });
-            } catch {
-                return;
-            }
-            for (const entry of entries) {
-                const full = join(current, entry.name);
-                if (entry.isDirectory()) {
-                    await walk(full);
-                } else {
-                    keys.push(relative(base, full).split(sep).join("/"));
-                }
-            }
-        };
-        await walk(dir);
+        await walk(dir, base, keys);
         return keys;
+    }
+}
+
+async function walk(
+    current: string,
+    base: string,
+    keys: string[],
+): Promise<void> {
+    let entries: Dirent[];
+    try {
+        entries = await readdir(current, { withFileTypes: true });
+    } catch {
+        return;
+    }
+    for (const entry of entries) {
+        const full = join(current, entry.name);
+        if (entry.isDirectory()) {
+            await walk(full, base, keys);
+        } else {
+            keys.push(relative(base, full).split(sep).join("/"));
+        }
     }
 }

@@ -1,14 +1,12 @@
-import { Card, Skeleton } from "@heroui/react";
+import { Card, Skeleton, toast } from "@heroui/react";
 import { MessageCircle } from "lucide-react";
-import { memo } from "react";
+import { memo, useCallback, useState } from "react";
 import type { KeyedMutator } from "swr";
 import { useAuth } from "~/hooks/useAuth";
 import { useCommentComposer } from "~/hooks/useCommentComposer";
-import {
-    type CommentThread,
-    useCommentThreads,
-} from "~/hooks/useCommentThreads";
+import { type CommentNode, useCommentThreads } from "~/hooks/useCommentThreads";
 import type { Comment } from "~/lib/api";
+import { postComment } from "~/lib/api";
 import { CommentComposer, SignInPrompt } from "./CommentComposer";
 import { CommentRow } from "./CommentRow";
 
@@ -43,9 +41,7 @@ export const CommentsSection = memo(function CommentsSection({
                         <CommentComposer
                             draft={composer.draft}
                             isPosting={composer.isPosting}
-                            replyTarget={composer.replyTarget}
                             onDraftChange={composer.setDraft}
-                            onCancelReply={composer.clearReplyTarget}
                             onSubmit={composer.submit}
                         />
                     ) : (
@@ -57,17 +53,15 @@ export const CommentsSection = memo(function CommentsSection({
 
                     <div className="flex flex-col gap-1">
                         {threads.map((thread) => (
-                            <ThreadBlock
+                            <CommentBranch
                                 key={thread.root.id}
-                                thread={thread}
+                                comment={thread.root}
+                                replies={thread.children}
+                                depth={0}
                                 canReply={isLoggedIn}
+                                workId={workId}
                                 focusCommentId={focusCommentId}
-                                onReply={(name) =>
-                                    composer.setReplyTarget({
-                                        rootId: thread.root.id,
-                                        name,
-                                    })
-                                }
+                                onReload={mutate}
                             />
                         ))}
                     </div>
@@ -77,37 +71,142 @@ export const CommentsSection = memo(function CommentsSection({
     );
 });
 
-function ThreadBlock({
-    thread,
+const INITIAL_VISIBLE_CHILDREN = 3;
+
+const MAX_INDENT_DEPTH = 3;
+
+const REPLY_CONTAINER_CLASS =
+    "ml-12 mt-1 mb-2 pl-4 border-l-2 border-default-200/70 flex flex-col gap-1";
+
+function containsComment(
+    node: CommentNode,
+    id: string | null | undefined,
+): boolean {
+    if (!id) {
+        return false;
+    }
+    if (node.comment.id === id) {
+        return true;
+    }
+    return node.children.some((child) => containsComment(child, id));
+}
+
+function CommentBranch({
+    comment,
+    replies,
+    depth,
+    replyToName,
     canReply,
+    workId,
     focusCommentId,
-    onReply,
+    onReload,
 }: {
-    thread: CommentThread;
+    comment: Comment;
+    replies: CommentNode[];
+    depth: number;
+    replyToName?: string;
     canReply: boolean;
+    workId: string;
     focusCommentId?: string | null;
-    onReply: (name: string) => void;
+    onReload: () => Promise<unknown>;
 }) {
+    const [isReplying, setIsReplying] = useState(false);
+    const [draft, setDraft] = useState("");
+    const [isPosting, setIsPosting] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(
+        () =>
+            focusCommentId != null &&
+            replies.some((child) => containsComment(child, focusCommentId)),
+    );
+
+    const authorName = comment.author.name ?? "匿名";
+    const isReply = depth > 0;
+
+    const totalReplies = replies.length;
+    const hasMoreReplies = totalReplies > INITIAL_VISIBLE_CHILDREN;
+    const visibleReplies =
+        hasMoreReplies && !isExpanded
+            ? replies.slice(0, INITIAL_VISIBLE_CHILDREN)
+            : replies;
+
+    const closeReply = useCallback(() => {
+        setIsReplying(false);
+        setDraft("");
+    }, []);
+
+    const submitReply = useCallback(async () => {
+        const content = draft.trim();
+        if (!content || isPosting || !isReplying) {
+            return;
+        }
+
+        setIsPosting(true);
+        try {
+            await postComment(workId, content, comment.id);
+            setDraft("");
+            setIsReplying(false);
+            await onReload();
+        } catch (error) {
+            toast.danger((error as Error).message);
+        } finally {
+            setIsPosting(false);
+        }
+    }, [workId, draft, isPosting, isReplying, comment.id, onReload]);
+
     return (
         <div className="flex flex-col">
             <CommentRow
-                comment={thread.root}
+                comment={comment}
+                isReply={isReply}
                 canReply={canReply}
-                focus={focusCommentId === thread.root.id}
-                onReply={onReply}
+                focus={focusCommentId === comment.id}
+                replyToName={replyToName}
+                onReply={() => setIsReplying(true)}
             />
-            {thread.replies.length > 0 && (
-                <div className="ml-12 mt-1 mb-2 pl-4 border-l-2 border-default-200/70 flex flex-col gap-1">
-                    {thread.replies.map((reply) => (
-                        <CommentRow
-                            key={reply.id}
-                            comment={reply}
-                            isReply
+            {isReplying && (
+                <div className={isReply ? "pt-1 pb-2" : "ml-12 mt-1 mb-2 pl-4"}>
+                    <CommentComposer
+                        draft={draft}
+                        isPosting={isPosting}
+                        replyTarget={{ name: authorName }}
+                        onDraftChange={setDraft}
+                        onCancelReply={closeReply}
+                        onSubmit={submitReply}
+                    />
+                </div>
+            )}
+            {replies.length > 0 && (
+                <div
+                    className={
+                        depth < MAX_INDENT_DEPTH
+                            ? REPLY_CONTAINER_CLASS
+                            : "mt-1 flex flex-col gap-1"
+                    }
+                >
+                    {visibleReplies.map((child) => (
+                        <CommentBranch
+                            key={child.comment.id}
+                            comment={child.comment}
+                            replies={child.children ?? []}
+                            depth={depth + 1}
+                            replyToName={authorName}
                             canReply={canReply}
-                            focus={focusCommentId === reply.id}
-                            onReply={onReply}
+                            workId={workId}
+                            focusCommentId={focusCommentId}
+                            onReload={onReload}
                         />
                     ))}
+                    {hasMoreReplies && (
+                        <button
+                            type="button"
+                            onClick={() => setIsExpanded((value) => !value)}
+                            className="w-fit text-xs text-foreground/50 hover:text-primary transition-colors"
+                        >
+                            {isExpanded
+                                ? "收起回复"
+                                : `展开全部 ${totalReplies} 条回复`}
+                        </button>
+                    )}
                 </div>
             )}
         </div>

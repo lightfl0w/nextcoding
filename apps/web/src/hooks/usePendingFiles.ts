@@ -20,44 +20,38 @@ export function usePendingFiles() {
 
     const hasFiles = files.length > 0;
 
-    const createFile = useCallback(
-        (name: string): CreatedFile => {
-            const trimmed = name.trim();
-            if (!trimmed) {
-                return { outcome: "duplicate" };
-            }
-            if (filesRef.current.some((file) => file.name === trimmed)) {
-                return { outcome: "duplicate" };
-            }
-            const file: PendingFile = {
-                key: crypto.randomUUID(),
-                name: trimmed,
-                content: "",
-            };
-            setFiles((current) => [...current, file]);
-            return { outcome: "created", key: file.key, version: 1 };
-        },
-        [],
-    );
+    const createFile = useCallback((name: string): CreatedFile => {
+        const trimmed = name.trim();
+        if (!trimmed) {
+            return { outcome: "duplicate" };
+        }
+        if (filesRef.current.some((file) => file.name === trimmed)) {
+            return { outcome: "duplicate" };
+        }
+        const file: PendingFile = {
+            key: crypto.randomUUID(),
+            name: trimmed,
+            content: "",
+        };
+        setFiles((current) => [...current, file]);
+        return { outcome: "created", key: file.key, version: 1 };
+    }, []);
 
-    const renameFile = useCallback(
-        (key: string, newName: string): boolean => {
-            const trimmed = newName.trim();
-            if (!trimmed) {
-                return false;
-            }
-            if (filesRef.current.some((file) => file.name === trimmed)) {
-                return false;
-            }
-            setFiles((current) =>
-                current.map((file) =>
-                    file.key === key ? { ...file, name: trimmed } : file,
-                ),
-            );
-            return true;
-        },
-        [],
-    );
+    const renameFile = useCallback((key: string, newName: string): boolean => {
+        const trimmed = newName.trim();
+        if (!trimmed) {
+            return false;
+        }
+        if (filesRef.current.some((file) => file.name === trimmed)) {
+            return false;
+        }
+        setFiles((current) =>
+            current.map((file) =>
+                file.key === key ? { ...file, name: trimmed } : file,
+            ),
+        );
+        return true;
+    }, []);
 
     const removeFile = useCallback((key: string) => {
         setFiles((current) => current.filter((file) => file.key !== key));
@@ -72,12 +66,10 @@ export function usePendingFiles() {
 
     const readContent = useCallback(
         (key: string) =>
-            filesRef.current.find((file) => file.key === key)?.content ??
-            null,
+            filesRef.current.find((file) => file.key === key)?.content ?? null,
         [],
     );
 
-    /** 派生给 FileExplorer / Monaco / 运行使用的文件列表。 */
     const workFiles = useMemo<WorkFile[]>(
         () =>
             files.map((file) => ({

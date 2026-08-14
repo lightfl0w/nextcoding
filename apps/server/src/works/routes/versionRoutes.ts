@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type { AuthenticatedEnv } from "../../http/guards.js";
 import { jsonError, readJsonBody, readTrimmed } from "../../http/responses.js";
 import { getStorage } from "../../storage/storageClient.js";
-import { requireWorkAuthor } from "../guards.js";
+import { requireWorkAuthor, authorizeWorkRead } from "../guards.js";
 import { VERSIONS_PAGE_SIZE } from "../limits.js";
 import {
     fileNameFromKey,
@@ -34,20 +34,29 @@ import {
 export const versionRoutes = new Hono<AuthenticatedEnv>();
 
 versionRoutes.get("/:id/versions", async (c) => {
-    const rows = await listVersionSummaries(
-        c.req.param("id"),
-        VERSIONS_PAGE_SIZE,
-    );
+    const workId = c.req.param("id");
+    const access = await authorizeWorkRead(c, workId);
+    if (!access.ok) {
+        return jsonError(c, "作品不存在", 404);
+    }
+
+    const rows = await listVersionSummaries(workId, VERSIONS_PAGE_SIZE);
     return c.json(rows);
 });
 
 versionRoutes.get("/:id/versions/:version", async (c) => {
+    const workId = c.req.param("id");
+    const access = await authorizeWorkRead(c, workId);
+    if (!access.ok) {
+        return jsonError(c, "作品不存在", 404);
+    }
+
     const version = parseVersionNumber(c.req.param("version"));
     if (version === null) {
         return jsonError(c, "版本号不合法", 400);
     }
 
-    const raw = await readSnapshotBytes(c.req.param("id"), version);
+    const raw = await readSnapshotBytes(workId, version);
     if (raw === "missing-version") {
         return jsonError(c, "版本不存在", 404);
     }
@@ -55,7 +64,6 @@ versionRoutes.get("/:id/versions/:version", async (c) => {
         return jsonError(c, "快照数据丢失", 500);
     }
 
-    const workId = c.req.param("id");
     const snapshot = parseSnapshot(raw);
     const files = await Promise.all(
         snapshot.files.map(async (file) => {
