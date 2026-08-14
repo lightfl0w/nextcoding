@@ -21,7 +21,7 @@ export function useUnreadCount() {
         if (!userId) {
             return;
         }
-        return subscribeNotificationStream((event) => {
+        return subscribeNotificationStream(userId, (event) => {
             if (event.type === "reconnected") {
                 mutate();
             } else {

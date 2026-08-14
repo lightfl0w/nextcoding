@@ -25,7 +25,7 @@ export function useNotifications() {
         if (!userId) {
             return;
         }
-        return subscribeNotificationStream((event) => {
+        return subscribeNotificationStream(userId, (event) => {
             if (event.type === "notification") {
                 mutate(
                     (current = []) =>
