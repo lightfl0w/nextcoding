@@ -78,6 +78,20 @@ const MAX_INDENT_DEPTH = 3;
 const REPLY_CONTAINER_CLASS =
     "ml-12 mt-1 mb-2 pl-4 border-l-2 border-default-200/70 flex flex-col gap-1";
 
+/**
+ * 统计评论总数，子评论与更深层级的子子评论一并计入。
+ * @param nodes - 子评论节点。
+ * @returns 所有层级的评论总数。
+ */
+function countComments(nodes: CommentNode[]): number {
+    let count = 0;
+    for (const node of nodes) {
+        count += 1;
+        count += countComments(node.children);
+    }
+    return count;
+}
+
 function containsComment(
     node: CommentNode,
     id: string | null | undefined,
@@ -122,12 +136,12 @@ function CommentBranch({
     const authorName = comment.author.name ?? "匿名";
     const isReply = depth > 0;
 
-    const totalReplies = replies.length;
+    const totalReplies = countComments(replies);
     const hasMoreReplies = totalReplies > INITIAL_VISIBLE_CHILDREN;
-    const visibleReplies =
-        hasMoreReplies && !isExpanded
-            ? replies.slice(0, INITIAL_VISIBLE_CHILDREN)
-            : replies;
+    const isCollapsed = hasMoreReplies && !isExpanded;
+    const visibleReplies = isCollapsed
+        ? replies.slice(0, INITIAL_VISIBLE_CHILDREN)
+        : replies;
 
     const closeReply = useCallback(() => {
         setIsReplying(false);
@@ -187,7 +201,7 @@ function CommentBranch({
                         <CommentBranch
                             key={child.comment.id}
                             comment={child.comment}
-                            replies={child.children ?? []}
+                            replies={isCollapsed ? [] : (child.children ?? [])}
                             depth={depth + 1}
                             replyToName={authorName}
                             canReply={canReply}
