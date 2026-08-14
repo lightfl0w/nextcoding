@@ -1,14 +1,16 @@
+import { useEffect } from "react";
 import useSWR from "swr";
 import { useAuth } from "~/hooks/useAuth";
 import type { AppNotification } from "~/lib/api";
 import { fetchNotifications, notificationsKey } from "~/lib/api";
+import { subscribeNotificationStream } from "~/lib/notificationStream";
 
-const REFRESH_INTERVAL_MS = 30_000;
+const MAX_NOTIFICATIONS = 100;
 const EMPTY_NOTIFICATIONS: AppNotification[] = [];
 
 /**
  * 通知列表。
- * @remarks 30 秒轮询刷新。
+ * @remarks 通过 SSE 实时推送，断线重连后自动重新拉取。
  */
 export function useNotifications() {
     const { user } = useAuth();
@@ -17,12 +19,38 @@ export function useNotifications() {
     const { data, isLoading, mutate } = useSWR<AppNotification[]>(
         userId ? notificationsKey(userId) : null,
         fetchNotifications,
-        { refreshInterval: REFRESH_INTERVAL_MS },
     );
+
+    useEffect(() => {
+        if (!userId) {
+            return;
+        }
+        return subscribeNotificationStream((event) => {
+            if (event.type === "notification") {
+                mutate(
+                    (current = []) =>
+                        mergeNotification(current, event.notification),
+                    { revalidate: false },
+                );
+            } else if (event.type === "reconnected") {
+                mutate();
+            }
+        });
+    }, [userId, mutate]);
 
     return {
         notifications: data ?? EMPTY_NOTIFICATIONS,
         isLoading: Boolean(userId) && isLoading,
         mutate,
     };
+}
+
+function mergeNotification(
+    list: AppNotification[],
+    next: AppNotification,
+): AppNotification[] {
+    return [next, ...list.filter((item) => item.id !== next.id)].slice(
+        0,
+        MAX_NOTIFICATIONS,
+    );
 }

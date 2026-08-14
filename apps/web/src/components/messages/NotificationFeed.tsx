@@ -18,6 +18,7 @@ interface NotificationFeedProps {
     readFilter: NotificationFilter;
     typeFilter: NotificationTypeFilter;
     onReadFilterChange: (filter: NotificationFilter) => void;
+    onMarkRead: (id: string) => void;
 }
 
 /**
@@ -39,6 +40,7 @@ export function NotificationFeed({
     readFilter,
     typeFilter,
     onReadFilterChange,
+    onMarkRead,
 }: NotificationFeedProps) {
     return (
         <Tabs
@@ -80,7 +82,10 @@ export function NotificationFeed({
                         typeFilter={typeFilter}
                     />
                 ) : (
-                    <NotificationList groups={groups} />
+                    <NotificationList
+                        groups={groups}
+                        onMarkRead={onMarkRead}
+                    />
                 )}
             </Tabs.Panel>
         </Tabs>

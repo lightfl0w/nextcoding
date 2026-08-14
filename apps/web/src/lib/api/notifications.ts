@@ -5,6 +5,10 @@ export function notificationsPath(): string {
     return "/api/notifications";
 }
 
+export function notificationsStreamPath(): string {
+    return `${notificationsPath()}/stream`;
+}
+
 /**
  * 通知列表的 SWR key。
  * @param userId - 用户 ID，避免切换账号后串数据。
@@ -32,6 +36,17 @@ export function fetchUnreadCount(): Promise<{ count: number }> {
 export function markNotificationsRead(): Promise<{ ok: boolean }> {
     return mutateJson(
         `${notificationsPath()}/read-all`,
+        "POST",
+        undefined,
+        "标记已读失败",
+    );
+}
+
+export function markNotificationRead(
+    id: string,
+): Promise<{ ok: boolean; unreadCount: number }> {
+    return mutateJson(
+        `${notificationsPath()}/${id}/read`,
         "POST",
         undefined,
         "标记已读失败",

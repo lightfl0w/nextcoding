@@ -16,6 +16,7 @@ import {
     insertRemix,
     listDirectRemixes,
 } from "../socialRepository.js";
+import { publishNewNotification } from "../notificationBus.js";
 
 export const remixRoutes = new Hono<AuthenticatedEnv>();
 
@@ -47,6 +48,7 @@ remixRoutes.post("/:id/remix", requireSession, async (c) => {
             actorId: userId,
             workId: forkId,
         });
+        await publishNewNotification(detail.userId);
     }
 
     return c.json({ id: forkId, title: detail.title }, 201);

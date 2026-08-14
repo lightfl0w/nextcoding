@@ -17,6 +17,7 @@ import {
 } from "../repository.js";
 import { toComment } from "../serializers.js";
 import { insertNotification } from "../socialRepository.js";
+import { publishNewNotification } from "../notificationBus.js";
 
 export const commentRoutes = new Hono<AuthenticatedEnv>();
 
@@ -75,6 +76,7 @@ commentRoutes.post("/:id/comments", requireSession, async (c) => {
             workId,
             commentId: inserted.id,
         });
+        await publishNewNotification(replyTarget.userId);
     }
 
     return c.json(

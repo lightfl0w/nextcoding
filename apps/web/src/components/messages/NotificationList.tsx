@@ -9,7 +9,13 @@ import {
     notificationText,
 } from "~/lib/notifications";
 
-export function NotificationList({ groups }: { groups: NotificationGroup[] }) {
+export function NotificationList({
+    groups,
+    onMarkRead,
+}: {
+    groups: NotificationGroup[];
+    onMarkRead: (id: string) => void;
+}) {
     return (
         <div className="flex flex-col gap-8">
             {groups.map((group) => (
@@ -22,12 +28,12 @@ export function NotificationList({ groups }: { groups: NotificationGroup[] }) {
                             {group.items.length} 条
                         </span>
                     </div>
-                    <div className="flex flex-col">
-                        {group.items.map((item, itemIndex) => (
+                    <div className="flex flex-col gap-2">
+                        {group.items.map((item) => (
                             <NotificationRow
                                 key={item.id}
                                 item={item}
-                                isLast={itemIndex === group.items.length - 1}
+                                onMarkRead={onMarkRead}
                             />
                         ))}
                     </div>
@@ -39,10 +45,10 @@ export function NotificationList({ groups }: { groups: NotificationGroup[] }) {
 
 function NotificationRow({
     item,
-    isLast,
+    onMarkRead,
 }: {
     item: AppNotification;
-    isLast: boolean;
+    onMarkRead: (id: string) => void;
 }) {
     return (
         <div className="group">
@@ -53,14 +59,15 @@ function NotificationRow({
                     {...(item.comment
                         ? { search: { comment: item.comment.id } }
                         : {})}
-                    className={`block transition-colors hover:bg-default-100/60 ${
-                        !isLast ? "" : "rounded-b-2xl"
-                    }`}
+                    className="block rounded-2xl"
                 >
-                    <NotificationCard item={item} isLast={isLast} />
+                    <NotificationCard
+                        item={item}
+                        onMarkRead={onMarkRead}
+                    />
                 </Link>
             ) : (
-                <NotificationCard item={item} isLast={isLast} />
+                <NotificationCard item={item} onMarkRead={onMarkRead} />
             )}
         </div>
     );
@@ -68,10 +75,10 @@ function NotificationRow({
 
 function NotificationCard({
     item,
-    isLast,
+    onMarkRead,
 }: {
     item: AppNotification;
-    isLast: boolean;
+    onMarkRead: (id: string) => void;
 }) {
     const variant =
         item.type === "spark"
@@ -84,9 +91,14 @@ function NotificationCard({
 
     return (
         <div
-            className={`relative grid gap-3 md:gap-4 md:grid-cols-[88px_minmax(0,1fr)_auto] items-center px-4 py-3.5 transition-colors ${
+            onClick={() => {
+                if (!item.read) {
+                    onMarkRead(item.id);
+                }
+            }}
+            className={`relative grid gap-3 md:gap-4 md:grid-cols-[88px_minmax(0,1fr)_auto] items-center px-4 py-3.5 rounded-2xl border border-default-200/60 transition-colors cursor-pointer hover:bg-default-100/60 ${
                 item.read ? "bg-background" : "bg-accent/5"
-            } ${!isLast ? "border-b border-default-200/60" : ""}`}
+            }`}
         >
             {!item.read && (
                 <span

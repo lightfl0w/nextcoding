@@ -8,6 +8,7 @@ import {
     insertNotification,
     insertSpark,
 } from "../socialRepository.js";
+import { publishNewNotification } from "../notificationBus.js";
 
 export const sparkRoutes = new Hono<AuthenticatedEnv>();
 
@@ -42,6 +43,7 @@ sparkRoutes.post("/:id/spark", requireSession, async (c) => {
         actorId: userId,
         workId,
     });
+    await publishNewNotification(ownerId);
 
     return c.json({ sparked: true });
 });

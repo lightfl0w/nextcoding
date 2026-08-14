@@ -49,6 +49,7 @@ vi.mock("../src/works/socialRepository.js", () => ({
     listDirectRemixes: vi.fn(),
     listNotifications: vi.fn(),
     markAllNotificationsRead: vi.fn(),
+    markNotificationRead: vi.fn(),
 }));
 
 vi.mock("../src/users/repository.js", () => ({
@@ -69,6 +70,7 @@ vi.mock("../src/storage/storageClient.js", () => ({
 
 import { auth } from "@nextcoding/auth";
 import { getStorage } from "../src/storage/storageClient.js";
+import * as socialRepo from "../src/works/socialRepository.js";
 import * as workRepo from "../src/works/repository.js";
 import { createMemoryStorage, makeSession } from "./helpers";
 
@@ -87,6 +89,8 @@ beforeEach(() => {
         userId: "owner",
         status: "published",
     });
+    vi.mocked(socialRepo.listNotifications).mockResolvedValue([]);
+    vi.mocked(socialRepo.countUnreadNotifications).mockResolvedValue(0);
     storage.store.clear();
     storage.putCalls.length = 0;
 });

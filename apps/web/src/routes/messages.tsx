@@ -8,7 +8,7 @@ import {
 } from "~/components/messages/MessagesSidebar";
 import { NotificationFeed } from "~/components/messages/NotificationFeed";
 import { useNotifications } from "~/hooks/useNotifications";
-import { markNotificationsRead } from "~/lib/api";
+import { markNotificationRead, markNotificationsRead } from "~/lib/api";
 import {
     countNotifications,
     groupNotifications,
@@ -57,6 +57,21 @@ function MessageCenterRoute() {
         }
     };
 
+    const markRead = async (id: string) => {
+        try {
+            await markNotificationRead(id);
+            mutate(
+                (current = []) =>
+                    current.map((item) =>
+                        item.id === id ? { ...item, read: true } : item,
+                    ),
+                false,
+            );
+        } catch (error) {
+            toast.danger((error as Error).message);
+        }
+    };
+
     return (
         <div className="mx-auto w-full max-w-6xl p-8">
             <div className="flex flex-col gap-6 md:grid md:gap-8 md:grid-cols-[minmax(0,1fr)_220px]">
@@ -82,6 +97,7 @@ function MessageCenterRoute() {
                         readFilter={readFilter}
                         typeFilter={typeFilter}
                         onReadFilterChange={setReadFilter}
+                        onMarkRead={markRead}
                     />
                 </main>
 

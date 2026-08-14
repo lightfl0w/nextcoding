@@ -133,3 +133,15 @@ export function markAllNotificationsRead(userId: string) {
         .set({ read: true })
         .where(eq(notification.userId, userId));
 }
+
+export function markNotificationRead(notificationId: string, userId: string) {
+    return db
+        .update(notification)
+        .set({ read: true })
+        .where(
+            and(
+                eq(notification.id, notificationId),
+                eq(notification.userId, userId),
+            ),
+        );
+}

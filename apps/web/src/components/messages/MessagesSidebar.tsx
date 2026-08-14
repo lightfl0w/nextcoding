@@ -62,7 +62,7 @@ export function MessagesSidebar({
                 </span>
             </div>
             <nav className="flex flex-col gap-1" aria-label="通知类型">
-                {options.map(({ key, label, count, unread, icon: Icon }) => {
+                {options.map(({ key, label, count, icon: Icon }) => {
                     const selected = typeFilter === key;
                     return (
                         <ToggleButton

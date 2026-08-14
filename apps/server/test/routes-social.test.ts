@@ -1,5 +1,11 @@
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
+import {
+    publishNewNotification,
+    publishToUser,
+    subscribeUser,
+    type NotificationStreamEvent,
+} from "../src/works/notificationBus.js";
 import * as socialRepo from "../src/works/socialRepository.js";
 import * as workRepo from "../src/works/repository.js";
 import { commentRoutes } from "../src/works/routes/commentRoutes.js";
@@ -493,6 +499,73 @@ describe("notificationRoutes", () => {
         expect(socialRepo.markAllNotificationsRead).toHaveBeenCalledWith(
             "user-1",
         );
+    });
+
+    it("标记单条已读", async () => {
+        vi.mocked(socialRepo.countUnreadNotifications).mockResolvedValue(2);
+        const res = await app().request("/api/notifications/n1/read", {
+            method: "POST",
+        });
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual({ ok: true, unreadCount: 2 });
+        expect(socialRepo.markNotificationRead).toHaveBeenCalledWith(
+            "n1",
+            "user-1",
+        );
+    });
+
+    it("SSE 流推送新通知", async () => {
+        vi.mocked(socialRepo.listNotifications).mockResolvedValue([
+            notificationRow(),
+        ]);
+        vi.mocked(socialRepo.countUnreadNotifications).mockResolvedValue(1);
+
+        const res = await app().request("/api/notifications/stream");
+        expect(res.status).toBe(200);
+        expect(res.headers.get("content-type")).toContain("text/event-stream");
+
+        await publishNewNotification("user-1");
+
+        const reader = res.body!.getReader();
+        const { value, done } = await reader.read();
+        expect(done).toBe(false);
+        expect(new TextDecoder().decode(value)).toContain(
+            "event: notification",
+        );
+        await reader.cancel();
+    });
+
+    it("总线推送最新通知与未读数", async () => {
+        vi.mocked(socialRepo.listNotifications).mockResolvedValue([
+            notificationRow(),
+        ]);
+        vi.mocked(socialRepo.countUnreadNotifications).mockResolvedValue(2);
+
+        const received: NotificationStreamEvent[] = [];
+        const unsubscribe = subscribeUser("user-1", (event) =>
+            received.push(event),
+        );
+        try {
+            await publishNewNotification("user-1");
+        } finally {
+            unsubscribe();
+        }
+
+        expect(received).toHaveLength(1);
+        expect(received[0]).toMatchObject({
+            type: "notification",
+            payload: { unreadCount: 2 },
+        });
+    });
+
+    it("取消订阅后不再收到事件", () => {
+        const received: NotificationStreamEvent[] = [];
+        const unsubscribe = subscribeUser("user-1", (event) =>
+            received.push(event),
+        );
+        unsubscribe();
+        publishToUser("user-1", { type: "unread", payload: { unreadCount: 0 } });
+        expect(received).toHaveLength(0);
     });
 });
 
