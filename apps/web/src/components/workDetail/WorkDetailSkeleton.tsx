@@ -8,7 +8,7 @@ export function WorkDetailSkeleton() {
                 <Skeleton className="size-9 rounded-lg" />
                 <Skeleton className="h-5 w-44 rounded-md" />
             </div>
-            <Skeleton className="h-[260px] w-full rounded-2xl" />
+            <Skeleton className="h-65 w-full rounded-2xl" />
             <div className="flex flex-col gap-3">
                 <Skeleton className="h-9 w-2/3 rounded-lg" />
                 <Skeleton className="h-4 w-64 rounded-md" />

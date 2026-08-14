@@ -155,14 +155,6 @@ function WorkDetailRoute() {
                             />
                         </div>
 
-                        {work.description && (
-                            <SectionCard title="作品简介" icon={Sparkles}>
-                                <p className="text-[15px] leading-relaxed text-foreground/80 whitespace-pre-wrap">
-                                    {work.description}
-                                </p>
-                            </SectionCard>
-                        )}
-
                         <CommentsSection
                             workId={workId}
                             comments={comments}
@@ -173,12 +165,24 @@ function WorkDetailRoute() {
                     </div>
 
                     <aside className="w-full lg:w-80 shrink-0 lg:sticky lg:top-20 flex flex-col gap-6">
+                        {work.description && (
+                            <SectionCard title="作品简介" icon={Sparkles}>
+                                <p className="text-[15px] leading-relaxed text-foreground/80 whitespace-pre-wrap">
+                                    {work.description}
+                                </p>
+                            </SectionCard>
+                        )}
+                        
                         <AuthorCard
                             author={work.author}
                             isSelf={follow.isSelf}
                             isPending={follow.pending}
                             onToggleFollow={follow.toggleFollow}
                         />
+
+                        <SectionCard title="创作脉络" icon={GitFork}>
+                            <CreationTree source={source} remixes={remixes} />
+                        </SectionCard>
 
                         <SectionCard title="版本历史" icon={Hash}>
                             <VersionTimeline
@@ -187,10 +191,6 @@ function WorkDetailRoute() {
                                 isRunning={runner.running}
                                 onRun={(version) => runner.runVersion(version)}
                             />
-                        </SectionCard>
-
-                        <SectionCard title="创作脉络" icon={GitFork}>
-                            <CreationTree source={source} remixes={remixes} />
                         </SectionCard>
 
                         <LikedCard />

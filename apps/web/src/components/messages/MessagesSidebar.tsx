@@ -70,7 +70,7 @@ export function MessagesSidebar({
                             isSelected={selected}
                             onChange={() => onTypeFilterChange(key)}
                             aria-label={`筛选 ${label}`}
-                            className="group h-auto justify-start gap-2.5 px-3 py-2 rounded-xl data-[selected=true]:bg-default-100"
+                            className="w-full group h-auto justify-start gap-2.5 px-3 py-2 rounded-xl data-[selected=true]:bg-default-100"
                         >
                             <Icon
                                 className="size-4 text-foreground/55 group-data-[selected=true]:text-foreground/80"
@@ -78,11 +78,6 @@ export function MessagesSidebar({
                             />
                             <span className="flex flex-1 items-center gap-1.5 min-w-0">
                                 <span className="text-sm">{label}</span>
-                                {unread > 0 && (
-                                    <span className="min-w-4 h-4 px-1 rounded-full bg-danger text-background text-[10px] font-semibold flex items-center justify-center tabular-nums">
-                                        {unread}
-                                    </span>
-                                )}
                             </span>
                             <span className="text-xs text-foreground/40 tabular-nums shrink-0">
                                 {count}
