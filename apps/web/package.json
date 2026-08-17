@@ -10,7 +10,7 @@
         "generate-routes": "tsr generate",
         "build": "dotenv -e ../../.env vite build",
         "preview": "dotenv -e ../../.env vite preview",
-        "test": "vitest run"
+        "test": "dotenv -e ../../.env vitest run"
     },
     "dependencies": {
         "@heroui/react": "^3.2.4",

@@ -73,7 +73,7 @@ export const MessageBubble = memo(function MessageBubble({
                         </span>
                     </div>
                     <div
-                        className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed break-words whitespace-pre-wrap ${
+                        className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed wrap-break-words whitespace-pre-wrap ${
                             isOwn
                                 ? "bg-primary text-primary-foreground rounded-br-md"
                                 : "bg-default-100/70 border border-default-200/70 text-foreground rounded-bl-md"

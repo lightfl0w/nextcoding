@@ -1,128 +1,171 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { messagesStreamPath } from "../src/lib/api/messages";
 import { subscribeMessageStream } from "../src/lib/messageStream";
+import { resetSharedSocket } from "../src/lib/socket";
 
-class FakeEventSource {
-    static instances: FakeEventSource[] = [];
-    readonly url: string;
-    private readonly listeners = new Map<
-        string,
-        Set<(event: unknown) => void>
-    >();
-    closed = false;
+type FakeInstance = {
+    url: string;
+    readyState: number;
+    onopen: (() => void) | null;
+    onmessage: ((evt: { data: unknown }) => void) | null;
+    onerror: ((err: unknown) => void) | null;
+    onclose: (() => void) | null;
+    closeCalled: boolean;
+    closeCode: number | null;
+    pushWireMessage: (event: string, data: unknown) => void;
+    triggerOpen: () => void;
+    triggerAbnormalClose: () => void;
+};
 
-    constructor(url: string) {
-        this.url = url;
-        FakeEventSource.instances.push(this);
-    }
+const instances: FakeInstance[] = [];
 
-    addEventListener(type: string, handler: (event: unknown) => void): void {
-        let set = this.listeners.get(type);
-        if (!set) {
-            set = new Set();
-            this.listeners.set(type, set);
-        }
-        set.add(handler);
-    }
-
-    close(): void {
-        this.closed = true;
-    }
-
-    emit(type: string, data: string): void {
-        const event = { data };
-        this.listeners.get(type)?.forEach((handler) => {
-            handler(event);
-        });
-    }
+function MockWebSocket(this: FakeInstance, url: string) {
+    this.url = url;
+    this.readyState = 0;
+    this.onopen = null;
+    this.onmessage = null;
+    this.onerror = null;
+    this.onclose = null;
+    this.closeCalled = false;
+    this.closeCode = null;
+    instances.push(this);
+    this.pushWireMessage = (event: string, data: unknown) => {
+        const msg = JSON.stringify({ event, data });
+        this.onmessage?.({ data: msg });
+    };
+    this.triggerOpen = () => {
+        this.readyState = 1;
+        this.onopen?.();
+    };
+    this.triggerAbnormalClose = () => {
+        this.readyState = 3;
+        this.onclose?.();
+    };
 }
+
+Object.assign(MockWebSocket.prototype, {
+    close(code = 1000) {
+        const self = this as unknown as FakeInstance;
+        self.closeCalled = true;
+        self.closeCode = code;
+        self.readyState = 3;
+    },
+});
+
+const READY_STATES = { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 };
 
 describe("messageStream", () => {
     beforeEach(() => {
-        vi.stubGlobal("EventSource", FakeEventSource);
-        FakeEventSource.instances = [];
+        instances.length = 0;
+        Object.assign(globalThis, {
+            WebSocket: MockWebSocket as unknown as typeof WebSocket,
+        });
+        Object.assign(MockWebSocket, READY_STATES);
+        vi.resetModules();
     });
 
     afterEach(() => {
-        vi.unstubAllGlobals();
+        resetSharedSocket();
+        vi.clearAllMocks();
     });
 
-    it("首个订阅建立连接，连接指向私信流地址", () => {
+    it("首个订阅建立 WebSocket 连接，端点为 /ws（同源 ws://）", () => {
         const unsubscribe = subscribeMessageStream("u1", vi.fn());
-        expect(FakeEventSource.instances).toHaveLength(1);
-        expect(FakeEventSource.instances[0].url).toBe(messagesStreamPath());
+        expect(instances).toHaveLength(1);
+
+        expect(instances[0].url).toMatch(/ws:\/\/[^/]+\/ws$/);
         unsubscribe();
+        expect(instances[0].closeCalled).toBe(true);
+        expect(instances[0].closeCode).toBe(1000);
     });
 
-    it("同一用户的多个订阅共享一条连接，unread 事件推给所有订阅", () => {
+    it("同一用户多个订阅共享同一条连接，message:unread 事件分发给所有订阅", () => {
         const first = vi.fn();
         const second = vi.fn();
         const unsubFirst = subscribeMessageStream("u1", first);
         const unsubSecond = subscribeMessageStream("u1", second);
-        expect(FakeEventSource.instances).toHaveLength(1);
-        FakeEventSource.instances[0].emit(
-            "unread",
-            JSON.stringify({ count: 3 }),
-        );
+        expect(instances).toHaveLength(1);
+        const sock = instances[0];
+        sock.triggerOpen();
+        sock.pushWireMessage("message:unread", { count: 3 });
         expect(first).toHaveBeenCalledWith({ type: "unread", count: 3 });
         expect(second).toHaveBeenCalledWith({ type: "unread", count: 3 });
         unsubFirst();
+
+        expect(sock.closeCalled).toBe(false);
         unsubSecond();
+        expect(sock.closeCalled).toBe(true);
     });
 
-    it("切换用户后重新建立连接，不复用原用户连接", () => {
+    it("不同用户的订阅复用同一底层连接（browser 同 tab 只开一条），事件由后端 room 隔离", () => {
         const handlerA = vi.fn();
         const handlerB = vi.fn();
         const unsubA = subscribeMessageStream("userA", handlerA);
         const unsubB = subscribeMessageStream("userB", handlerB);
-        expect(FakeEventSource.instances).toHaveLength(2);
-        expect(FakeEventSource.instances[0].closed).toBe(false);
-        expect(FakeEventSource.instances[1].closed).toBe(false);
 
-        FakeEventSource.instances[0].emit(
-            "unread",
-            JSON.stringify({ count: 1 }),
-        );
-        expect(handlerA).toHaveBeenCalledWith({ type: "unread", count: 1 });
-        expect(handlerB).not.toHaveBeenCalled();
+        expect(instances).toHaveLength(1);
+        const sock = instances[0];
+        sock.triggerOpen();
+        sock.pushWireMessage("message:recall", {
+            conversationId: "cA",
+            messageId: "mA",
+        });
 
-        FakeEventSource.instances[1].emit(
-            "unread",
-            JSON.stringify({ count: 2 }),
-        );
-        expect(handlerB).toHaveBeenCalledWith({ type: "unread", count: 2 });
-        expect(handlerA).toHaveBeenCalledTimes(1);
+        expect(handlerA).toHaveBeenCalledWith({
+            type: "recall",
+            conversationId: "cA",
+            messageId: "mA",
+        });
+        expect(handlerB).toHaveBeenCalledWith({
+            type: "recall",
+            conversationId: "cA",
+            messageId: "mA",
+        });
         unsubA();
         unsubB();
     });
 
-    it("message 事件透传会话与消息", () => {
+    it("message:new 事件解析为 type=message 并透传 conversationId/message", () => {
         const handler = vi.fn();
         const unsubscribe = subscribeMessageStream("u1", handler);
-        const payload = {
+        instances[0].triggerOpen();
+        const data = {
             conversationId: "c1",
             message: { id: "m1", content: "你好" },
         };
-        FakeEventSource.instances[0].emit("message", JSON.stringify(payload));
+        instances[0].pushWireMessage("message:new", data);
         expect(handler).toHaveBeenCalledWith({
             type: "message",
             conversationId: "c1",
-            message: payload.message,
+            message: data.message,
         });
         unsubscribe();
     });
 
-    it("最后一个订阅取消后断开对应用户的连接", () => {
-        const unsubA = subscribeMessageStream("userA", vi.fn());
-        const unsubB = subscribeMessageStream("userB", vi.fn());
-        expect(FakeEventSource.instances).toHaveLength(2);
-        unsubA();
-        expect(FakeEventSource.instances[0].closed).toBe(true);
-        expect(FakeEventSource.instances[1].closed).toBe(false);
-        unsubB();
-        expect(FakeEventSource.instances[1].closed).toBe(true);
+    it("open 事件触发 reconnected", () => {
+        const handler = vi.fn();
+        const unsubscribe = subscribeMessageStream("u1", handler);
+        instances[0].triggerOpen();
+        expect(handler).toHaveBeenCalledWith({ type: "reconnected" });
+        vi.useFakeTimers();
+        instances[0].triggerAbnormalClose();
+        vi.runAllTimers();
+        vi.useRealTimers();
+        expect(instances).toHaveLength(2);
+        const newSock = instances[1];
+        newSock.triggerOpen();
+        expect(handler).toHaveBeenCalledWith({ type: "reconnected" });
+        unsubscribe();
+    });
 
-        subscribeMessageStream("userA", vi.fn());
-        expect(FakeEventSource.instances).toHaveLength(3);
+    it("最后一个订阅取消后主动关闭且不重连", () => {
+        const unsubA = subscribeMessageStream("userA", vi.fn());
+        expect(instances[0].closeCalled).toBe(false);
+        unsubA();
+        expect(instances[0].closeCalled).toBe(true);
+
+        vi.useFakeTimers();
+        vi.runAllTimers();
+        vi.useRealTimers();
+        expect(instances).toHaveLength(1);
     });
 });

@@ -133,7 +133,7 @@ export function VersionCompareDialog({
                                             modified={
                                                 selectedFile.modified ?? ""
                                             }
-                                            label={`v${fromVersion} → v${toVersion}`}
+                                            label={`v${fromVersion} 对比 v${toVersion}`}
                                             onClose={() => setSelected(null)}
                                         />
                                     </div>
@@ -225,7 +225,7 @@ export function VersionCompareDialog({
                                             {isLoading ? "对比中…" : "开始对比"}
                                         </Button>
                                         <span className="text-xs text-foreground/40">
-                                            差异按 v{fromVersion ?? "?"} → v
+                                            差异按 v{fromVersion ?? "?"} 对比 v
                                             {toVersion ?? "?"}
                                         </span>
                                     </div>

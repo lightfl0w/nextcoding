@@ -4,14 +4,19 @@ import { devtools } from "@tanstack/devtools-vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 
 import viteReact from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 
 const CROSS_ORIGIN_ISOLATION_HEADERS: Record<string, string> = {
     "Cross-Origin-Opener-Policy": "same-origin",
     "Cross-Origin-Embedder-Policy": "credentialless",
 };
 
+const env = loadEnv("", "../../", "");
+const BACKEND_URL = env.BACKEND_URL || "http://localhost:3000";
+
 const config = defineConfig({
+    envDir: "../../",
+    envPrefix: ["VITE_", "BACKEND_"],
     resolve: {
         tsconfigPaths: true,
         dedupe: ["react", "react-dom"],
@@ -19,8 +24,13 @@ const config = defineConfig({
     server: {
         proxy: {
             "/api": {
-                target: "http://localhost:3000",
+                target: BACKEND_URL,
                 changeOrigin: true,
+            },
+            "/ws": {
+                target: BACKEND_URL,
+                changeOrigin: true,
+                ws: true,
             },
         },
         headers: CROSS_ORIGIN_ISOLATION_HEADERS,

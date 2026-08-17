@@ -30,6 +30,7 @@ function ConversationRoute() {
     const { messages, isLoading, mutate } = useMessages(id);
     const bottomRef = useRef<HTMLDivElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const [userScrolled, setUserScrolled] = useState(false);
 
     const [older, setOlder] = useState<Message[]>([]);
     const [hasMore, setHasMore] = useState(true);
@@ -58,7 +59,7 @@ function ConversationRoute() {
                 return;
             }
             if (event.type === "message") {
-                const incoming = event.message as Message;
+                const incoming = normalizeIncomingMessage(event.message);
                 mutate(
                     (prev) =>
                         prev?.some((m) => m.id === incoming.id)
@@ -82,8 +83,15 @@ function ConversationRoute() {
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: id 作为滚动触发器
     useEffect(() => {
+        setUserScrolled(false);
         bottomRef.current?.scrollIntoView();
     }, [id]);
+
+    useEffect(() => {
+        if (messages.length > 0 && !userScrolled) {
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages, userScrolled]);
 
     const loadMore = useCallback(async () => {
         if (loadingMore || !hasMore) {
@@ -142,7 +150,11 @@ function ConversationRoute() {
 
     const handleScroll = useCallback(
         (e: React.UIEvent<HTMLDivElement>) => {
-            if (e.currentTarget.scrollTop < 24) {
+            const el = e.currentTarget;
+            const isNearBottom =
+                el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+            setUserScrolled(!isNearBottom);
+            if (el.scrollTop < 24) {
                 loadMore();
             }
         },
@@ -198,4 +210,29 @@ function ConversationRoute() {
             <MessageInput onSend={handleSend} />
         </div>
     );
+}
+
+/**
+ * 把服务端实时推送的消息归一化为完整 Message 结构。
+ * 推送负载为扁平字段（senderName/senderImage），REST 查询返回 sender 对象，兼容两者。
+ */
+function normalizeIncomingMessage(raw: unknown): Message {
+    const data = raw as Partial<Message> & {
+        senderName?: string | null;
+        senderImage?: string | null;
+    };
+    const sender: Message["sender"] = data.sender ?? {
+        id: data.senderId ?? "unknown",
+        name: data.senderName ?? null,
+        image: data.senderImage ?? null,
+    };
+    return {
+        id: data.id ?? "",
+        content: data.content ?? "",
+        senderId: data.senderId ?? sender.id,
+        read: data.read ?? false,
+        recalled: data.recalled ?? false,
+        createdAt: data.createdAt ?? new Date().toISOString(),
+        sender,
+    };
 }

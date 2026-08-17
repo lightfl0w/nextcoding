@@ -18,7 +18,7 @@
         "packages/*",
         "apps/*"
     ],
-    "packageManager": "pnpm@11.21.0",
+    "packageManager": "pnpm@11.22.0",
     "devDependencies": {
         "@biomejs/biome": "2.5.7",
         "dotenv-cli": "^11.0.0",

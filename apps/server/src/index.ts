@@ -2,11 +2,13 @@ import { serve } from "@hono/node-server";
 import { auth } from "@nextcoding/auth";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+
 import { ensureAchievements } from "./achievements/repository.js";
 import { achievementRoutes } from "./achievements/routes.js";
 import { activityFeedRoutes, activityUserRoutes } from "./activities/routes.js";
 import { adminRoutes } from "./admin/routes.js";
 import { messageRoutes } from "./messages/routes.js";
+import { registerWsRoutes, wss } from "./realtime/io.js";
 import { settingsRoutes } from "./settings/routes.js";
 import { storageRoutes } from "./storage/routes.js";
 import { tagRoutes } from "./tags/routes.js";
@@ -26,7 +28,11 @@ const CORS_ORIGINS = (
 
 const app = new Hono();
 
+// 必须在 cors 之前：upgradeWebSocket 与修改 headers 的中间件冲突
+registerWsRoutes(app);
+
 app.use(
+    "*",
     cors({
         origin: (origin) => {
             if (!origin || CORS_ORIGINS.includes(origin)) {
@@ -61,6 +67,13 @@ app.onError((err, c) => {
 
 await ensureAchievements();
 
-serve({ fetch: app.fetch, port: PORT }, (info) => {
-    console.log(`Server is running on http://localhost:${info.port}`);
-});
+serve(
+    {
+        fetch: app.fetch,
+        port: PORT,
+        websocket: { server: wss },
+    },
+    (info) => {
+        console.log(`Server is running on http://localhost:${info.port}`);
+    },
+);

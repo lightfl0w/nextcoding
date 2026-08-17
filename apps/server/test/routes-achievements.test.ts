@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
 import * as achRepo from "../src/achievements/repository.js";
 import { achievementRoutes } from "../src/achievements/routes.js";
+import { userRoutes } from "../src/users/routes.js";
 import { mockGetSession } from "./setup";
 
 describe("achievementRoutes", () => {
@@ -70,7 +71,11 @@ describe("achievementRoutes", () => {
         });
     });
 
-    describe("GET /:id/achievements", () => {
+    describe("GET /api/users/:id/achievements", () => {
+        function userApp() {
+            return new Hono().route("/api/users", userRoutes);
+        }
+
         it("返回用户已解锁成就", async () => {
             vi.mocked(achRepo.listUserAchievements).mockResolvedValue([
                 {
@@ -84,8 +89,8 @@ describe("achievementRoutes", () => {
                     unlockedAt: "2026-01-02T00:00:00Z",
                 },
             ] as never);
-            const res = await app().request(
-                "/api/achievements/user-1/achievements",
+            const res = await userApp().request(
+                "/api/users/user-1/achievements",
             );
             expect(res.status).toBe(200);
             const body = (await res.json()) as Array<Record<string, unknown>>;

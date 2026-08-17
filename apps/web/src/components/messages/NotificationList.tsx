@@ -1,4 +1,3 @@
-import { Chip } from "@heroui/react";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, GitFork, MessageSquare, Sparkles } from "lucide-react";
 import type { AppNotification } from "~/lib/api";
@@ -141,15 +140,7 @@ function NotificationContent({ item }: { item: AppNotification }) {
                         <span className="tabular-nums">
                             {formatDate(item.createdAt)}
                         </span>
-                        {!item.read && (
-                            <Chip
-                                size="sm"
-                                variant="soft"
-                                className="h-4 px-1.5 text-[10px]"
-                            >
-                                新
-                            </Chip>
-                        )}
+
                         {item.work && (
                             <span className="truncate hidden sm:inline">
                                 · {item.work.title}

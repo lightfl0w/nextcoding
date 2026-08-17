@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { beforeEach, vi } from "vitest";
 
+process.env.DB_URL ??= "file::memory:?cache=shared";
+
 vi.mock("@nextcoding/auth", () => ({
     auth: { api: { getSession: vi.fn() } },
 }));
@@ -54,6 +56,20 @@ vi.mock("../src/works/socialRepository.js", () => ({
     markAllNotificationsRead: vi.fn(),
     markNotificationRead: vi.fn(),
 }));
+
+vi.mock("../src/works/sparkBalance.js", () => ({
+    DAILY_SPARK_GRANT: 10,
+    consumeSpark: vi.fn(async () => true),
+    ensureSparkBalance: vi.fn(async () => 10),
+}));
+
+vi.mock("../src/works/notificationBus.js", async (importOriginal) => {
+    const actual =
+        await importOriginal<
+            typeof import("../src/works/notificationBus.js")
+        >();
+    return actual;
+});
 
 vi.mock("../src/users/repository.js", () => ({
     countFollowers: vi.fn(),

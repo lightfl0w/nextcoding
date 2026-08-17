@@ -52,10 +52,6 @@ export function unreadMessageCountPath() {
     return "/api/messages/unread-count";
 }
 
-export function messagesStreamPath() {
-    return "/api/messages/stream";
-}
-
 export async function fetchConversations(
     path: string,
 ): Promise<Conversation[]> {

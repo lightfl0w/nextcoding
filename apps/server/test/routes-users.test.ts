@@ -68,6 +68,7 @@ describe("userRoutes", () => {
             expect(await res.json()).toEqual({
                 givenSparks: 5,
                 receivedSparks: 9,
+                sparkBalance: 10,
             });
         });
     });

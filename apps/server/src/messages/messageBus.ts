@@ -1,3 +1,5 @@
+import { emitToUser } from "../realtime/io.js";
+
 export type MessageStreamEvent = {
     type: "message" | "recall" | "unread";
     payload: unknown;
@@ -6,6 +8,16 @@ export type MessageStreamEvent = {
 type Listener = (event: MessageStreamEvent) => void;
 
 const listenersByUser = new Map<string, Set<Listener>>();
+
+/**
+ * 事件类型
+ * 与私信流共用同一连接，事件名前缀区分消息与通知，避免 unread 冲突。
+ */
+const SOCKET_EVENT_BY_TYPE: Record<MessageStreamEvent["type"], string> = {
+    message: "message:new",
+    recall: "message:recall",
+    unread: "message:unread",
+};
 
 export function subscribeUser(userId: string, listener: Listener): () => void {
     let set = listenersByUser.get(userId);
@@ -29,6 +41,11 @@ export function publishToUser(userId: string, event: MessageStreamEvent): void {
             listener(event);
         }
     }
+    emitToUser(
+        userId,
+        SOCKET_EVENT_BY_TYPE[event.type] ?? event.type,
+        event.payload,
+    );
 }
 
 export function publishNewMessage(

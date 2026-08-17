@@ -1,6 +1,6 @@
 import { Avatar, Button } from "@heroui/react";
 import { ArrowLeft, MessageSquare, Trash2 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { EmptyState } from "~/components/ui/EmptyState";
 import { LoadingState } from "~/components/ui/LoadingState";
 import type { AdminConversation, AdminMessage } from "~/lib/api/admin";
@@ -27,6 +27,8 @@ export function AdminChatView({
     onRequestDeleteConversation,
 }: AdminChatViewProps) {
     const bottomRef = useRef<HTMLDivElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const [userScrolled, setUserScrolled] = useState(false);
     const user1Id = conversation?.user1.id;
     const title = conversation
         ? `${conversation.user1.name ?? "未命名用户"} 与 ${conversation.user2.name ?? "未命名用户"}`
@@ -37,8 +39,22 @@ export function AdminChatView({
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: 依赖仅用于在切换会话/新消息时触发滚动
     useEffect(() => {
+        setUserScrolled(false);
         bottomRef.current?.scrollIntoView({ block: "end" });
-    }, [conversation?.id, messages.length]);
+    }, [conversation?.id]);
+
+    useEffect(() => {
+        if (messages.length > 0 && !userScrolled) {
+            bottomRef.current?.scrollIntoView({ block: "end" });
+        }
+    }, [messages, userScrolled]);
+
+    const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+        const el = e.currentTarget;
+        const isNearBottom =
+            el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+        setUserScrolled(!isNearBottom);
+    }, []);
 
     return (
         <div className="flex flex-col h-full min-w-0">
@@ -74,7 +90,11 @@ export function AdminChatView({
                 )}
             </header>
 
-            <div className="flex-1 overflow-y-auto px-4 py-4">
+            <div
+                ref={scrollRef}
+                onScroll={handleScroll}
+                className="flex-1 overflow-y-auto px-4 py-4"
+            >
                 {isLoading ? (
                     <LoadingState text="正在加载消息…" />
                 ) : messages.length === 0 ? (
@@ -149,7 +169,7 @@ function ChatMessageBubble({
                     </Button>
                 </div>
                 <div
-                    className={`mt-0.5 px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words bg-default-100/70 border border-default-200/70 text-foreground ${
+                    className={`mt-0.5 px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed wrap-break-words bg-default-100/70 border border-default-200/70 text-foreground ${
                         alignRight ? "rounded-br-md" : "rounded-bl-md"
                     }`}
                 >

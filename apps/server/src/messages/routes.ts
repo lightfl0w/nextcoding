@@ -1,13 +1,11 @@
 import type { Context } from "hono";
 import { Hono } from "hono";
-import { streamSSE } from "hono/streaming";
 import { type AuthenticatedEnv, requireSession } from "../http/guards.js";
 import { jsonError, readJsonBody, readTrimmed } from "../http/responses.js";
 import {
     publishMessageRecalled,
     publishNewMessage,
     publishUnreadCount,
-    subscribeUser,
 } from "./messageBus.js";
 import {
     countUnreadMessages,
@@ -26,7 +24,6 @@ import {
 
 const MESSAGE_MAX_LENGTH = 1000;
 const MESSAGE_LIMIT_MAX = 100;
-const HEARTBEAT_INTERVAL_MS = 15_000;
 
 type ChatEnv = AuthenticatedEnv;
 
@@ -155,32 +152,6 @@ export const messageRoutes = new Hono<ChatEnv>()
         const unreadCount = await countUnreadMessages(userId);
         publishUnreadCount(userId, unreadCount);
         return c.json({ ok: true, unreadCount });
-    })
-    .get("/stream", (c) => {
-        const userId = c.get("userId");
-        return streamSSE(c, async (stream) => {
-            const unsubscribe = subscribeUser(userId, (event) => {
-                void stream.writeSSE({
-                    event: event.type,
-                    data: JSON.stringify(event.payload),
-                });
-            });
-            const heartbeat = setInterval(() => {
-                if (!stream.aborted) {
-                    void stream.write(": hb\n\n");
-                }
-            }, HEARTBEAT_INTERVAL_MS);
-            const cleanup = () => {
-                unsubscribe();
-                clearInterval(heartbeat);
-                c.req.raw.signal.removeEventListener("abort", cleanup);
-            };
-            c.req.raw.signal.addEventListener("abort", cleanup);
-            stream.onAbort(cleanup);
-            await new Promise<void>((resolve) => {
-                stream.onAbort(() => resolve());
-            });
-        });
     });
 
 async function accessibleConversation(c: Context<ChatEnv>) {

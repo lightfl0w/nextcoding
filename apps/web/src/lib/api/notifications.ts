@@ -5,10 +5,6 @@ export function notificationsPath(): string {
     return "/api/notifications";
 }
 
-export function notificationsStreamPath(): string {
-    return `${notificationsPath()}/stream`;
-}
-
 /**
  * 通知列表的 SWR key。
  * @param userId - 用户 ID，避免切换账号后串数据。

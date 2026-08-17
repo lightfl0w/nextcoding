@@ -15,6 +15,14 @@ import * as socialRepo from "../src/works/socialRepository.js";
 import { makeWorkSummaryRow } from "./helpers";
 import { mockGetSession, storage } from "./setup";
 
+vi.mock("../src/realtime/io.js", () => ({
+    emitToUser: vi.fn(),
+    registerWsRoutes: vi.fn(),
+    wss: { on: vi.fn() },
+}));
+
+import { emitToUser } from "../src/realtime/io.js";
+
 describe("commentRoutes", () => {
     function app() {
         return new Hono().route("/api/works", commentRoutes);
@@ -514,25 +522,22 @@ describe("notificationRoutes", () => {
         );
     });
 
-    it("SSE 流推送新通知", async () => {
+    it("WebSocket 推送新通知", async () => {
         vi.mocked(socialRepo.listNotifications).mockResolvedValue([
             notificationRow(),
         ]);
         vi.mocked(socialRepo.countUnreadNotifications).mockResolvedValue(1);
 
-        const res = await app().request("/api/notifications/stream");
-        expect(res.status).toBe(200);
-        expect(res.headers.get("content-type")).toContain("text/event-stream");
-
         await publishNewNotification("user-1");
 
-        const reader = res.body?.getReader();
-        const { value, done } = await reader.read();
-        expect(done).toBe(false);
-        expect(new TextDecoder().decode(value)).toContain(
-            "event: notification",
+        expect(emitToUser).toHaveBeenCalledWith(
+            "user-1",
+            "notification:new",
+            expect.objectContaining({
+                notification: expect.objectContaining({ id: "n1" }),
+                unreadCount: 1,
+            }),
         );
-        await reader.cancel();
     });
 
     it("总线推送最新通知与未读数", async () => {

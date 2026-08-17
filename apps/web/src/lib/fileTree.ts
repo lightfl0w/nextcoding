@@ -11,7 +11,7 @@ export type { FolderNode };
 /**
  * 取路径最后一段。
  * @param name - 含路径的文件名。
- * @returns 例如 `"src/main.js"` → `"main.js"`。
+ * @returns 例如 `"src/main.js"` 变成 `"main.js"`。
  */
 export function pathBasename(name: string): string {
     const slash = name.lastIndexOf("/");

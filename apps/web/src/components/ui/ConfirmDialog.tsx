@@ -92,7 +92,7 @@ export function ConfirmDialog({
                 onOpenChange={state.setOpen}
             >
                 <AlertDialog.Container>
-                    <AlertDialog.Dialog className="sm:max-w-[400px]">
+                    <AlertDialog.Dialog className="sm:max-w-100">
                         {content}
                     </AlertDialog.Dialog>
                 </AlertDialog.Container>
@@ -105,7 +105,7 @@ export function ConfirmDialog({
             {trigger}
             <AlertDialog.Backdrop>
                 <AlertDialog.Container>
-                    <AlertDialog.Dialog className="sm:max-w-[400px]">
+                    <AlertDialog.Dialog className="sm:max-w-100">
                         {content}
                     </AlertDialog.Dialog>
                 </AlertDialog.Container>

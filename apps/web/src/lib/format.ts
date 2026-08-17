@@ -10,7 +10,6 @@ export function formatCount(count: number) {
 /**
  * 格式化时间。
  * @param timestamp - 时间戳或日期。
- * @returns 刚刚 → 分钟/小时/天前，超一周显示日期。
  */
 export function formatDate(timestamp: number | string | Date) {
     const date = new Date(timestamp);

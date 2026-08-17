@@ -1,3 +1,4 @@
+import { emitToUser } from "../realtime/io.js";
 import { toNotification } from "./serializers.js";
 import {
     countUnreadNotifications,
@@ -12,6 +13,15 @@ export type NotificationStreamEvent = {
 type Listener = (event: NotificationStreamEvent) => void;
 
 const listenersByUser = new Map<string, Set<Listener>>();
+
+/**
+ * 事件类型
+ * 与通知流共用同一连接，事件名前缀区分消息与通知，避免 unread 冲突。
+ */
+const SOCKET_EVENT_BY_TYPE: Record<NotificationStreamEvent["type"], string> = {
+    notification: "notification:new",
+    unread: "notification:unread",
+};
 
 /**
  * 订阅某用户的实时通知事件，返回取消订阅函数。
@@ -41,6 +51,11 @@ export function publishToUser(
             listener(event);
         }
     }
+    emitToUser(
+        userId,
+        SOCKET_EVENT_BY_TYPE[event.type] ?? event.type,
+        event.payload,
+    );
 }
 
 /**
