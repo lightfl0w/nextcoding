@@ -1,8 +1,9 @@
-import { Button } from "@heroui/react";
+import { Button, useOverlayState } from "@heroui/react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { GitPullRequest, Plus } from "lucide-react";
 import { FeaturedWorks } from "~/components/FeaturedWorks";
 import { SectionHeading } from "~/components/ui/SectionHeading";
+import { GitImportModal } from "~/components/workEditor/GitImportModal";
 import { useAuth } from "~/hooks/useAuth";
 
 export const Route = createFileRoute("/")({ component: Home });
@@ -10,6 +11,7 @@ export const Route = createFileRoute("/")({ component: Home });
 function Home() {
     const navigate = useNavigate();
     const { isLoggedIn } = useAuth();
+    const gitImportState = useOverlayState();
 
     const submitCreate = () => {
         if (!isLoggedIn) {
@@ -64,12 +66,21 @@ function Home() {
                             <Plus className="size-4" />
                             创建作品
                         </Button>
+                        <Button
+                            size="lg"
+                            variant="secondary"
+                            className="gap-2"
+                            onPress={gitImportState.open}
+                        >
+                            <GitPullRequest className="size-4" />从 Git 导入
+                        </Button>
                         <Link to="/discover">
                             <Button size="lg" variant="ghost">
                                 发现作品
                             </Button>
                         </Link>
                     </div>
+                    <GitImportModal state={gitImportState} />
                 </div>
             </section>
 

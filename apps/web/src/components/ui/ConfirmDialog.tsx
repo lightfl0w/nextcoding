@@ -14,7 +14,7 @@ interface ConfirmDialogProps {
     heading: ReactNode;
     description: ReactNode;
     confirmLabel: string;
-    onConfirm: () => void | Promise<void>;
+    onConfirm: () => unknown;
 }
 
 /**

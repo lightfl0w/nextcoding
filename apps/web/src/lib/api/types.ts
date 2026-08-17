@@ -55,6 +55,7 @@ export interface WorkVersion {
     version: number;
     message: string | null;
     createdAt: string;
+    author: { id: string; name: string | null } | null;
 }
 
 export interface SnapshotFile {
@@ -63,6 +64,7 @@ export interface SnapshotFile {
     contentType: string | null;
     content: string;
     encoding?: "base64";
+    hash?: string;
 }
 
 export interface Snapshot {

@@ -1,0 +1,1 @@
+ALTER TABLE `work_version` ADD `user_id` text REFERENCES user(id);

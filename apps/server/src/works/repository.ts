@@ -222,6 +222,15 @@ export async function findPublishedWorkOwnerId(workId: string) {
     return row?.userId ?? null;
 }
 
+export async function findWorkAuthor(workId: string) {
+    const [row] = await db
+        .select({ id: user.id, name: user.name, email: user.email })
+        .from(work)
+        .innerJoin(user, eq(work.userId, user.id))
+        .where(eq(work.id, workId));
+    return row ?? null;
+}
+
 export async function workExists(workId: string) {
     const [row] = await db
         .select({ id: work.id })
@@ -358,11 +367,41 @@ export function listVersionSummaries(workId: string, limit: number) {
             version: workVersion.version,
             message: workVersion.message,
             createdAt: workVersion.createdAt,
+            authorId: workVersion.userId,
+            authorName: user.name,
         })
         .from(workVersion)
+        .leftJoin(user, eq(workVersion.userId, user.id))
         .where(eq(workVersion.workId, workId))
         .orderBy(desc(workVersion.version))
         .limit(limit);
+}
+
+export function deleteVersion(workId: string, version: number) {
+    return db
+        .delete(workVersion)
+        .where(
+            and(
+                eq(workVersion.workId, workId),
+                eq(workVersion.version, version),
+            ),
+        );
+}
+
+export function renameVersionMessage(
+    workId: string,
+    version: number,
+    message: string | null,
+) {
+    return db
+        .update(workVersion)
+        .set({ message })
+        .where(
+            and(
+                eq(workVersion.workId, workId),
+                eq(workVersion.version, version),
+            ),
+        );
 }
 
 export async function findVersion(workId: string, version: number) {
@@ -393,6 +432,7 @@ export function insertVersion(values: {
     version: number;
     snapshotKey: string;
     message: string | null;
+    userId?: string | null;
     createdAt: Date;
 }) {
     return db

@@ -40,6 +40,41 @@ describe("versionRoutes", () => {
             );
             expect(await res.json()).toHaveLength(1);
         });
+
+        it("摘要携带提交者信息，无提交者时返回 null", async () => {
+            vi.mocked(workRepo.listVersionSummaries).mockResolvedValue([
+                {
+                    version: 2,
+                    message: "更新",
+                    createdAt: new Date("2026-01-02T00:00:00Z"),
+                    authorId: "user-9",
+                    authorName: "李四",
+                },
+                {
+                    version: 1,
+                    message: "初版",
+                    createdAt: new Date("2026-01-01T00:00:00Z"),
+                    authorId: null,
+                    authorName: null,
+                },
+            ]);
+            const res = await app().request("/api/works/work-1/versions");
+            expect(res.status).toBe(200);
+            expect(await res.json()).toEqual([
+                {
+                    version: 2,
+                    message: "更新",
+                    createdAt: "2026-01-02T00:00:00.000Z",
+                    author: { id: "user-9", name: "李四" },
+                },
+                {
+                    version: 1,
+                    message: "初版",
+                    createdAt: "2026-01-01T00:00:00.000Z",
+                    author: null,
+                },
+            ]);
+        });
     });
 
     describe("GET /:id/versions/:version", () => {
@@ -399,6 +434,108 @@ describe("versionRoutes", () => {
                     size: 9,
                 }),
             ]);
+        });
+    });
+
+    describe("DELETE /:id/versions/:version", () => {
+        it("需要作者权限", async () => {
+            mockGetSession.mockResolvedValue(makeSession({ id: "someone" }));
+            vi.mocked(workRepo.findWorkOwnerId).mockResolvedValue("owner");
+            const res = await app().request("/api/works/work-1/versions/1", {
+                method: "DELETE",
+            });
+            expect(res.status).toBe(403);
+        });
+
+        it("版本不存在返回 404", async () => {
+            asOwner();
+            vi.mocked(workRepo.findVersion).mockResolvedValue(null);
+            const res = await app().request("/api/works/work-1/versions/9", {
+                method: "DELETE",
+            });
+            expect(res.status).toBe(404);
+        });
+
+        it("删除快照与版本记录", async () => {
+            asOwner();
+            vi.mocked(workRepo.findVersion).mockResolvedValue(makeVersionRow());
+            storage.store.set(
+                "works/work-1/snapshots/v1.json",
+                new TextEncoder().encode("{}"),
+            );
+            const res = await app().request("/api/works/work-1/versions/1", {
+                method: "DELETE",
+            });
+            expect(res.status).toBe(200);
+            expect(await res.json()).toEqual({
+                ok: true,
+                deletedVersion: 1,
+            });
+            expect(storage.store.has("works/work-1/snapshots/v1.json")).toBe(
+                false,
+            );
+            expect(workRepo.deleteVersion).toHaveBeenCalledWith("work-1", 1);
+        });
+    });
+
+    describe("PATCH /:id/versions/:version", () => {
+        it("需要作者权限", async () => {
+            mockGetSession.mockResolvedValue(makeSession({ id: "someone" }));
+            vi.mocked(workRepo.findWorkOwnerId).mockResolvedValue("owner");
+            const res = await app().request("/api/works/work-1/versions/1", {
+                method: "PATCH",
+                body: JSON.stringify({ message: "改名" }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(403);
+        });
+
+        it("版本不存在返回 404", async () => {
+            asOwner();
+            vi.mocked(workRepo.findVersion).mockResolvedValue(null);
+            const res = await app().request("/api/works/work-1/versions/9", {
+                method: "PATCH",
+                body: JSON.stringify({ message: "改名" }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(404);
+        });
+
+        it("修改版本说明", async () => {
+            asOwner();
+            vi.mocked(workRepo.findVersion).mockResolvedValue(makeVersionRow());
+            const res = await app().request("/api/works/work-1/versions/1", {
+                method: "PATCH",
+                body: JSON.stringify({ message: "  改名后的说明  " }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(200);
+            expect(await res.json()).toEqual({
+                ok: true,
+                version: 1,
+                message: "改名后的说明",
+            });
+            expect(workRepo.renameVersionMessage).toHaveBeenCalledWith(
+                "work-1",
+                1,
+                "改名后的说明",
+            );
+        });
+
+        it("空白说明存为 null", async () => {
+            asOwner();
+            vi.mocked(workRepo.findVersion).mockResolvedValue(makeVersionRow());
+            const res = await app().request("/api/works/work-1/versions/1", {
+                method: "PATCH",
+                body: JSON.stringify({ message: "   " }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(200);
+            expect(workRepo.renameVersionMessage).toHaveBeenCalledWith(
+                "work-1",
+                1,
+                null,
+            );
         });
     });
 });

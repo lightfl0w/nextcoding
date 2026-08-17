@@ -1,8 +1,8 @@
 {
     "version": "6",
     "dialect": "sqlite",
-    "id": "1cf12165-5176-493f-8e7f-937255164576",
-    "prevId": "157e177b-51d6-4498-8ff6-f6e3f8283135",
+    "id": "08b5afc6-6fc7-4e24-9d9c-76154f670be4",
+    "prevId": "1cf12165-5176-493f-8e7f-937255164576",
     "tables": {
         "account": {
             "name": "account",
@@ -711,6 +711,13 @@
                     "notNull": false,
                     "autoincrement": false
                 },
+                "user_id": {
+                    "name": "user_id",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "autoincrement": false
+                },
                 "created_at": {
                     "name": "created_at",
                     "type": "integer",
@@ -735,6 +742,15 @@
                     "columnsFrom": ["work_id"],
                     "columnsTo": ["id"],
                     "onDelete": "cascade",
+                    "onUpdate": "no action"
+                },
+                "work_version_user_id_user_id_fk": {
+                    "name": "work_version_user_id_user_id_fk",
+                    "tableFrom": "work_version",
+                    "tableTo": "user",
+                    "columnsFrom": ["user_id"],
+                    "columnsTo": ["id"],
+                    "onDelete": "set null",
                     "onUpdate": "no action"
                 }
             },

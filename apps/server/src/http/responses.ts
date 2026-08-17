@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 
-type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 500;
+export type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 500;
 
 export type JsonBody = Record<string, unknown>;
 

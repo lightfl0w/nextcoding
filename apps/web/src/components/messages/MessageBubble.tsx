@@ -22,13 +22,9 @@ export const MessageBubble = memo(function MessageBubble({
         return (
             <div className={`flex ${align}`}>
                 <div className="flex max-w-[70%] items-center gap-2.5 px-1 py-1">
-                    <BubbleAvatar
-                        name={senderName}
-                        image={message.sender.image}
-                    />
                     <div className="flex items-baseline gap-1.5">
                         <span className="text-sm text-foreground/45 italic">
-                            已撤回一条消息
+                            {`${senderName} 撤回了一条消息`}
                         </span>
                         <span className="text-[11px] text-foreground/45 tabular-nums">
                             {formatTime(message.createdAt)}

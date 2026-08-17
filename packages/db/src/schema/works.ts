@@ -59,6 +59,9 @@ export const workVersion = sqliteTable(
         version: integer("version").notNull(),
         snapshotKey: text("snapshot_key").notNull(),
         message: text("message"),
+        userId: text("user_id").references(() => user.id, {
+            onDelete: "set null",
+        }),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
             .notNull(),
@@ -112,6 +115,10 @@ export const workVersionRelations = relations(workVersion, ({ one }) => ({
     work: one(work, {
         fields: [workVersion.workId],
         references: [work.id],
+    }),
+    author: one(user, {
+        fields: [workVersion.userId],
+        references: [user.id],
     }),
 }));
 

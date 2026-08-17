@@ -58,3 +58,41 @@ export function restoreVersion(
         "回滚失败",
     );
 }
+
+/**
+ * 删除指定版本。
+ * @param workId - 作品 ID。
+ * @param version - 版本号。
+ * @returns 删除结果。
+ */
+export function deleteVersion(
+    workId: string,
+    version: number,
+): Promise<{ ok: boolean; deletedVersion: number }> {
+    return mutateJson(
+        `${workVersionsPath(workId)}/${version}`,
+        "DELETE",
+        undefined,
+        "删除版本失败",
+    );
+}
+
+/**
+ * 修改版本说明。
+ * @param workId - 作品 ID。
+ * @param version - 版本号。
+ * @param message - 新说明；可为 `null`。
+ * @returns 更新结果。
+ */
+export function renameVersionMessage(
+    workId: string,
+    version: number,
+    message: string | null,
+): Promise<{ ok: boolean; version: number; message: string | null }> {
+    return mutateJson(
+        `${workVersionsPath(workId)}/${version}`,
+        "PATCH",
+        { message },
+        "修改版本说明失败",
+    );
+}

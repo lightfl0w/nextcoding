@@ -3,8 +3,10 @@ import { useCallback } from "react";
 import useSWR from "swr";
 import type { WorkVersion } from "~/lib/api";
 import {
+    deleteVersion,
     fetchVersions,
     publishVersion,
+    renameVersionMessage,
     restoreVersion,
     workVersionsPath,
 } from "~/lib/api";
@@ -56,5 +58,57 @@ export function useVersionHistory(workId: string | null) {
         [workId],
     );
 
-    return { versions, publish, restore };
+    const remove = useCallback(
+        async (version: number): Promise<boolean> => {
+            if (workId === null) {
+                return false;
+            }
+            try {
+                await deleteVersion(workId, version);
+                mutate(
+                    (current = []) =>
+                        current.filter((row) => row.version !== version),
+                    false,
+                );
+                toast.success(`已删除 v${version}`);
+                return true;
+            } catch (error) {
+                toast.danger((error as Error).message);
+                return false;
+            }
+        },
+        [workId, mutate],
+    );
+
+    const rename = useCallback(
+        async (version: number, message: string | null): Promise<boolean> => {
+            if (workId === null) {
+                return false;
+            }
+            try {
+                const updated = await renameVersionMessage(
+                    workId,
+                    version,
+                    message,
+                );
+                mutate(
+                    (current = []) =>
+                        current.map((row) =>
+                            row.version === version
+                                ? { ...row, message: updated.message }
+                                : row,
+                        ),
+                    false,
+                );
+                toast.success(`已更新 v${version} 的说明`);
+                return true;
+            } catch (error) {
+                toast.danger((error as Error).message);
+                return false;
+            }
+        },
+        [workId, mutate],
+    );
+
+    return { versions, publish, restore, remove, rename };
 }

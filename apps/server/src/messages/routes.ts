@@ -183,7 +183,6 @@ export const messageRoutes = new Hono<ChatEnv>()
         });
     });
 
-/** 校验会话存在且当前用户有访问权限，返回会话信息或错误响应。 */
 async function accessibleConversation(c: Context<ChatEnv>) {
     const conversationId = c.req.param("id") ?? "";
     const userId = c.get("userId");

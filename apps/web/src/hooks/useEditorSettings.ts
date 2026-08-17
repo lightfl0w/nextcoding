@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 const FONT_SIZE_KEY = "editor.fontSize";
 const FONT_FAMILY_KEY = "editor.fontFamily";
 const AUTO_SAVE_DRAFT_KEY = "editor.autoSaveDraft";
+const AUTO_SNAPSHOT_KEY = "editor.autoSnapshot";
 
 export const EDITOR_FONT_SIZE_MIN = 10;
 export const EDITOR_FONT_SIZE_MAX = 28;
@@ -49,15 +50,21 @@ function readAutoSaveDraft(): boolean {
     return localStorage.getItem(AUTO_SAVE_DRAFT_KEY) === "true";
 }
 
+function readAutoSnapshot(): boolean {
+    return localStorage.getItem(AUTO_SNAPSHOT_KEY) === "true";
+}
+
 /**
  * Monaco 编辑器偏好。
- * @returns 字号、字体与自动保存草稿开关；修改会写入 localStorage 持久化。
+ * @returns 字号、字体、自动保存草稿与自动快照开关；修改会写入 localStorage 持久化。
  */
 export function useEditorSettings() {
     const [fontSize, setFontSizeState] = useState<number>(readFontSize);
     const [fontFamily, setFontFamilyState] = useState<string>(readFontFamily);
     const [autoSaveDraft, setAutoSaveDraftState] =
         useState<boolean>(readAutoSaveDraft);
+    const [autoSnapshot, setAutoSnapshotState] =
+        useState<boolean>(readAutoSnapshot);
 
     const setFontSize = useCallback((value: number) => {
         setFontSizeState(value);
@@ -74,12 +81,19 @@ export function useEditorSettings() {
         localStorage.setItem(AUTO_SAVE_DRAFT_KEY, String(value));
     }, []);
 
+    const setAutoSnapshot = useCallback((value: boolean) => {
+        setAutoSnapshotState(value);
+        localStorage.setItem(AUTO_SNAPSHOT_KEY, String(value));
+    }, []);
+
     return {
         fontSize,
         fontFamily,
         autoSaveDraft,
+        autoSnapshot,
         setFontSize,
         setFontFamily,
         setAutoSaveDraft,
+        setAutoSnapshot,
     };
 }

@@ -21,6 +21,7 @@ interface EditorHeaderProps {
     fontSize: number;
     fontFamily: string;
     autoSaveDraft: boolean;
+    autoSnapshot: boolean;
     onTitleChange: (value: string) => void;
     onTitleSave: () => void;
     onExitCompare: () => void;
@@ -30,6 +31,7 @@ interface EditorHeaderProps {
     onFontSizeChange: (value: number) => void;
     onFontFamilyChange: (value: string) => void;
     onAutoSaveDraftChange: (value: boolean) => void;
+    onAutoSnapshotChange: (value: boolean) => void;
 }
 
 const SELECT_CLASS =
@@ -46,6 +48,7 @@ export function EditorHeader({
     fontSize,
     fontFamily,
     autoSaveDraft,
+    autoSnapshot,
     onTitleChange,
     onTitleSave,
     onExitCompare,
@@ -55,6 +58,7 @@ export function EditorHeader({
     onFontSizeChange,
     onFontFamilyChange,
     onAutoSaveDraftChange,
+    onAutoSnapshotChange,
 }: EditorHeaderProps) {
     const draftState = useOverlayState();
     return (
@@ -127,9 +131,11 @@ export function EditorHeader({
                 fontSize={fontSize}
                 fontFamily={fontFamily}
                 autoSaveDraft={autoSaveDraft}
+                autoSnapshot={autoSnapshot}
                 onFontSizeChange={onFontSizeChange}
                 onFontFamilyChange={onFontFamilyChange}
                 onAutoSaveDraftChange={onAutoSaveDraftChange}
+                onAutoSnapshotChange={onAutoSnapshotChange}
             />
             <Button
                 size="sm"
@@ -175,25 +181,31 @@ export function EditorHeader({
  * @param props.fontSize - 当前字号。
  * @param props.fontFamily - 当前字体。
  * @param props.autoSaveDraft - 是否自动保存草稿。
+ * @param props.autoSnapshot - 是否自动快照。
  * @param props.onFontSizeChange - 修改字号。
  * @param props.onFontFamilyChange - 修改字体。
  * @param props.onAutoSaveDraftChange - 切换自动保存草稿。
+ * @param props.onAutoSnapshotChange - 切换自动快照。
  * @remarks 自持展开状态，点击遮罩关闭。
  */
 function EditorSettingsMenu({
     fontSize,
     fontFamily,
     autoSaveDraft,
+    autoSnapshot,
     onFontSizeChange,
     onFontFamilyChange,
     onAutoSaveDraftChange,
+    onAutoSnapshotChange,
 }: {
     fontSize: number;
     fontFamily: string;
     autoSaveDraft: boolean;
+    autoSnapshot: boolean;
     onFontSizeChange: (value: number) => void;
     onFontFamilyChange: (value: string) => void;
     onAutoSaveDraftChange: (value: boolean) => void;
+    onAutoSnapshotChange: (value: boolean) => void;
 }) {
     const [settingsOpen, setSettingsOpen] = useState(false);
     const fontSizes = Array.from(
@@ -270,6 +282,19 @@ function EditorSettingsMenu({
                                     <Checkbox.Indicator />
                                 </Checkbox.Control>
                                 自动保存草稿
+                            </Checkbox.Content>
+                        </Checkbox>
+                        <Checkbox
+                            isSelected={autoSnapshot}
+                            onChange={(selected) =>
+                                onAutoSnapshotChange(selected)
+                            }
+                        >
+                            <Checkbox.Content>
+                                <Checkbox.Control>
+                                    <Checkbox.Indicator />
+                                </Checkbox.Control>
+                                自动快照
                             </Checkbox.Content>
                         </Checkbox>
                     </div>

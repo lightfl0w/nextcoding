@@ -11,6 +11,7 @@ import {
 } from "../naming.js";
 import {
     bumpWorkFileVersion,
+    deleteVersion,
     deleteWorkFile,
     findVersion,
     insertVersion,
@@ -19,6 +20,7 @@ import {
     listWorkFiles,
     mapWorkFilesByKey,
     nextVersionNumber,
+    renameVersionMessage,
 } from "../repository.js";
 import {
     captureFiles,
@@ -41,7 +43,17 @@ versionRoutes.get("/:id/versions", async (c) => {
     }
 
     const rows = await listVersionSummaries(workId, VERSIONS_PAGE_SIZE);
-    return c.json(rows);
+    return c.json(
+        rows.map((row) => ({
+            version: row.version,
+            message: row.message,
+            createdAt: row.createdAt,
+            author:
+                row.authorId !== null && row.authorId !== undefined
+                    ? { id: row.authorId, name: row.authorName ?? null }
+                    : null,
+        })),
+    );
 });
 
 versionRoutes.get("/:id/versions/:version", async (c) => {
@@ -106,6 +118,7 @@ versionRoutes.post("/:id/versions", requireWorkAuthor, async (c) => {
         version,
         snapshotKey,
         message,
+        userId: c.get("userId"),
         createdAt,
     });
 
@@ -143,6 +156,42 @@ versionRoutes.post(
         });
     },
 );
+
+versionRoutes.delete("/:id/versions/:version", requireWorkAuthor, async (c) => {
+    const workId = c.req.param("id");
+    const version = parseVersionNumber(c.req.param("version"));
+    if (version === null) {
+        return jsonError(c, "版本号不合法", 400);
+    }
+
+    const row = await findVersion(workId, version);
+    if (!row) {
+        return jsonError(c, "版本不存在", 404);
+    }
+
+    await getStorage().delete(row.snapshotKey);
+    await deleteVersion(workId, version);
+
+    return c.json({ ok: true, deletedVersion: version });
+});
+
+versionRoutes.patch("/:id/versions/:version", requireWorkAuthor, async (c) => {
+    const workId = c.req.param("id");
+    const version = parseVersionNumber(c.req.param("version"));
+    if (version === null) {
+        return jsonError(c, "版本号不合法", 400);
+    }
+
+    const body = await readJsonBody(c);
+    const message = readTrimmed(body, "message") || null;
+    if (!(await findVersion(workId, version))) {
+        return jsonError(c, "版本不存在", 404);
+    }
+
+    await renameVersionMessage(workId, version, message);
+
+    return c.json({ ok: true, version, message });
+});
 
 async function restoreFiles(workId: string, files: SnapshotFile[]) {
     const payloads = await Promise.all(

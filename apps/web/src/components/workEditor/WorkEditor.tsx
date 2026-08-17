@@ -1,9 +1,15 @@
-import { AlertDialog, Button, Spinner } from "@heroui/react";
+import {
+    AlertDialog,
+    Button,
+    Spinner,
+    toast,
+    useOverlayState,
+} from "@heroui/react";
 import { useBlocker, useNavigate } from "@tanstack/react-router";
 import { FileCode } from "lucide-react";
 import type * as Monaco from "monaco-editor";
 import { useTheme } from "next-themes";
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 
 import { MonacoWrapper } from "~/components/editor/MonacoWrapper";
@@ -12,6 +18,8 @@ import { DiffView } from "~/components/workEditor/DiffView";
 import { EditorHeader } from "~/components/workEditor/EditorHeader";
 import { EditorTabs } from "~/components/workEditor/EditorTabs";
 import { FileExplorer } from "~/components/workEditor/FileExplorer";
+import { PushToRemoteDialog } from "~/components/workEditor/PushToRemoteDialog";
+import { VersionCompareDialog } from "~/components/workEditor/VersionCompareDialog";
 import { VersionHistoryPanel } from "~/components/workEditor/VersionHistoryPanel";
 import { type DiffPreview, useDiffPreview } from "~/hooks/useDiffPreview";
 import { useDraftSaver } from "~/hooks/useDraftSaver";
@@ -31,7 +39,10 @@ import { useWork } from "~/hooks/useWork";
 import { useWorkFiles } from "~/hooks/useWorkFiles";
 import { useWorkSource } from "~/hooks/useWorkRemixes";
 import { fileContentPath, readFileContent } from "~/lib/api";
+import { downloadWorkAsGit } from "~/lib/api/git";
 import { languageLabel } from "~/lib/run";
+
+const AUTO_SNAPSHOT_INTERVAL_MS = 5 * 60_000;
 
 /**
  * 作品编辑器。
@@ -49,9 +60,11 @@ export function WorkEditor({ workId }: { workId: string | null }) {
         fontSize,
         fontFamily,
         autoSaveDraft,
+        autoSnapshot,
         setFontSize,
         setFontFamily,
         setAutoSaveDraft,
+        setAutoSnapshot,
     } = useEditorSettings();
     const [editor, setEditor] =
         useState<Monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -131,6 +144,9 @@ export function WorkEditor({ workId }: { workId: string | null }) {
 
     const diff = useDiffPreview({ workId, activeKey, readDraft });
     const versionHistory = useVersionHistory(workId);
+    const compareDialogState = useOverlayState();
+    const pushDialogState = useOverlayState();
+    const [isGitBusy, setIsGitBusy] = useState(false);
     const runner = useEditorRun({
         files,
         activeKey,
@@ -254,6 +270,41 @@ export function WorkEditor({ workId }: { workId: string | null }) {
         () => workId === null && pending.hasFiles && !persistingRef.current,
         [workId, pending.hasFiles, persistingRef.current],
     );
+
+    const lastAutoSnapshotRef = useRef(0);
+    const prevSavingRef = useRef(isSaving);
+    useEffect(() => {
+        const finishedSaving = prevSavingRef.current && !isSaving;
+        prevSavingRef.current = isSaving;
+        if (!finishedSaving || !autoSnapshot || workId === null) {
+            return;
+        }
+        const now = Date.now();
+        if (now - lastAutoSnapshotRef.current < AUTO_SNAPSHOT_INTERVAL_MS) {
+            return;
+        }
+        lastAutoSnapshotRef.current = now;
+        const date = new Date(now);
+        const hh = String(date.getHours()).padStart(2, "0");
+        const mm = String(date.getMinutes()).padStart(2, "0");
+        void versionHistory.publish(`自动快照 ${hh}:${mm}`);
+    }, [isSaving, autoSnapshot, workId, versionHistory.publish]);
+
+    const handleExportGit = useCallback(async () => {
+        if (workId === null) {
+            return;
+        }
+        setIsGitBusy(true);
+        try {
+            await downloadWorkAsGit(workId);
+            toast.success("Git 仓库已下载");
+        } catch (error) {
+            toast.danger((error as Error).message || "导出失败");
+        } finally {
+            setIsGitBusy(false);
+        }
+    }, [workId]);
+
     const blocker = useBlocker({
         shouldBlockFn: shouldBlock,
         enableBeforeUnload: true,
@@ -288,9 +339,11 @@ export function WorkEditor({ workId }: { workId: string | null }) {
                 fontSize={fontSize}
                 fontFamily={fontFamily}
                 autoSaveDraft={autoSaveDraft}
+                autoSnapshot={autoSnapshot}
                 onFontSizeChange={setFontSize}
                 onFontFamilyChange={setFontFamily}
                 onAutoSaveDraftChange={setAutoSaveDraft}
+                onAutoSnapshotChange={setAutoSnapshot}
             />
 
             <div className="flex-1 flex min-h-0">
@@ -343,8 +396,38 @@ export function WorkEditor({ workId }: { workId: string | null }) {
                     versions={versionHistory.versions}
                     onCompare={diff.compareWith}
                     onRestore={versionHistory.restore}
+                    onRemove={versionHistory.remove}
+                    onRename={versionHistory.rename}
+                    onCompareVersions={() => {
+                        if (workId !== null) {
+                            compareDialogState.open();
+                        }
+                    }}
+                    onExportGit={() => void handleExportGit()}
+                    onPushRemote={() => {
+                        if (workId !== null) {
+                            pushDialogState.open();
+                        }
+                    }}
+                    isBusy={isGitBusy}
                 />
             </div>
+
+            {workId !== null && (
+                <VersionCompareDialog
+                    state={compareDialogState}
+                    workId={workId}
+                    versions={versionHistory.versions}
+                    monaco={monaco}
+                    theme={theme}
+                    fontSize={fontSize}
+                    fontFamily={fontFamily}
+                />
+            )}
+
+            {workId !== null && (
+                <PushToRemoteDialog state={pushDialogState} workId={workId} />
+            )}
 
             <RunPanel
                 open={runner.isPanelOpen}

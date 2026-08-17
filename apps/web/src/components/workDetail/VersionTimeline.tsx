@@ -54,6 +54,9 @@ export function VersionTimeline({
                                 {version.message ?? "无说明"}
                             </span>
                             <span className="text-xs text-foreground/40">
+                                {version.author?.name
+                                    ? `${version.author.name} · `
+                                    : ""}
                                 {formatDate(version.createdAt)}
                             </span>
                         </div>

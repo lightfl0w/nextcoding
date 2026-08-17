@@ -29,9 +29,7 @@ export function CommentRow({
         <div
             id={`comment-${comment.id}`}
             className={`py-2.5 px-3 -mx-3 rounded-lg transition-colors flex gap-3 group ${
-                focus
-                    ? "bg-accent/10 ring-1 ring-accent/40"
-                    : "hover:bg-hover"
+                focus ? "bg-accent/10 ring-1 ring-accent/40" : "hover:bg-hover"
             }`}
         >
             <Avatar size="sm" className="shrink-0">

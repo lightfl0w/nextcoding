@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { bookmarkRoutes } from "../bookmarks/routes.js";
+import { gitRoutes } from "../git/routes.js";
 import { reportRoutes } from "../reports/routes.js";
 import { catalogRoutes } from "./routes/catalogRoutes.js";
 import { commentRoutes } from "./routes/commentRoutes.js";
@@ -10,6 +11,7 @@ import { sparkRoutes } from "./routes/sparkRoutes.js";
 import { versionRoutes } from "./routes/versionRoutes.js";
 
 export const workRoutes = new Hono()
+    .route("/", gitRoutes)
     .route("/", commentRoutes)
     .route("/", fileRoutes)
     .route("/", versionRoutes)

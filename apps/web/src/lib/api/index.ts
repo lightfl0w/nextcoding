@@ -4,6 +4,7 @@ export * from "./bookmarks";
 export * from "./comments";
 export * from "./files";
 export * from "./follows";
+export * from "./git";
 export * from "./leaderboard";
 export * from "./messages";
 export * from "./notifications";

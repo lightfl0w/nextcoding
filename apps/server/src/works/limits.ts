@@ -18,6 +18,21 @@ export const VERSIONS_PAGE_SIZE = 200;
 
 export const MY_WORKS_PAGE_SIZE = 200;
 
+const DEFAULT_GIT_IMPORT_MAX_COMMITS = 100;
+const DEFAULT_GIT_IMPORT_MAX_FILES = 500;
+const DEFAULT_GIT_IMPORT_MAX_TOTAL_MB = 100;
+
+export const GIT_IMPORT_MAX_COMMITS =
+    Number(process.env.NC_GIT_IMPORT_MAX_COMMITS) ||
+    DEFAULT_GIT_IMPORT_MAX_COMMITS;
+
+export const GIT_IMPORT_MAX_FILES =
+    Number(process.env.NC_GIT_IMPORT_MAX_FILES) || DEFAULT_GIT_IMPORT_MAX_FILES;
+
+export const GIT_IMPORT_MAX_TOTAL_BYTES =
+    (Number(process.env.NC_GIT_IMPORT_MAX_TOTAL_MB) ||
+        DEFAULT_GIT_IMPORT_MAX_TOTAL_MB) * BYTES_PER_MB;
+
 export function exceedsFileSizeLimit(byteLength: number): boolean {
     return byteLength > MAX_FILE_SIZE_BYTES;
 }

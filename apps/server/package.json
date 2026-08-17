@@ -13,7 +13,9 @@
         "@nextcoding/auth": "workspace:*",
         "@nextcoding/db": "workspace:*",
         "@nextcoding/storage": "workspace:*",
-        "hono": "^4.13.0"
+        "fflate": "^0.8.3",
+        "hono": "^4.13.0",
+        "isomorphic-git": "^1.41.4"
     },
     "devDependencies": {
         "@types/node": "^26.1.1",
