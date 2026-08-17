@@ -9,6 +9,79 @@
     --color-default-100: var(--surface-tertiary);
     --color-default-200: var(--default);
     --color-default-300: var(--default);
+
+    --color-hover: color-mix(in oklab, var(--foreground) 6%, transparent);
+    --color-hover-strong: color-mix(
+        in oklab,
+        var(--foreground) 11%,
+        transparent
+    );
+
+    --color-bronze: oklch(0.64 0.1 55);
+}
+
+.dark {
+    --muted: oklch(78% 0.015 286.067);
+    --border: oklch(33% 0.006 286.033);
+    --separator: oklch(30% 0.006 286.033);
+    --default: oklch(31% 0.006 286.033);
+    --surface-secondary: oklch(29% 0.005 286.2);
+    --surface-tertiary: oklch(32% 0.004 248);
+    --color-primary-100: color-mix(in oklab, var(--accent) 22%, transparent);
+
+    .text-foreground\/30 {
+        color: color-mix(in oklab, var(--foreground) 42%, transparent);
+    }
+    .text-foreground\/35 {
+        color: color-mix(in oklab, var(--foreground) 48%, transparent);
+    }
+    .text-foreground\/40 {
+        color: color-mix(in oklab, var(--foreground) 55%, transparent);
+    }
+    .text-foreground\/45 {
+        color: color-mix(in oklab, var(--foreground) 62%, transparent);
+    }
+    .text-foreground\/50 {
+        color: color-mix(in oklab, var(--foreground) 68%, transparent);
+    }
+    .text-foreground\/55 {
+        color: color-mix(in oklab, var(--foreground) 72%, transparent);
+    }
+    .text-foreground\/60 {
+        color: color-mix(in oklab, var(--foreground) 76%, transparent);
+    }
+    .text-foreground\/65 {
+        color: color-mix(in oklab, var(--foreground) 80%, transparent);
+    }
+    .text-foreground\/70 {
+        color: color-mix(in oklab, var(--foreground) 84%, transparent);
+    }
+    .text-foreground\/75 {
+        color: color-mix(in oklab, var(--foreground) 87%, transparent);
+    }
+    .text-foreground\/80 {
+        color: color-mix(in oklab, var(--foreground) 90%, transparent);
+    }
+    .text-foreground\/85 {
+        color: color-mix(in oklab, var(--foreground) 93%, transparent);
+    }
+    .text-foreground\/90 {
+        color: color-mix(in oklab, var(--foreground) 95%, transparent);
+    }
+    .border-default-200\/70 {
+        border-color: color-mix(in oklab, var(--default) 88%, transparent);
+    }
+    .border-default-200\/60 {
+        border-color: color-mix(in oklab, var(--default) 80%, transparent);
+    }
+}
+
+.scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
 }
 
 html {

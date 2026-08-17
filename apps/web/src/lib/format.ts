@@ -39,3 +39,15 @@ export function formatDate(timestamp: number | string | Date) {
     const d = String(date.getDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
 }
+
+/**
+ * 格式化钟表时间(消息气泡头部用)。
+ * @param timestamp - 时间戳或日期。
+ * @returns `HH:MM`。
+ */
+export function formatTime(timestamp: number | string | Date) {
+    const date = new Date(timestamp);
+    const h = String(date.getHours()).padStart(2, "0");
+    const m = String(date.getMinutes()).padStart(2, "0");
+    return `${h}:${m}`;
+}

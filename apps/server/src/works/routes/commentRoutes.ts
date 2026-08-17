@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { insertActivity } from "../../activities/repository.js";
 import { type AuthenticatedEnv, requireSession } from "../../http/guards.js";
 import {
     type JsonBody,
@@ -66,6 +67,13 @@ commentRoutes.post("/:id/comments", requireSession, async (c) => {
         userId,
         parentId,
         content,
+    });
+    await insertActivity({
+        userId,
+        type: "comment",
+        actorId: userId,
+        workId,
+        commentId: inserted.id,
     });
 
     if (replyTarget && replyTarget.userId !== userId) {

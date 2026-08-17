@@ -10,8 +10,8 @@ import { authClient } from "@nextcoding/auth/client";
 import { Link } from "@tanstack/react-router";
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { AlertBox } from "~/components/ui/AlertBox";
 import { validateEmail } from "~/lib/validation";
-import { FormError, SuccessAlert } from "./AuthAlert";
 
 export function ForgotForm({ redirect }: { redirect: string }) {
     const [error, setError] = useState<string | null>(null);
@@ -45,7 +45,8 @@ export function ForgotForm({ redirect }: { redirect: string }) {
             className="flex flex-col gap-4 p-6 rounded-2xl border border-default-200/70 bg-surface"
         >
             {sent ? (
-                <SuccessAlert
+                <AlertBox
+                    status="success"
                     title="重置链接已发送"
                     message="如果该邮箱已注册，你会收到一封包含重置链接的邮件，链接 1 小时内有效。"
                 />
@@ -63,7 +64,9 @@ export function ForgotForm({ redirect }: { redirect: string }) {
                 <FieldError />
             </TextField>
 
-            {error ? <FormError title="发送失败" message={error} /> : null}
+            {error ? (
+                <AlertBox status="danger" title="发送失败" message={error} />
+            ) : null}
 
             <Button type="submit" fullWidth isPending={isSubmitting}>
                 发送重置链接

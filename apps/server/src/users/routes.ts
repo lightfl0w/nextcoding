@@ -1,4 +1,7 @@
 import { Hono } from "hono";
+import { checkAndUnlockAchievements } from "../achievements/checker.js";
+import { listUserAchievements } from "../achievements/repository.js";
+import { insertActivity } from "../activities/repository.js";
 import {
     type AuthenticatedEnv,
     readSession,
@@ -9,6 +12,7 @@ import { getStorage } from "../storage/storageClient.js";
 import { clampLimit } from "../works/limits.js";
 import { listUserPublishedWorks } from "../works/repository.js";
 import { toUserProfile, toWorkSummary } from "../works/serializers.js";
+import { ensureSparkBalance } from "../works/sparkBalance.js";
 import {
     countFollowers,
     countFollowing,
@@ -49,11 +53,12 @@ function publicStorageUrl(key: string): string {
 export const userRoutes = new Hono<AuthenticatedEnv>()
     .get("/me/stats", requireSession, async (c) => {
         const userId = c.get("userId");
-        const [givenSparks, receivedSparks] = await Promise.all([
+        const [givenSparks, receivedSparks, sparkBalance] = await Promise.all([
             countGivenSparks(userId),
             countReceivedSparks(userId),
+            ensureSparkBalance(userId),
         ]);
-        return c.json({ givenSparks, receivedSparks });
+        return c.json({ givenSparks, receivedSparks, sparkBalance });
     })
     .post("/me/avatar", requireSession, async (c) => {
         const userId = c.get("userId");
@@ -138,6 +143,10 @@ export const userRoutes = new Hono<AuthenticatedEnv>()
             })),
         );
     })
+    .get("/:id/achievements", async (c) => {
+        const rows = await listUserAchievements(c.req.param("id"));
+        return c.json(rows);
+    })
     .post("/:id/follow", requireSession, async (c) => {
         const targetId = c.req.param("id");
         const actorId = c.get("userId");
@@ -153,6 +162,14 @@ export const userRoutes = new Hono<AuthenticatedEnv>()
         }
 
         await insertFollow({ followerId: actorId, followingId: targetId });
+        await insertActivity({
+            userId: actorId,
+            type: "follow",
+            actorId,
+            targetUserId: targetId,
+        });
+        void checkAndUnlockAchievements(actorId).catch(() => {});
+        void checkAndUnlockAchievements(targetId).catch(() => {});
         return c.json({ following: true });
     })
     .delete("/:id/follow", requireSession, async (c) => {

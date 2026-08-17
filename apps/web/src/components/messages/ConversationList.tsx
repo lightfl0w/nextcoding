@@ -1,29 +1,32 @@
-import { Avatar, Spinner } from "@heroui/react";
+import { Avatar } from "@heroui/react";
 import { Link } from "@tanstack/react-router";
+import { MessageCircle } from "lucide-react";
 import { memo } from "react";
+import { EmptyState } from "~/components/ui/EmptyState";
+import { LoadingState } from "~/components/ui/LoadingState";
 import type { Conversation } from "~/lib/api/messages";
 import { formatDate } from "~/lib/format";
-
-interface ConversationListProps {
-    conversations: Conversation[];
-    activeId?: string;
-    isLoading?: boolean;
-}
 
 export function ConversationList({
     conversations,
     activeId,
     isLoading,
-}: ConversationListProps) {
+}: {
+    conversations: Conversation[];
+    activeId?: string;
+    isLoading?: boolean;
+}) {
     if (isLoading) {
-        return <ConversationListSkeleton />;
+        return <LoadingState text="正在加载会话…" />;
     }
 
     if (conversations.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 text-foreground/40">
-                <p className="text-sm">暂无会话</p>
-            </div>
+            <EmptyState
+                icon={MessageCircle}
+                title="暂无会话"
+                hint="到用户主页点击「发私信」即可开始聊天"
+            />
         );
     }
 
@@ -48,27 +51,25 @@ const ConversationItem = memo(function ConversationItem({
     isActive: boolean;
 }) {
     const { otherUser, lastMessage, lastMessageAt, unreadCount } = conversation;
+    const name = otherUser.name ?? "未命名用户";
 
     return (
         <Link
-            to="/messages/$id"
+            to="/chat/$id"
             params={{ id: conversation.id }}
             className={`block rounded-2xl transition-colors ${
                 isActive
-                    ? "bg-default-100/70 border border-default-200/70"
-                    : "hover:bg-default-100/50 border border-transparent"
+                    ? "bg-hover-strong border border-default-200/70"
+                    : "hover:bg-hover border border-transparent"
             }`}
         >
             <div className="flex items-center gap-3 px-3 py-2.5">
                 <Avatar size="sm" className="shrink-0">
                     {otherUser.image ? (
-                        <Avatar.Image
-                            alt={otherUser.name ?? "用户"}
-                            src={otherUser.image}
-                        />
+                        <Avatar.Image alt={name} src={otherUser.image} />
                     ) : null}
                     <Avatar.Fallback>
-                        {(otherUser.name ?? "用").charAt(0).toUpperCase()}
+                        {name.charAt(0).toUpperCase()}
                     </Avatar.Fallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
@@ -80,7 +81,7 @@ const ConversationItem = memo(function ConversationItem({
                                     : "text-foreground/80"
                             }`}
                         >
-                            {otherUser.name ?? "未命名用户"}
+                            {name}
                         </span>
                         {lastMessageAt && (
                             <span className="text-xs text-foreground/40 tabular-nums shrink-0">
@@ -109,12 +110,3 @@ const ConversationItem = memo(function ConversationItem({
         </Link>
     );
 });
-
-function ConversationListSkeleton() {
-    return (
-        <div className="flex flex-col items-center justify-center gap-3 py-16 text-foreground/40">
-            <Spinner size="sm" />
-            <span className="text-sm">正在加载会话…</span>
-        </div>
-    );
-}

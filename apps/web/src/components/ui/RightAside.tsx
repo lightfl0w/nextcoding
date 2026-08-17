@@ -27,7 +27,7 @@ export function RightAside() {
                             key={work.id}
                             to="/work/$id"
                             params={{ id: work.id }}
-                            className="flex items-center gap-2 px-1.5 py-1.5 rounded-lg hover:bg-default-100/70 transition-colors min-w-0"
+                            className="flex items-center gap-2 px-1.5 py-1.5 rounded-lg hover:bg-hover transition-colors min-w-0"
                         >
                             <span className="text-xs font-semibold text-foreground/35 w-4 shrink-0 tabular-nums">
                                 {index + 1}

@@ -11,12 +11,12 @@ import { authClient } from "@nextcoding/auth/client";
 import { Link } from "@tanstack/react-router";
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { AlertBox } from "~/components/ui/AlertBox";
 import {
     safeRedirect,
     validateEmail,
     validatePassword,
 } from "~/lib/validation";
-import { FormError } from "./AuthAlert";
 
 export function LoginForm({ redirect }: { redirect: string }) {
     const [error, setError] = useState<string | null>(null);
@@ -90,7 +90,9 @@ export function LoginForm({ redirect }: { redirect: string }) {
                 </Link>
             </div>
 
-            {error ? <FormError title="登录失败" message={error} /> : null}
+            {error ? (
+                <AlertBox status="danger" title="登录失败" message={error} />
+            ) : null}
 
             <Button type="submit" fullWidth isPending={isSubmitting}>
                 登录

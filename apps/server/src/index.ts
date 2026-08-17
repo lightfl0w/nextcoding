@@ -2,6 +2,7 @@ import { serve } from "@hono/node-server";
 import { auth } from "@nextcoding/auth";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { ensureAchievements } from "./achievements/repository.js";
 import { achievementRoutes } from "./achievements/routes.js";
 import { activityFeedRoutes, activityUserRoutes } from "./activities/routes.js";
 import { adminRoutes } from "./admin/routes.js";
@@ -57,6 +58,8 @@ app.onError((err, c) => {
     console.error(err);
     return c.json({ error: "服务器内部错误" }, 500);
 });
+
+await ensureAchievements();
 
 serve({ fetch: app.fetch, port: PORT }, (info) => {
     console.log(`Server is running on http://localhost:${info.port}`);

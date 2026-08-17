@@ -31,7 +31,7 @@ export function CommentRow({
             className={`py-2.5 px-3 -mx-3 rounded-lg transition-colors flex gap-3 group ${
                 focus
                     ? "bg-accent/10 ring-1 ring-accent/40"
-                    : "hover:bg-default-50/60"
+                    : "hover:bg-hover"
             }`}
         >
             <Avatar size="sm" className="shrink-0">
@@ -67,7 +67,7 @@ export function CommentRow({
                     <button
                         type="button"
                         onClick={() => onReply(authorName)}
-                        className={`flex items-center gap-1 text-xs text-foreground/45 hover:text-primary w-fit transition-colors ${
+                        className={`flex items-center gap-1 text-xs text-foreground/50 hover:text-primary w-fit transition-colors focus-visible:text-primary focus-visible:opacity-100 ${
                             isReply ? "" : "opacity-0 group-hover:opacity-100"
                         }`}
                     >

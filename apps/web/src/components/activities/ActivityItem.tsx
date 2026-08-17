@@ -59,39 +59,17 @@ export const ActivityItem = memo(function ActivityItem({
                     <span className="text-foreground/60 truncate">
                         {type === "spark" && work && (
                             <>
-                                给{" "}
-                                <Link
-                                    to="/work/$id"
-                                    params={{ id: work.id }}
-                                    className="font-medium hover:underline"
-                                >
-                                    {work.title}
-                                </Link>{" "}
-                                送了一个火花
+                                给 <WorkLink work={work} /> 送了一个火花
                             </>
                         )}
                         {type === "remix" && work && (
                             <>
-                                复刻了{" "}
-                                <Link
-                                    to="/work/$id"
-                                    params={{ id: work.id }}
-                                    className="font-medium hover:underline"
-                                >
-                                    {work.title}
-                                </Link>
+                                复刻了 <WorkLink work={work} />
                             </>
                         )}
                         {type === "comment" && work && (
                             <>
-                                评论了{" "}
-                                <Link
-                                    to="/work/$id"
-                                    params={{ id: work.id }}
-                                    className="font-medium hover:underline"
-                                >
-                                    {work.title}
-                                </Link>
+                                评论了 <WorkLink work={work} />
                                 {comment?.content && (
                                     <>: {comment.content.slice(0, 50)}</>
                                 )}
@@ -99,26 +77,16 @@ export const ActivityItem = memo(function ActivityItem({
                         )}
                         {type === "publish" && work && (
                             <>
-                                发布了新作品{" "}
-                                <Link
-                                    to="/work/$id"
-                                    params={{ id: work.id }}
-                                    className="font-medium hover:underline"
-                                >
-                                    {work.title}
-                                </Link>
+                                发布了新作品 <WorkLink work={work} />
                             </>
                         )}
                         {type === "follow" && targetUser && (
                             <>
                                 关注了{" "}
-                                <Link
-                                    to="/user/$id"
-                                    params={{ id: targetUser.id }}
-                                    className="font-medium hover:underline"
-                                >
-                                    {targetUser.name ?? "匿名用户"}
-                                </Link>
+                                <UserLink
+                                    id={targetUser.id}
+                                    name={targetUser.name}
+                                />
                             </>
                         )}
                     </span>
@@ -130,3 +98,27 @@ export const ActivityItem = memo(function ActivityItem({
         </div>
     );
 });
+
+function WorkLink({ work }: { work: { id: string; title: string } }) {
+    return (
+        <Link
+            to="/work/$id"
+            params={{ id: work.id }}
+            className="font-medium hover:underline"
+        >
+            {work.title}
+        </Link>
+    );
+}
+
+function UserLink({ id, name }: { id: string; name?: string | null }) {
+    return (
+        <Link
+            to="/user/$id"
+            params={{ id }}
+            className="font-medium hover:underline"
+        >
+            {name ?? "匿名用户"}
+        </Link>
+    );
+}

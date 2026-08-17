@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { checkAndUnlockAchievements } from "../../achievements/checker.js";
+import { insertActivity } from "../../activities/repository.js";
 import {
     type AuthenticatedEnv,
     readSession,
@@ -124,6 +126,14 @@ catalogRoutes.post("/:id/publish", requireWorkAuthor, async (c) => {
         return jsonError(c, "请至少在一个文件里填写内容后再发布", 400);
     }
     await publishWork(workId);
+    const userId = c.get("userId");
+    await insertActivity({
+        userId,
+        type: "publish",
+        actorId: userId,
+        workId,
+    });
+    void checkAndUnlockAchievements(userId).catch(() => {});
     return c.json({ ok: true, id: workId, status: "published" });
 });
 

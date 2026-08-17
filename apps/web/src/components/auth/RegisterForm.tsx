@@ -10,13 +10,13 @@ import { authClient } from "@nextcoding/auth/client";
 import { Link } from "@tanstack/react-router";
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { AlertBox } from "~/components/ui/AlertBox";
 import {
     safeRedirect,
     validateEmail,
     validateName,
     validatePassword,
 } from "~/lib/validation";
-import { FormError } from "./AuthAlert";
 
 export function RegisterForm({ redirect }: { redirect: string }) {
     const [error, setError] = useState<string | null>(null);
@@ -104,7 +104,9 @@ export function RegisterForm({ redirect }: { redirect: string }) {
                 <FieldError />
             </TextField>
 
-            {error ? <FormError title="注册失败" message={error} /> : null}
+            {error ? (
+                <AlertBox status="danger" title="注册失败" message={error} />
+            ) : null}
 
             <Button type="submit" fullWidth isPending={isSubmitting}>
                 注册

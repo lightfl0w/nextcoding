@@ -76,7 +76,7 @@ export function listConversations(userId: string) {
             ),
         )
         .where(
-            sql`${conversation.user1Id} = ${userId} OR ${conversation.user2Id} = ${userId}`,
+            sql`(${conversation.user1Id} = ${userId} OR ${conversation.user2Id} = ${userId})`,
         )
         .orderBy(desc(conversation.lastMessageAt));
 }
@@ -93,6 +93,7 @@ export function listMessages(
             senderId: message.senderId,
             content: message.content,
             read: message.read,
+            recalled: message.recalled,
             createdAt: message.createdAt,
             senderName: user.name,
             senderImage: user.image,
@@ -136,7 +137,7 @@ export function countUnreadMessages(userId: string) {
         .innerJoin(conversation, eq(conversation.id, message.conversationId))
         .where(
             and(
-                sql`${conversation.user1Id} = ${userId} OR ${conversation.user2Id} = ${userId}`,
+                sql`(${conversation.user1Id} = ${userId} OR ${conversation.user2Id} = ${userId})`,
                 ne(message.senderId, userId),
                 eq(message.read, false),
             ),
@@ -191,5 +192,30 @@ export function findConversationBetween(user1Id: string, user2Id: string) {
                 eq(conversation.user2Id, larger),
             ),
         )
+        .get();
+}
+
+export function findMessage(messageId: string) {
+    return db
+        .select({
+            id: message.id,
+            conversationId: message.conversationId,
+            senderId: message.senderId,
+            recalled: message.recalled,
+        })
+        .from(message)
+        .where(eq(message.id, messageId))
+        .get();
+}
+
+export async function recallMessage(messageId: string, senderId: string) {
+    await db
+        .update(message)
+        .set({ recalled: true })
+        .where(and(eq(message.id, messageId), eq(message.senderId, senderId)));
+    return db
+        .select({ recalled: message.recalled })
+        .from(message)
+        .where(eq(message.id, messageId))
         .get();
 }

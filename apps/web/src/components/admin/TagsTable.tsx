@@ -1,9 +1,10 @@
-import { Button, Dropdown, Label, Table } from "@heroui/react";
-import { MoreHorizontal, Tags } from "lucide-react";
+import { Table } from "@heroui/react";
+import { Tags } from "lucide-react";
 import { EmptyState } from "~/components/ui/EmptyState";
 import type { AdminTag } from "~/lib/api/admin";
 import { formatDate } from "~/lib/format";
 import { AdminTableShell } from "./AdminTableShell";
+import { RowActions } from "./RowActions";
 
 interface TagsTableProps {
     items: AdminTag[];
@@ -55,33 +56,21 @@ export function TagsTable({
                         </span>
                     </Table.Cell>
                     <Table.Cell>
-                        <Dropdown>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                aria-label={`管理标签 ${tag.name}`}
-                                isIconOnly
-                            >
-                                <MoreHorizontal className="size-4" />
-                            </Button>
-                            <Dropdown.Popover>
-                                <Dropdown.Menu
-                                    onAction={(key) => {
-                                        if (key === "delete") {
-                                            onRequestDelete(tag);
-                                        }
-                                    }}
-                                >
-                                    <Dropdown.Item
-                                        id="delete"
-                                        textValue="删除标签"
-                                        variant="danger"
-                                    >
-                                        <Label>删除标签</Label>
-                                    </Dropdown.Item>
-                                </Dropdown.Menu>
-                            </Dropdown.Popover>
-                        </Dropdown>
+                        <RowActions
+                            label={`管理标签 ${tag.name}`}
+                            actions={[
+                                {
+                                    id: "delete",
+                                    label: "删除标签",
+                                    variant: "danger",
+                                },
+                            ]}
+                            onAction={(key) => {
+                                if (key === "delete") {
+                                    onRequestDelete(tag);
+                                }
+                            }}
+                        />
                     </Table.Cell>
                 </Table.Row>
             ))}

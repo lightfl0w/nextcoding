@@ -51,7 +51,7 @@ function DiscoverPage() {
                         type="button"
                         onClick={() => setKeyword("")}
                         aria-label="清除搜索"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-default-100 text-foreground/40 hover:text-foreground transition-colors"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-hover text-foreground/40 hover:text-foreground transition-colors"
                     >
                         <X className="size-4" />
                     </button>

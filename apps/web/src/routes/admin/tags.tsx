@@ -1,8 +1,8 @@
 import { Card, useOverlayState } from "@heroui/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { DeleteConfirm } from "~/components/admin/DeleteConfirm";
 import { TagsTable } from "~/components/admin/TagsTable";
+import { ConfirmDialog } from "~/components/ui/ConfirmDialog";
 import { PageHeader } from "~/components/ui/PageHeader";
 import { useAdminTags } from "~/hooks/useAdmin";
 import { type AdminTag, deleteAdminTag } from "~/lib/api/admin";
@@ -44,7 +44,7 @@ function TagsPage() {
                 </Card.Content>
             </Card>
 
-            <DeleteConfirm
+            <ConfirmDialog
                 state={deleteState}
                 heading="删除标签"
                 description={

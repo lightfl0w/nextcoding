@@ -7,10 +7,11 @@ import {
     useOverlayState,
 } from "@heroui/react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { FilePenLine, LogIn, Pencil, Rocket } from "lucide-react";
+import { FilePenLine, Pencil, Rocket } from "lucide-react";
 import { useCallback, useState } from "react";
 import { EmptyState } from "~/components/ui/EmptyState";
 import { PageHeader } from "~/components/ui/PageHeader";
+import { SignInPrompt } from "~/components/ui/SignInPrompt";
 import { useAuth } from "~/hooks/useAuth";
 import { useMyWorks } from "~/hooks/useMyWorks";
 import { publishWork } from "~/lib/api";
@@ -32,7 +33,13 @@ function DraftsPage() {
     }
 
     if (!user) {
-        return <SignInPrompt />;
+        return (
+            <SignInPrompt
+                title="登录后查看你的草稿"
+                hint="管理未发布的作品"
+                redirect="/drafts"
+            />
+        );
     }
 
     return <DraftsList />;
@@ -207,23 +214,6 @@ function DraftRow({
                     {publishingId === work.id ? "发布中…" : "发布"}
                 </Button>
             </div>
-        </div>
-    );
-}
-
-function SignInPrompt() {
-    return (
-        <div className="p-8 w-full flex flex-col items-center gap-4 py-24">
-            <div className="size-12 rounded-full bg-default-100/70 flex items-center justify-center text-foreground/45">
-                <LogIn className="size-6" strokeWidth={1.5} />
-            </div>
-            <div className="flex flex-col items-center gap-1">
-                <p className="text-base font-medium">登录后查看你的草稿</p>
-                <p className="text-xs text-foreground/45">管理未发布的作品</p>
-            </div>
-            <Link to="/auth" search={{ mode: "login", redirect: "/drafts" }}>
-                <Button variant="primary">去登录</Button>
-            </Link>
         </div>
     );
 }

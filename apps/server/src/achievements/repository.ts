@@ -8,6 +8,33 @@ import {
     work,
 } from "@nextcoding/db";
 import { and, count, eq } from "drizzle-orm";
+import { ACHIEVEMENT_SEEDS } from "./seed.js";
+
+/**
+ * 幂等补齐成就目录：按 key 检查缺失项后插入，服务启动时调用。
+ */
+export async function ensureAchievements() {
+    for (const seed of ACHIEVEMENT_SEEDS) {
+        const existing = await db
+            .select({ id: achievement.id })
+            .from(achievement)
+            .where(eq(achievement.key, seed.key))
+            .limit(1)
+            .get();
+        if (existing) {
+            continue;
+        }
+        await db.insert(achievement).values({
+            id: crypto.randomUUID(),
+            key: seed.key,
+            name: seed.name,
+            description: seed.description,
+            icon: seed.icon,
+            category: seed.category ?? null,
+            threshold: seed.threshold ?? null,
+        });
+    }
+}
 
 export function listAchievements() {
     return db

@@ -9,11 +9,13 @@ import {
     Info,
     Layout,
     type LucideIcon,
+    MessageCircle,
     ShieldCheck,
     Tags,
 } from "lucide-react";
 import { useAuth } from "~/hooks/useAuth";
 import { useUnreadCount } from "~/hooks/useUnreadCount";
+import { useUnreadMessageCount } from "~/hooks/useUnreadMessageCount";
 
 type NavItem =
     | { label: string; href: string; icon: LucideIcon }
@@ -24,6 +26,7 @@ export function Nav() {
         select: (s) => s.location.pathname,
     });
     const { count } = useUnreadCount();
+    const { count: messageCount } = useUnreadMessageCount();
     const { user } = useAuth();
 
     const isActive = (href: string) =>
@@ -37,6 +40,12 @@ export function Nav() {
         { label: "排行榜", href: "/leaderboard", icon: Crown },
         { label: "草稿", href: "/drafts", icon: FilePenLine },
         { label: "消息", href: "/messages", icon: Bell, badge: count },
+        {
+            label: "聊天",
+            href: "/chat",
+            icon: MessageCircle,
+            badge: messageCount,
+        },
         { label: "关于", href: "/about", icon: Info },
         ...(user?.role === "admin"
             ? [{ label: "管理后台", href: "/admin", icon: ShieldCheck }]

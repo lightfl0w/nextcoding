@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { bookmarkRoutes } from "../bookmarks/routes.js";
+import { reportRoutes } from "../reports/routes.js";
 import { catalogRoutes } from "./routes/catalogRoutes.js";
 import { commentRoutes } from "./routes/commentRoutes.js";
 import { fileRoutes } from "./routes/fileRoutes.js";
@@ -16,4 +17,5 @@ export const workRoutes = new Hono()
     .route("/", sparkRoutes)
     .route("/", remixRoutes)
     .route("/", bookmarkRoutes)
+    .route("/", reportRoutes)
     .route("/", leaderboardRoutes);

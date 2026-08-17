@@ -9,6 +9,11 @@ import {
     notificationText,
 } from "~/lib/notifications";
 
+export type NotificationItemProps = {
+    item: AppNotification;
+    onMarkRead: (id: string) => void;
+};
+
 export function NotificationList({
     groups,
     onMarkRead,
@@ -43,40 +48,52 @@ export function NotificationList({
     );
 }
 
-function NotificationRow({
-    item,
-    onMarkRead,
-}: {
-    item: AppNotification;
-    onMarkRead: (id: string) => void;
-}) {
-    return (
-        <div className="group">
-            {item.work ? (
+function NotificationRow({ item, onMarkRead }: NotificationItemProps) {
+    const markIfUnread = () => {
+        if (!item.read) {
+            onMarkRead(item.id);
+        }
+    };
+
+    const classes =
+        "w-full relative grid gap-3 md:gap-4 md:grid-cols-[88px_minmax(0,1fr)_auto] items-center px-4 py-3.5 rounded-2xl border border-default-200/70 transition-colors cursor-pointer hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+
+    if (item.work) {
+        return (
+            <div className="group">
                 <Link
                     to="/work/$id"
                     params={{ id: item.work.id }}
                     {...(item.comment
                         ? { search: { comment: item.comment.id } }
                         : {})}
-                    className="block rounded-2xl"
+                    onClick={markIfUnread}
+                    className={`${classes} ${
+                        item.read ? "bg-background" : "bg-accent/5"
+                    }`}
                 >
-                    <NotificationCard item={item} onMarkRead={onMarkRead} />
+                    <NotificationContent item={item} />
                 </Link>
-            ) : (
-                <NotificationCard item={item} onMarkRead={onMarkRead} />
-            )}
+            </div>
+        );
+    }
+
+    return (
+        <div className="group">
+            <button
+                type="button"
+                onClick={markIfUnread}
+                className={`${classes} ${
+                    item.read ? "bg-background" : "bg-accent/5"
+                }`}
+            >
+                <NotificationContent item={item} />
+            </button>
         </div>
     );
 }
 
-function NotificationCard({
-    item,
-    onMarkRead,
-}: {
-    item: AppNotification;
-    onMarkRead: (id: string) => void;
-}) {
+function NotificationContent({ item }: { item: AppNotification }) {
     const variant =
         item.type === "spark"
             ? { tile: "bg-warning/15 text-warning", Icon: Sparkles }
@@ -86,20 +103,8 @@ function NotificationCard({
     const tileColor = variant.tile;
     const Icon = variant.Icon;
 
-    const markIfUnread = () => {
-        if (!item.read) {
-            onMarkRead(item.id);
-        }
-    };
-
     return (
-        <button
-            type="button"
-            onClick={markIfUnread}
-            className={`relative grid gap-3 md:gap-4 md:grid-cols-[88px_minmax(0,1fr)_auto] items-center px-4 py-3.5 rounded-2xl border border-default-200/60 transition-colors cursor-pointer hover:bg-default-100/60 ${
-                item.read ? "bg-background" : "bg-accent/5"
-            }`}
-        >
+        <>
             {!item.read && (
                 <span
                     className="absolute left-0 top-3 bottom-3 w-0.5 rounded-r bg-accent"
@@ -111,7 +116,7 @@ function NotificationCard({
                 <span className="text-xs text-foreground/50 tabular-nums">
                     {formatTimeOfDay(item.createdAt)}
                 </span>
-                <span className="text-[11px] text-foreground/35 md:hidden">
+                <span className="text-[11px] text-foreground/45 md:hidden">
                     {formatDate(item.createdAt)}
                 </span>
             </div>
@@ -156,12 +161,12 @@ function NotificationCard({
 
             {item.work ? (
                 <ChevronRight
-                    className="size-4 text-foreground/30 hidden md:block shrink-0"
+                    className="size-4 text-foreground/40 hidden md:block shrink-0"
                     strokeWidth={1.75}
                 />
             ) : (
                 <span className="hidden md:block size-4 shrink-0" />
             )}
-        </button>
+        </>
     );
 }

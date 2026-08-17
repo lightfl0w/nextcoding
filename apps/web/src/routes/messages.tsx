@@ -1,15 +1,13 @@
-import { Tabs, toast } from "@heroui/react";
+import { Button, toast } from "@heroui/react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Bell, MessageCircle } from "lucide-react";
+import { Check } from "lucide-react";
 import { useMemo, useState } from "react";
-import { ConversationList } from "~/components/messages/ConversationList";
-import { MessagesHeader } from "~/components/messages/MessagesHeader";
 import {
     MessagesSidebar,
     MobileTypeFilter,
 } from "~/components/messages/MessagesSidebar";
 import { NotificationFeed } from "~/components/messages/NotificationFeed";
-import { useConversations } from "~/hooks/useConversations";
+import { PageHeader } from "~/components/ui/PageHeader";
 import { useNotifications } from "~/hooks/useNotifications";
 import { markNotificationRead, markNotificationsRead } from "~/lib/api";
 import {
@@ -24,44 +22,6 @@ export const Route = createFileRoute("/messages")({
 });
 
 function MessageCenterRoute() {
-    const [tab, setTab] = useState("notifications");
-
-    return (
-        <div className="mx-auto w-full max-w-6xl p-8 flex flex-col gap-6">
-            <Tabs
-                selectedKey={tab}
-                onSelectionChange={(key) => setTab(key as string)}
-                className="w-full"
-            >
-                <Tabs.ListContainer>
-                    <Tabs.List aria-label="消息类型">
-                        <Tabs.Tab
-                            id="notifications"
-                            className="flex items-center gap-1.5"
-                        >
-                            <Bell className="size-4" />
-                            通知
-                            <Tabs.Indicator />
-                        </Tabs.Tab>
-                        <Tabs.Tab
-                            id="conversations"
-                            className="flex items-center gap-1.5"
-                        >
-                            <MessageCircle className="size-4" />
-                            私信
-                            <Tabs.Indicator />
-                        </Tabs.Tab>
-                    </Tabs.List>
-                </Tabs.ListContainer>
-            </Tabs>
-
-            {tab === "notifications" && <NotificationPanel />}
-            {tab === "conversations" && <ConversationsPanel />}
-        </div>
-    );
-}
-
-function NotificationPanel() {
     const { notifications, isLoading, mutate } = useNotifications();
     const [readFilter, setReadFilter] = useState<NotificationFilter>("all");
     const [typeFilter, setTypeFilter] = useState<NotificationTypeFilter>("all");
@@ -114,11 +74,24 @@ function NotificationPanel() {
     };
 
     return (
-        <div className="flex flex-col gap-6 md:grid md:gap-8 md:grid-cols-[minmax(0,1fr)_220px]">
+        <div className="mx-auto w-full max-w-6xl p-8 flex flex-col gap-6 md:grid md:gap-8 md:grid-cols-[minmax(0,1fr)_220px]">
             <main className="flex min-w-0 flex-col gap-6 order-2 md:order-1">
-                <MessagesHeader
-                    unreadCount={counts.unread}
-                    onMarkAllRead={markAllRead}
+                <PageHeader
+                    title="消息中心"
+                    description="收到火花、二创与评论时都会通知你"
+                    action={
+                        counts.unread > 0 ? (
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                className="gap-1.5 shrink-0"
+                                onPress={markAllRead}
+                            >
+                                <Check className="size-3.5" />
+                                全部已读
+                            </Button>
+                        ) : undefined
+                    }
                 />
 
                 <div className="md:hidden">
@@ -149,13 +122,5 @@ function NotificationPanel() {
                 />
             </div>
         </div>
-    );
-}
-
-function ConversationsPanel() {
-    const { conversations, isLoading } = useConversations();
-
-    return (
-        <ConversationList conversations={conversations} isLoading={isLoading} />
     );
 }

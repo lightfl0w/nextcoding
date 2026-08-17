@@ -11,6 +11,7 @@ export default {
         "./src/schema/activities.ts",
         "./src/schema/messages.ts",
         "./src/schema/achievements.ts",
+        "./src/schema/reports.ts",
         "./src/schema/settings.ts",
     ],
     out: "./src/migrations",

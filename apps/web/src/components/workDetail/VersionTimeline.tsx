@@ -40,7 +40,7 @@ export function VersionTimeline({
                 return (
                     <li
                         key={version.version}
-                        className="group flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-default-100/70 transition-colors"
+                        className="group flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-hover transition-colors"
                     >
                         <Chip
                             size="sm"
@@ -64,7 +64,7 @@ export function VersionTimeline({
                             aria-label={`运行 v${version.version}`}
                             isDisabled={isRunning}
                             onPress={() => onRun(version)}
-                            className="size-7 min-w-0 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity"
+                            className="size-7 min-w-0 shrink-0 opacity-60 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                         >
                             {isActive && isRunning ? (
                                 <Spinner size="sm" />

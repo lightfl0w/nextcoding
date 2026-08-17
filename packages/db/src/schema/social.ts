@@ -115,6 +115,14 @@ export const follow = sqliteTable(
     ],
 );
 
+export const sparkBalance = sqliteTable("spark_balance", {
+    userId: text("user_id")
+        .primaryKey()
+        .references(() => user.id, { onDelete: "cascade" }),
+    balance: integer("balance").notNull().default(0),
+    lastGrantedAt: text("last_granted_at").notNull(),
+});
+
 export const sparkRelations = relations(spark, ({ one }) => ({
     work: one(work, { fields: [spark.workId], references: [work.id] }),
     user: one(user, { fields: [spark.userId], references: [user.id] }),

@@ -4,7 +4,7 @@ import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AdminPagination } from "~/components/admin/AdminPagination";
 import { CommentsTable } from "~/components/admin/CommentsTable";
-import { DeleteConfirm } from "~/components/admin/DeleteConfirm";
+import { ConfirmDialog } from "~/components/ui/ConfirmDialog";
 import { PageHeader } from "~/components/ui/PageHeader";
 import { useAdminComments } from "~/hooks/useAdmin";
 import { type AdminComment, deleteAdminComment } from "~/lib/api/admin";
@@ -119,7 +119,7 @@ function CommentsPage() {
                 </Card.Content>
             </Card>
 
-            <DeleteConfirm
+            <ConfirmDialog
                 state={deleteState}
                 heading="删除评论"
                 description={

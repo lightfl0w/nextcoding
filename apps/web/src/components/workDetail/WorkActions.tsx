@@ -8,6 +8,7 @@ import {
     Sparkles,
 } from "lucide-react";
 import { BookmarkButton } from "~/components/bookmarks/BookmarkButton";
+import { ReportButton } from "~/components/ReportButton";
 import { formatCount } from "~/lib/format";
 import { languageLabel, type RuntimeInfo } from "~/lib/run";
 import { StatBadge } from "./StatBadge";
@@ -82,7 +83,7 @@ export function WorkActions({
             <div className="flex items-center gap-2.5 flex-wrap">
                 <Button
                     variant="primary"
-                    className="gap-2 shrink-0 shadow-sm"
+                    className="gap-2 shrink-0"
                     isDisabled={!runtime || isRunning}
                     onPress={onRun}
                 >
@@ -114,6 +115,7 @@ export function WorkActions({
                     二创
                 </Button>
                 <BookmarkButton workId={workId} />
+                <ReportButton workId={workId} />
             </div>
         </div>
     );

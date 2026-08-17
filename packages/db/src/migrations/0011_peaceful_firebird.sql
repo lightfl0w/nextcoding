@@ -1,0 +1,1 @@
+ALTER TABLE `message` ADD `recalled` integer DEFAULT false NOT NULL;

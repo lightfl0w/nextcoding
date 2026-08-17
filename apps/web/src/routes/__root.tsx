@@ -4,6 +4,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
 import "~/styles.css";
 import { Providers } from "~/components/ThemeProviders";
+import { MobileNav } from "~/components/ui/MobileNav";
 import { RightAside } from "~/components/ui/RightAside";
 import { Sidebar } from "~/components/ui/Sidebar";
 
@@ -20,7 +21,10 @@ function RootComponent() {
     const fullscreen = isAuthPage || isEditor || isAdmin;
 
     const isWorkDetail = /^\/work\/[^/]+$/.test(pathname);
-    const hasOwnAside = isWorkDetail || pathname.startsWith("/messages");
+    const hasOwnAside =
+        isWorkDetail ||
+        pathname.startsWith("/messages") ||
+        pathname.startsWith("/chat");
     const showAside = !fullscreen && !hasOwnAside;
 
     return (
@@ -35,12 +39,13 @@ function RootComponent() {
                         <div className="relative z-10 flex w-full">
                             <Sidebar />
 
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0 pb-20 md:pb-0">
                                 <Outlet />
                             </div>
 
                             {showAside && <RightAside />}
                         </div>
+                        <MobileNav />
                     </main>
                 )}
             </Providers>

@@ -5,7 +5,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <NextThemesProvider
             attribute="class"
             defaultTheme="system"
-            enableSystem={true}
+            enableSystem
             storageKey="theme"
             disableTransitionOnChange
         >

@@ -12,7 +12,6 @@ import { authClient } from "@nextcoding/auth/client";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
     FileText,
-    LogIn,
     LogOut,
     Pencil,
     Plus,
@@ -25,6 +24,7 @@ import { SettingsPanel } from "~/components/settings/SettingsPanel";
 import { EmptyState } from "~/components/ui/EmptyState";
 import { PageHeader } from "~/components/ui/PageHeader";
 import { SectionHeading } from "~/components/ui/SectionHeading";
+import { SignInPrompt } from "~/components/ui/SignInPrompt";
 import { useAuth } from "~/hooks/useAuth";
 import { useMyStats } from "~/hooks/useMyStats";
 import { useMyWorks } from "~/hooks/useMyWorks";
@@ -48,7 +48,13 @@ function AccountRoute() {
     }
 
     if (!user) {
-        return <SignInPrompt />;
+        return (
+            <SignInPrompt
+                title="登录后查看你的账号"
+                hint="管理资料、火花与你的作品"
+                redirect="/account"
+            />
+        );
     }
 
     return (
@@ -92,16 +98,16 @@ function AccountRoute() {
 }
 
 function ProfileTab() {
-    const { givenSparks } = useMyStats();
+    const { sparkBalance } = useMyStats();
     return (
         <div className="flex flex-col gap-6">
-            <ProfileCard givenSparks={givenSparks} />
+            <ProfileCard sparkBalance={sparkBalance} />
             <MyWorksSection />
         </div>
     );
 }
 
-function ProfileCard({ givenSparks }: { givenSparks: number }) {
+function ProfileCard({ sparkBalance }: { sparkBalance: number }) {
     const { user, refetch } = useAuth();
     const navigate = useNavigate();
     const editDialogState = useOverlayState();
@@ -152,9 +158,8 @@ function ProfileCard({ givenSparks }: { givenSparks: number }) {
                     <div className="flex items-center gap-1.5 text-sm text-foreground/80">
                         <Sparkles className="size-4 text-warning" />
                         <span className="font-medium tabular-nums">
-                            {givenSparks}
+                            {sparkBalance}
                         </span>
-                        <span className="text-foreground/50">个火花</span>
                     </div>
 
                     <div className="flex items-center justify-between text-xs text-foreground/50">
@@ -328,24 +333,5 @@ function WorkRowLink({ work }: { work: OwnedWork }) {
                 {formatDate(work.updatedAt)}
             </span>
         </Link>
-    );
-}
-
-function SignInPrompt() {
-    return (
-        <div className="p-8 w-full flex flex-col items-center gap-4 py-24">
-            <div className="size-12 rounded-full bg-default-100/70 flex items-center justify-center text-foreground/45">
-                <LogIn className="size-6" strokeWidth={1.5} />
-            </div>
-            <div className="flex flex-col items-center gap-1">
-                <p className="text-base font-medium">登录后查看你的账号</p>
-                <p className="text-xs text-foreground/45">
-                    管理资料、火花与你的作品
-                </p>
-            </div>
-            <Link to="/auth" search={{ mode: "login", redirect: "/account" }}>
-                <Button variant="primary">去登录</Button>
-            </Link>
-        </div>
     );
 }

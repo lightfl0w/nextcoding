@@ -1,5 +1,5 @@
 export type MessageStreamEvent = {
-    type: "message" | "unread";
+    type: "message" | "recall" | "unread";
     payload: unknown;
 };
 
@@ -46,6 +46,17 @@ export function publishNewMessage(
     publishToUser(userId, {
         type: "message",
         payload: { conversationId, message },
+    });
+}
+
+export function publishMessageRecalled(
+    userId: string,
+    conversationId: string,
+    messageId: string,
+): void {
+    publishToUser(userId, {
+        type: "recall",
+        payload: { conversationId, messageId },
     });
 }
 

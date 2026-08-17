@@ -58,7 +58,7 @@ function AdminTableSkeleton({ rows }: { rows: number }) {
             {SKELETON_IDS.slice(0, rows).map((id) => (
                 <div
                     key={id}
-                    className="h-14 rounded-xl border border-default-200/60 flex items-center gap-4 px-4"
+                    className="h-14 rounded-xl border border-default-200/70 flex items-center gap-4 px-4"
                 >
                     <Skeleton className="size-8 rounded-full" />
                     <div className="flex flex-col gap-1.5 flex-1 min-w-0">

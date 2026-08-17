@@ -42,11 +42,11 @@ function ModeLink({
         <Link
             to="/auth"
             search={{ mode, redirect }}
-            className={
+            className={`py-2 text-center text-sm font-medium transition-colors rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
                 active
-                    ? "bg-foreground/5 text-foreground rounded-lg py-2 text-center text-sm font-medium"
-                    : "text-foreground/50 hover:text-foreground py-2 text-center text-sm font-medium"
-            }
+                    ? "bg-hover-strong text-foreground"
+                    : "text-foreground/50 hover:text-foreground hover:bg-hover"
+            }`}
         >
             {label}
         </Link>

@@ -1,11 +1,7 @@
 import { Card } from "@heroui/react";
 import type { UserSettings } from "~/lib/api/settings";
 import { ToggleSwitch } from "./ToggleSwitch";
-
-interface PrivacySettingsProps {
-    settings: UserSettings;
-    onChange: (updates: Partial<UserSettings>) => void;
-}
+import type { SettingsSectionProps } from "./types";
 
 const PRIVACY_OPTIONS: Array<{
     key: keyof Pick<UserSettings, "showActivity" | "showBookmarks">;
@@ -24,7 +20,7 @@ const PRIVACY_OPTIONS: Array<{
     },
 ];
 
-export function PrivacySettings({ settings, onChange }: PrivacySettingsProps) {
+export function PrivacySettings({ settings, onChange }: SettingsSectionProps) {
     return (
         <div className="flex flex-col gap-4">
             <div>

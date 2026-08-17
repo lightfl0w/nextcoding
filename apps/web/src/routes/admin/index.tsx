@@ -1,4 +1,4 @@
-import { Avatar, Card, Skeleton, Spinner } from "@heroui/react";
+import { Avatar, Card, Skeleton } from "@heroui/react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
     Eye,
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { StatCard } from "~/components/admin/StatCard";
 import { TrendChart } from "~/components/admin/TrendChart";
+import { AlertBox } from "~/components/ui/AlertBox";
 import { PageHeader } from "~/components/ui/PageHeader";
 import { useAdminStats } from "~/hooks/useAdmin";
 import { formatCount, formatDate } from "~/lib/format";
@@ -26,9 +27,12 @@ function AdminDashboardPage() {
     }
     if (error || !stats) {
         return (
-            <div className="flex flex-col items-center gap-2 py-20 text-foreground/45">
-                <Spinner size="sm" />
-                <p className="text-sm">统计加载失败，请稍后刷新重试</p>
+            <div className="py-20">
+                <AlertBox
+                    status="danger"
+                    title="加载失败"
+                    message="统计加载失败，请稍后刷新重试"
+                />
             </div>
         );
     }
@@ -90,7 +94,7 @@ function AdminDashboardPage() {
                                         <Link
                                             to="/user/$id"
                                             params={{ id: user.id }}
-                                            className="flex items-center gap-3 py-2.5 rounded-lg hover:bg-default-50 transition-colors"
+                                            className="flex items-center gap-3 py-2.5 rounded-lg hover:bg-hover transition-colors"
                                         >
                                             <Avatar
                                                 size="sm"
@@ -146,7 +150,7 @@ function AdminDashboardPage() {
                                         <Link
                                             to="/work/$id"
                                             params={{ id: work.id }}
-                                            className="flex items-center gap-3 py-2.5 rounded-lg hover:bg-default-50 transition-colors"
+                                            className="flex items-center gap-3 py-2.5 rounded-lg hover:bg-hover transition-colors"
                                         >
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium truncate">

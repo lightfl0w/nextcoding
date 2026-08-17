@@ -15,31 +15,33 @@ export const WorkCard = memo(function WorkCard({ work }: { work: Work }) {
     const { sparked, count, handleSparkClick } = useWorkCardSpark(work);
 
     return (
-        <Link
-            to="/work/$id"
-            params={{ id: work.id }}
-            className="block h-full group"
-        >
-            <Card className="w-full p-0 shadow-none rounded-2xl overflow-hidden h-full border border-default-200/70 transition-colors group-hover:border-default-300">
+        <div className="h-full group">
+            <Card className="w-full p-0 shadow-none rounded-2xl overflow-hidden h-full border border-default-200/70 transition-[transform,border-color] duration-200 group-hover:border-default-300 group-hover:-translate-y-0.5">
                 <div className="p-4 flex flex-col gap-2.5 h-full">
-                    <Card.Header className="gap-1">
-                        <Card.Title className="text-sm font-semibold line-clamp-1">
-                            {work.title}
-                        </Card.Title>
-                        <Card.Description className="text-xs leading-relaxed line-clamp-2">
-                            {work.description ?? "暂无简介"}
-                        </Card.Description>
-                    </Card.Header>
+                    <Link
+                        to="/work/$id"
+                        params={{ id: work.id }}
+                        className="flex min-w-0 flex-col gap-2.5"
+                    >
+                        <Card.Header className="gap-1">
+                            <Card.Title className="text-sm font-semibold line-clamp-1">
+                                {work.title}
+                            </Card.Title>
+                            <Card.Description className="text-xs leading-relaxed line-clamp-2">
+                                {work.description ?? "暂无简介"}
+                            </Card.Description>
+                        </Card.Header>
 
-                    {Array.isArray(work.tags) && work.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                            {work.tags.map((tag) => (
-                                <Chip key={tag} size="sm" variant="soft">
-                                    <Chip.Label>{tag}</Chip.Label>
-                                </Chip>
-                            ))}
-                        </div>
-                    )}
+                        {Array.isArray(work.tags) && work.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                                {work.tags.map((tag) => (
+                                    <Chip key={tag} size="sm" variant="soft">
+                                        <Chip.Label>{tag}</Chip.Label>
+                                    </Chip>
+                                ))}
+                            </div>
+                        )}
+                    </Link>
 
                     <Card.Footer className="justify-between mt-auto">
                         <div className="flex items-center gap-1.5 min-w-0">
@@ -68,7 +70,7 @@ export const WorkCard = memo(function WorkCard({ work }: { work: Work }) {
                                 className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 transition-colors ${
                                     sparked
                                         ? "text-primary bg-primary/10"
-                                        : "hover:text-foreground/80 hover:bg-default-100"
+                                        : "hover:text-foreground/80 hover:bg-hover"
                                 }`}
                             >
                                 <Sparkles
@@ -96,6 +98,6 @@ export const WorkCard = memo(function WorkCard({ work }: { work: Work }) {
                     </Card.Footer>
                 </div>
             </Card>
-        </Link>
+        </div>
     );
 });

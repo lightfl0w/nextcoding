@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { checkAndUnlockAchievements } from "../../achievements/checker.js";
+import { insertActivity } from "../../activities/repository.js";
 import { type AuthenticatedEnv, requireSession } from "../../http/guards.js";
 import { jsonError } from "../../http/responses.js";
 import { getStorage } from "../../storage/storageClient.js";
@@ -40,6 +42,13 @@ remixRoutes.post("/:id/remix", requireSession, async (c) => {
     });
     await copyFiles(originalId, forkId);
     await insertRemix({ originalId, forkId, userId });
+    await insertActivity({
+        userId,
+        type: "remix",
+        actorId: userId,
+        workId: forkId,
+    });
+    void checkAndUnlockAchievements(userId).catch(() => {});
 
     if (detail.userId !== userId) {
         await insertNotification({

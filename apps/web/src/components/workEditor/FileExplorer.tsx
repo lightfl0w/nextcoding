@@ -10,13 +10,13 @@ import {
     Trash2,
 } from "lucide-react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { ConfirmDialog } from "~/components/ui/ConfirmDialog";
 import type { WorkFile } from "~/lib/api";
 import {
     buildFileTree,
     type FileTreeNode,
     type FolderNode,
 } from "~/lib/fileTree";
-import { ConfirmButton } from "./ConfirmButton";
 
 interface FileExplorerProps {
     files: WorkFile[];
@@ -39,15 +39,14 @@ interface FileExplorerProps {
     onConfirmRename: () => void;
 }
 
-interface TreeRowProps {
-    node: FileTreeNode;
-    depth: number;
-    collapsed: ReadonlySet<string>;
+type TreeViewState = {
     activeKey: string | null;
     nameError: string | null;
     renamingKey: string | null;
     renameDraft: string;
-    onToggleFolder: (path: string) => void;
+};
+
+type TreeViewCallbacks = {
     onOpenFile: (key: string) => void;
     onDeleteFile: (file: WorkFile) => void;
     onDeleteFolder: (folder: string) => void;
@@ -55,7 +54,21 @@ interface TreeRowProps {
     onCancelRename: () => void;
     onChangeRenameDraft: (value: string) => void;
     onConfirmRename: () => void;
-}
+};
+
+type TreeRowProps = TreeViewState &
+    TreeViewCallbacks & {
+        node: FileTreeNode;
+        depth: number;
+        collapsed: ReadonlySet<string>;
+        onToggleFolder: (path: string) => void;
+    };
+
+type FolderRowProps = Omit<TreeRowProps, "node"> & { node: FolderNode };
+
+type FileRowProps = Omit<TreeRowProps, "node"> & {
+    node: Extract<FileTreeNode, { kind: "file" }>;
+};
 
 /**
  * 文件树。
@@ -128,7 +141,7 @@ export const FileExplorer = memo(function FileExplorer({
                     type="button"
                     onClick={onStartComposing}
                     title="新建文件"
-                    className="p-1 rounded-md hover:bg-default-100 text-foreground/60"
+                    className="p-1 rounded-md hover:bg-hover text-foreground/60"
                 >
                     <FilePlus2 className="size-3.5" />
                 </button>
@@ -181,11 +194,11 @@ function FolderRow({
     node,
     depth,
     collapsed,
+    onToggleFolder,
     activeKey,
     nameError,
     renamingKey,
     renameDraft,
-    onToggleFolder,
     onOpenFile,
     onDeleteFile,
     onDeleteFolder,
@@ -193,23 +206,7 @@ function FolderRow({
     onCancelRename,
     onChangeRenameDraft,
     onConfirmRename,
-}: {
-    node: FolderNode;
-    depth: number;
-    collapsed: ReadonlySet<string>;
-    activeKey: string | null;
-    nameError: string | null;
-    renamingKey: string | null;
-    renameDraft: string;
-    onToggleFolder: (path: string) => void;
-    onOpenFile: (key: string) => void;
-    onDeleteFile: (file: WorkFile) => void;
-    onDeleteFolder: (folder: string) => void;
-    onStartRename: (file: WorkFile) => void;
-    onCancelRename: () => void;
-    onChangeRenameDraft: (value: string) => void;
-    onConfirmRename: () => void;
-}) {
+}: FolderRowProps) {
     const isCollapsed = collapsed.has(node.path);
     const indent = 12 + depth * 14;
 
@@ -217,7 +214,7 @@ function FolderRow({
         <>
             <div
                 style={{ paddingLeft: indent }}
-                className="group flex items-center rounded-lg pr-1 text-sm text-foreground/80 transition-colors hover:bg-default-100"
+                className="group flex items-center rounded-lg pr-1 text-sm text-foreground/80 transition-colors hover:bg-hover"
             >
                 <button
                     type="button"
@@ -236,7 +233,7 @@ function FolderRow({
                     )}
                     <span className="truncate">{node.name}</span>
                 </button>
-                <ConfirmButton
+                <ConfirmDialog
                     heading={`删除文件夹 ${node.name}？`}
                     description="将删除该文件夹下的所有文件，此操作不可恢复。"
                     confirmLabel="确认删除"
@@ -265,11 +262,11 @@ function FolderRow({
                         node={child}
                         depth={depth + 1}
                         collapsed={collapsed}
+                        onToggleFolder={onToggleFolder}
                         activeKey={activeKey}
                         nameError={nameError}
                         renamingKey={renamingKey}
                         renameDraft={renameDraft}
-                        onToggleFolder={onToggleFolder}
                         onOpenFile={onOpenFile}
                         onDeleteFile={onDeleteFile}
                         onDeleteFolder={onDeleteFolder}
@@ -296,20 +293,7 @@ function FileRow({
     onCancelRename,
     onChangeRenameDraft,
     onConfirmRename,
-}: {
-    node: Extract<FileTreeNode, { kind: "file" }>;
-    depth: number;
-    activeKey: string | null;
-    nameError: string | null;
-    renamingKey: string | null;
-    renameDraft: string;
-    onOpenFile: (key: string) => void;
-    onDeleteFile: (file: WorkFile) => void;
-    onStartRename: (file: WorkFile) => void;
-    onCancelRename: () => void;
-    onChangeRenameDraft: (value: string) => void;
-    onConfirmRename: () => void;
-}) {
+}: FileRowProps) {
     const indent = 12 + depth * 14;
     const isActive = activeKey === node.file.key;
     const isRenaming = renamingKey === node.file.key;
@@ -353,7 +337,7 @@ function FileRow({
             >
                 <Pencil className="size-3.5" />
             </Button>
-            <ConfirmButton
+            <ConfirmDialog
                 heading={`删除 ${node.file.name}？`}
                 description="将永久删除该文件及其内容，此操作不可恢复。"
                 confirmLabel="确认删除"
@@ -410,7 +394,7 @@ function toggleSetItem<T>(set: ReadonlySet<T>, item: T): Set<T> {
 function fileRowClassName(isActive: boolean): string {
     const stateClass = isActive
         ? "bg-primary-100 text-primary"
-        : "hover:bg-default-100 text-foreground/80";
+        : "hover:bg-hover text-foreground/80";
     return `group flex items-center rounded-lg pr-1 text-sm transition-colors ${stateClass}`;
 }
 
@@ -422,7 +406,7 @@ function fileRowClassName(isActive: boolean): string {
 function rowActionButtonClassName(isActive: boolean): string {
     const visibilityClass = isActive
         ? "opacity-100"
-        : "opacity-0 group-hover:opacity-100";
+        : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100";
     return `size-6 min-w-0 text-foreground/50 ${visibilityClass}`;
 }
 

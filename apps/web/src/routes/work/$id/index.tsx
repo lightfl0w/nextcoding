@@ -147,7 +147,7 @@ function WorkDetailRoute() {
                                 output={runner.output}
                                 result={runner.result}
                                 label={runner.label}
-                                className="rounded-2xl border border-default-200 overflow-hidden shadow-sm"
+                                className="rounded-2xl border border-default-200/70 overflow-hidden"
                                 awaitingInput={runner.awaitingInput}
                                 onSubmitInput={runner.submitInput}
                                 onCancelInput={runner.cancelInput}

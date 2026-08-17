@@ -1,8 +1,8 @@
 import { Button } from "@heroui/react";
 import { GitCompareArrows, History, RotateCcw } from "lucide-react";
 import { memo } from "react";
+import { ConfirmDialog } from "~/components/ui/ConfirmDialog";
 import type { WorkVersion } from "~/lib/api";
-import { ConfirmButton } from "./ConfirmButton";
 
 interface VersionHistoryPanelProps {
     versions: WorkVersion[];
@@ -60,11 +60,11 @@ function VersionRow({
                         type="button"
                         title="对比当前草稿"
                         onClick={onCompare}
-                        className="p-1 rounded-md hover:bg-default-100 text-foreground/60"
+                        className="p-1 rounded-md hover:bg-hover text-foreground/60"
                     >
                         <GitCompareArrows className="size-3.5" />
                     </button>
-                    <ConfirmButton
+                    <ConfirmDialog
                         heading={`回滚到 v${version.version}？`}
                         description={`将用 v${version.version} 的内容覆盖当前草稿，当前未发布的修改会丢失。历史版本不会被删除。`}
                         confirmLabel="确认回滚"

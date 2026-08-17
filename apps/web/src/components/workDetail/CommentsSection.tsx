@@ -1,4 +1,4 @@
-import { Card, Skeleton, toast } from "@heroui/react";
+import { Card, Skeleton } from "@heroui/react";
 import { MessageCircle } from "lucide-react";
 import { memo, useCallback, useState } from "react";
 import type { KeyedMutator } from "swr";
@@ -6,7 +6,6 @@ import { useAuth } from "~/hooks/useAuth";
 import { useCommentComposer } from "~/hooks/useCommentComposer";
 import { type CommentNode, useCommentThreads } from "~/hooks/useCommentThreads";
 import type { Comment } from "~/lib/api";
-import { postComment } from "~/lib/api";
 import { CommentComposer, SignInPrompt } from "./CommentComposer";
 import { CommentRow } from "./CommentRow";
 
@@ -125,12 +124,16 @@ function CommentBranch({
     onReload: () => Promise<unknown>;
 }) {
     const [isReplying, setIsReplying] = useState(false);
-    const [draft, setDraft] = useState("");
-    const [isPosting, setIsPosting] = useState(false);
     const [isExpanded, setIsExpanded] = useState(
         () =>
             focusCommentId != null &&
             replies.some((child) => containsComment(child, focusCommentId)),
+    );
+
+    const { draft, setDraft, isPosting, submit } = useCommentComposer(
+        workId,
+        onReload,
+        comment.id,
     );
 
     const authorName = comment.author.name ?? "匿名";
@@ -146,26 +149,13 @@ function CommentBranch({
     const closeReply = useCallback(() => {
         setIsReplying(false);
         setDraft("");
-    }, []);
+    }, [setDraft]);
 
     const submitReply = useCallback(async () => {
-        const content = draft.trim();
-        if (!content || isPosting || !isReplying) {
-            return;
-        }
-
-        setIsPosting(true);
-        try {
-            await postComment(workId, content, comment.id);
-            setDraft("");
+        if (await submit()) {
             setIsReplying(false);
-            await onReload();
-        } catch (error) {
-            toast.danger((error as Error).message);
-        } finally {
-            setIsPosting(false);
         }
-    }, [workId, draft, isPosting, isReplying, comment.id, onReload]);
+    }, [submit]);
 
     return (
         <div className="flex flex-col">

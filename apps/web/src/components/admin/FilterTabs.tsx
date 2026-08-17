@@ -25,7 +25,7 @@ export function FilterTabs<T extends string>({
             <Tabs.ListContainer>
                 <Tabs.List>
                     {options.map((option) => (
-                        <Tabs.Tab key={option.value} id={option.value} >
+                        <Tabs.Tab key={option.value} id={option.value}>
                             {option.label}
                             <Tabs.Indicator />
                         </Tabs.Tab>

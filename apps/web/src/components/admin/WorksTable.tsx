@@ -1,10 +1,11 @@
-import { Button, Chip, Dropdown, Label, Table } from "@heroui/react";
+import { Chip, Table } from "@heroui/react";
 import { Link } from "@tanstack/react-router";
-import { FileCode2, MoreHorizontal } from "lucide-react";
+import { FileCode2 } from "lucide-react";
 import { EmptyState } from "~/components/ui/EmptyState";
 import type { AdminWork } from "~/lib/api/admin";
 import { formatCount, formatDate } from "~/lib/format";
 import { AdminTableShell } from "./AdminTableShell";
+import { RowActions } from "./RowActions";
 
 interface WorksTableProps {
     items: AdminWork[];
@@ -84,33 +85,21 @@ export function WorksTable({
                         </span>
                     </Table.Cell>
                     <Table.Cell>
-                        <Dropdown>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                aria-label={`管理作品 ${work.title}`}
-                                isIconOnly
-                            >
-                                <MoreHorizontal className="size-4" />
-                            </Button>
-                            <Dropdown.Popover>
-                                <Dropdown.Menu
-                                    onAction={(key) => {
-                                        if (key === "delete") {
-                                            onRequestDelete(work);
-                                        }
-                                    }}
-                                >
-                                    <Dropdown.Item
-                                        id="delete"
-                                        textValue="删除作品"
-                                        variant="danger"
-                                    >
-                                        <Label>删除作品</Label>
-                                    </Dropdown.Item>
-                                </Dropdown.Menu>
-                            </Dropdown.Popover>
-                        </Dropdown>
+                        <RowActions
+                            label={`管理作品 ${work.title}`}
+                            actions={[
+                                {
+                                    id: "delete",
+                                    label: "删除作品",
+                                    variant: "danger",
+                                },
+                            ]}
+                            onAction={(key) => {
+                                if (key === "delete") {
+                                    onRequestDelete(work);
+                                }
+                            }}
+                        />
                     </Table.Cell>
                 </Table.Row>
             ))}

@@ -80,7 +80,7 @@ export function DiffView({
                 type="button"
                 onClick={onClose}
                 title="关闭对比"
-                className="absolute top-2 right-2 z-50 p-1.5 rounded-md bg-background border border-default-200 hover:bg-default-100"
+                className="absolute top-2 right-2 z-50 p-1.5 rounded-md bg-background border border-default-200 hover:bg-hover"
             >
                 <X className="size-4" />
             </button>

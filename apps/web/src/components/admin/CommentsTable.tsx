@@ -1,10 +1,11 @@
-import { Avatar, Button, Dropdown, Label, Table } from "@heroui/react";
+import { Avatar, Table } from "@heroui/react";
 import { Link } from "@tanstack/react-router";
-import { MessageSquareQuote, MoreHorizontal } from "lucide-react";
+import { MessageSquareQuote } from "lucide-react";
 import { EmptyState } from "~/components/ui/EmptyState";
 import type { AdminComment } from "~/lib/api/admin";
 import { formatDate } from "~/lib/format";
 import { AdminTableShell } from "./AdminTableShell";
+import { RowActions } from "./RowActions";
 
 interface CommentsTableProps {
     items: AdminComment[];
@@ -76,33 +77,21 @@ export function CommentsTable({
                         </span>
                     </Table.Cell>
                     <Table.Cell>
-                        <Dropdown>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                aria-label="管理评论"
-                                isIconOnly
-                            >
-                                <MoreHorizontal className="size-4" />
-                            </Button>
-                            <Dropdown.Popover>
-                                <Dropdown.Menu
-                                    onAction={(key) => {
-                                        if (key === "delete") {
-                                            onRequestDelete(comment);
-                                        }
-                                    }}
-                                >
-                                    <Dropdown.Item
-                                        id="delete"
-                                        textValue="删除评论"
-                                        variant="danger"
-                                    >
-                                        <Label>删除评论</Label>
-                                    </Dropdown.Item>
-                                </Dropdown.Menu>
-                            </Dropdown.Popover>
-                        </Dropdown>
+                        <RowActions
+                            label="管理评论"
+                            actions={[
+                                {
+                                    id: "delete",
+                                    label: "删除评论",
+                                    variant: "danger",
+                                },
+                            ]}
+                            onAction={(key) => {
+                                if (key === "delete") {
+                                    onRequestDelete(comment);
+                                }
+                            }}
+                        />
                     </Table.Cell>
                 </Table.Row>
             ))}

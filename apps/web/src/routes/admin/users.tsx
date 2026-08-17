@@ -4,9 +4,9 @@ import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AdminPagination } from "~/components/admin/AdminPagination";
 import { BanModal } from "~/components/admin/BanModal";
-import { DeleteConfirm } from "~/components/admin/DeleteConfirm";
 import { FilterTabs } from "~/components/admin/FilterTabs";
 import { UsersTable } from "~/components/admin/UsersTable";
+import { ConfirmDialog } from "~/components/ui/ConfirmDialog";
 import { PageHeader } from "~/components/ui/PageHeader";
 import { useAdminUsers } from "~/hooks/useAdmin";
 import { useAuth } from "~/hooks/useAuth";
@@ -238,7 +238,7 @@ function UsersPage() {
             </Card>
 
             <BanModal state={banState} user={banTarget} onConfirm={handleBan} />
-            <DeleteConfirm
+            <ConfirmDialog
                 state={deleteState}
                 heading="删除用户"
                 description={

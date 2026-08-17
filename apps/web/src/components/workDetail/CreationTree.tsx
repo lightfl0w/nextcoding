@@ -52,7 +52,7 @@ export function CreationTree({
                                 key={remix.id}
                                 to="/work/$id"
                                 params={{ id: remix.id }}
-                                className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-default-100/70 transition-colors text-sm min-w-0"
+                                className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-hover transition-colors text-sm min-w-0"
                             >
                                 <GitFork className="size-3.5 text-foreground/40 shrink-0" />
                                 <span className="truncate">{remix.title}</span>

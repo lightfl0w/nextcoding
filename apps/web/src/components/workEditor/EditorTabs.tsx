@@ -57,7 +57,7 @@ export function EditorTabs({
                             className={`p-1 mr-1.5 rounded-md text-foreground/40 hover:bg-default-200 hover:text-foreground transition-opacity ${
                                 isActive
                                     ? "opacity-100"
-                                    : "opacity-0 group-hover:opacity-100"
+                                    : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
                             }`}
                         >
                             <X className="size-3" />

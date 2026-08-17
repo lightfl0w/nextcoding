@@ -3,9 +3,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AdminPagination } from "~/components/admin/AdminPagination";
-import { DeleteConfirm } from "~/components/admin/DeleteConfirm";
 import { FilterTabs } from "~/components/admin/FilterTabs";
 import { WorksTable } from "~/components/admin/WorksTable";
+import { ConfirmDialog } from "~/components/ui/ConfirmDialog";
 import { PageHeader } from "~/components/ui/PageHeader";
 import { useAdminWorks } from "~/hooks/useAdmin";
 import { type AdminWork, deleteAdminWork } from "~/lib/api/admin";
@@ -152,7 +152,7 @@ function WorksPage() {
                 </Card.Content>
             </Card>
 
-            <DeleteConfirm
+            <ConfirmDialog
                 state={deleteState}
                 heading="删除作品"
                 description={

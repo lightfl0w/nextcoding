@@ -1,8 +1,9 @@
-import { Button, Card, Spinner } from "@heroui/react";
+import { Button, Card } from "@heroui/react";
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { ShieldAlert, ShieldCheck } from "lucide-react";
 import { AdminNav } from "~/components/admin/AdminNav";
 import { AdminSidebar } from "~/components/admin/AdminSidebar";
+import { LoadingState } from "~/components/ui/LoadingState";
 import { useAuth } from "~/hooks/useAuth";
 
 export const Route = createFileRoute("/admin")({
@@ -15,10 +16,7 @@ function AdminLayout() {
     if (isPending) {
         return (
             <AdminShell>
-                <div className="flex items-center justify-center gap-2 py-24 text-foreground/40">
-                    <Spinner size="sm" />
-                    <span className="text-sm">正在验证身份…</span>
-                </div>
+                <LoadingState text="正在验证身份…" />
             </AdminShell>
         );
     }

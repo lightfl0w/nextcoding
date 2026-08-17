@@ -1,4 +1,5 @@
 import { Tabs } from "@heroui/react";
+import { LoadingState } from "~/components/ui/LoadingState";
 import type { AppNotification } from "~/lib/api";
 import type {
     NotificationCounts,
@@ -8,7 +9,6 @@ import type {
 } from "~/lib/notifications";
 import { EmptyNotifications } from "./EmptyNotifications";
 import { NotificationList } from "./NotificationList";
-import { NotificationsSkeleton } from "./NotificationsSkeleton";
 
 interface NotificationFeedProps {
     isLoading: boolean;
@@ -75,7 +75,7 @@ export function NotificationFeed({
 
             <Tabs.Panel className="pt-2" id={readFilter}>
                 {isLoading ? (
-                    <NotificationsSkeleton />
+                    <LoadingState text="正在加载通知…" />
                 ) : filtered.length === 0 ? (
                     <EmptyNotifications
                         readFilter={readFilter}

@@ -19,6 +19,7 @@ export interface Message {
     content: string;
     senderId: string;
     read: boolean;
+    recalled: boolean;
     createdAt: string;
     sender: ConversationUser;
 }
@@ -49,6 +50,10 @@ export function conversationMessagesPath(
 
 export function unreadMessageCountPath() {
     return "/api/messages/unread-count";
+}
+
+export function messagesStreamPath() {
+    return "/api/messages/stream";
 }
 
 export async function fetchConversations(
@@ -82,6 +87,17 @@ export async function markConversationRead(
     await mutateJson(
         `/api/messages/conversations/${conversationId}/read`,
         "POST",
+    );
+}
+
+export async function recallMessage(
+    conversationId: string,
+    messageId: string,
+): Promise<{ ok: boolean }> {
+    return mutateJson<{ ok: boolean }>(
+        `/api/messages/conversations/${conversationId}/recall`,
+        "POST",
+        { messageId },
     );
 }
 

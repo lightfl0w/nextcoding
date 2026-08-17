@@ -17,11 +17,16 @@ interface TagChipProps {
  */
 export function TagChip({ name, slug, color, size = "sm" }: TagChipProps) {
     return (
-        <Link to="/tags/$slug" params={{ slug }} className="block">
+        <Link
+            to="/tags/$slug"
+            params={{ slug }}
+            className="block rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
             <Chip
                 size={size}
                 variant="soft"
                 color={color ? undefined : "default"}
+                className="transition-opacity hover:opacity-75"
                 style={
                     color ? { backgroundColor: `${color}20`, color } : undefined
                 }

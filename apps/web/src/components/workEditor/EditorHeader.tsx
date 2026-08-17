@@ -220,7 +220,7 @@ function EditorSettingsMenu({
                         onClick={() => setSettingsOpen(false)}
                         className="fixed inset-0 z-40 cursor-default"
                     />
-                    <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-default-200 bg-background p-3 flex flex-col gap-3 shadow-lg">
+                    <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-default-200 bg-background p-3 flex flex-col gap-3 shadow-sm">
                         <label className="flex flex-col gap-1 text-xs">
                             字号
                             <select

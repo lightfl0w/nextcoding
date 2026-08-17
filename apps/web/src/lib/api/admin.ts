@@ -91,13 +91,13 @@ export interface AdminListQuery {
     search?: string;
     role?: "admin" | "user";
     banned?: boolean;
-    status?: "draft" | "published";
+    status?: "draft" | "published" | "pending" | "resolved" | "dismissed";
     page?: number;
     pageSize?: number;
 }
 
 function adminListPath(
-    resource: "users" | "works" | "comments",
+    resource: "users" | "works" | "comments" | "conversations" | "reports",
     query: AdminListQuery = {},
 ) {
     const params = new URLSearchParams();
@@ -228,5 +228,177 @@ export function deleteAdminTag(tagId: string) {
         "DELETE",
         undefined,
         "删除标签失败",
+    );
+}
+
+export interface AdminConversationUser {
+    id: string;
+    name: string | null;
+    image: string | null;
+    email: string | null;
+}
+
+export interface AdminConversation {
+    id: string;
+    user1: AdminConversationUser;
+    user2: AdminConversationUser;
+    messageCount: number;
+    lastMessage: string | null;
+    lastMessageAt: string | null;
+    createdAt: string;
+}
+
+export interface AdminMessage {
+    id: string;
+    conversationId: string;
+    senderId: string;
+    content: string;
+    read: boolean;
+    createdAt: string;
+    sender: { id: string; name: string | null; image: string | null };
+}
+
+const ADMIN_MESSAGE_LIMIT = 200;
+
+export function adminConversationsPath(query: AdminListQuery = {}) {
+    return adminListPath("conversations", query);
+}
+
+export function adminConversationMessagesPath(
+    conversationId: string,
+    limit: number = ADMIN_MESSAGE_LIMIT,
+) {
+    return `/api/admin/conversations/${conversationId}/messages?limit=${limit}`;
+}
+
+export function fetchAdminConversations(
+    query: AdminListQuery = {},
+): Promise<PageResult<AdminConversation>> {
+    return getJson<PageResult<AdminConversation>>(
+        adminConversationsPath(query),
+    );
+}
+
+export function fetchAdminConversationMessages(
+    conversationId: string,
+): Promise<PageResult<AdminMessage>> {
+    return getJson<PageResult<AdminMessage>>(
+        adminConversationMessagesPath(conversationId),
+    );
+}
+
+export function deleteAdminMessage(messageId: string) {
+    return mutateJson<{ ok: boolean; id: string }>(
+        `/api/admin/messages/${messageId}`,
+        "DELETE",
+        undefined,
+        "删除消息失败",
+    );
+}
+
+export function deleteAdminConversation(conversationId: string) {
+    return mutateJson<{ ok: boolean; id: string }>(
+        `/api/admin/conversations/${conversationId}`,
+        "DELETE",
+        undefined,
+        "删除会话失败",
+    );
+}
+
+export type AdminReportStatus = "pending" | "resolved" | "dismissed";
+
+export interface AdminReport {
+    id: string;
+    reason: string;
+    status: AdminReportStatus;
+    handledAt: string | null;
+    createdAt: string;
+    workId: string;
+    workTitle: string;
+    workStatus: "draft" | "published";
+    reporterId: string;
+    reporterName: string | null;
+    handlerId: string | null;
+    handlerName: string | null;
+}
+
+export function fetchAdminReports(
+    query: AdminListQuery = {},
+): Promise<PageResult<AdminReport>> {
+    return getJson<PageResult<AdminReport>>(adminListPath("reports", query));
+}
+
+export function resolveAdminReport(reportId: string) {
+    return mutateJson<{ ok: boolean; id: string; status: AdminReportStatus }>(
+        `/api/admin/reports/${reportId}/resolve`,
+        "POST",
+        undefined,
+        "处理举报失败",
+    );
+}
+
+export function dismissAdminReport(reportId: string) {
+    return mutateJson<{ ok: boolean; id: string; status: AdminReportStatus }>(
+        `/api/admin/reports/${reportId}/dismiss`,
+        "POST",
+        undefined,
+        "忽略举报失败",
+    );
+}
+
+export interface AdminAchievement {
+    id: string;
+    key: string;
+    name: string;
+    description: string;
+    icon: string;
+    category: string | null;
+    threshold: number | null;
+    createdAt: string;
+    unlockCount: number;
+}
+
+export interface AdminUserAchievement {
+    id: string;
+    key: string;
+    name: string;
+    icon: string;
+    category: string | null;
+    unlockedAt: string;
+}
+
+export function adminAchievementsPath(): string {
+    return "/api/admin/achievements";
+}
+
+export function adminUserAchievementsPath(userId: string): string {
+    return `/api/admin/achievements/users/${userId}`;
+}
+
+export function fetchAdminAchievements(): Promise<AdminAchievement[]> {
+    return getJson<AdminAchievement[]>(adminAchievementsPath());
+}
+
+export function fetchAdminUserAchievements(
+    userId: string,
+): Promise<AdminUserAchievement[]> {
+    return getJson<AdminUserAchievement[]>(adminUserAchievementsPath(userId));
+}
+
+export function grantAdminAchievement(userId: string, achievementId: string) {
+    return mutateJson<{ ok: boolean; granted: boolean }>(
+        "/api/admin/achievements/grant",
+        "POST",
+        { userId, achievementId },
+        "授予成就失败",
+    );
+}
+
+export function revokeAdminAchievement(userId: string, achievementId: string) {
+    return mutateJson<{ ok: boolean }>(
+        "/api/admin/achievements/revoke",
+        "POST",
+        { userId, achievementId },
+        "撤销成就失败",
     );
 }

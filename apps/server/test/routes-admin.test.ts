@@ -350,3 +350,303 @@ describe("作品/评论/标签管理", () => {
         expect(adminRepo.deleteTag).toHaveBeenCalledWith("t1");
     });
 });
+
+describe("会话/消息管理", () => {
+    beforeEach(() => {
+        mockGetSession.mockResolvedValue(adminSession());
+    });
+
+    function conversationRow(overrides: Record<string, unknown> = {}) {
+        return {
+            id: "conv-1",
+            user1Id: "u1",
+            user1Name: "张三",
+            user1Image: null,
+            user1Email: "a@b.c",
+            user2Id: "u2",
+            user2Name: "李四",
+            user2Image: null,
+            user2Email: "d@e.f",
+            messageCount: 3,
+            lastMessage: "你好",
+            lastMessageAt: new Date("2026-01-01T00:00:00Z"),
+            createdAt: new Date("2026-01-01T00:00:00Z"),
+            ...overrides,
+        };
+    }
+
+    it("GET /conversations 透传搜索与分页参数", async () => {
+        vi.mocked(adminRepo.listAdminConversations).mockResolvedValue({
+            total: 0,
+            items: [],
+        });
+        const res = await app().request(
+            "/api/admin/conversations?search=张三&page=2&pageSize=10",
+        );
+        expect(res.status).toBe(200);
+        expect(adminRepo.listAdminConversations).toHaveBeenCalledWith({
+            search: "张三",
+            page: 2,
+            pageSize: 10,
+        });
+        expect(await res.json()).toEqual({ total: 0, items: [] });
+    });
+
+    it("GET /conversations 序列化双方用户信息", async () => {
+        vi.mocked(adminRepo.listAdminConversations).mockResolvedValue({
+            total: 1,
+            items: [conversationRow()],
+        } as never);
+        const res = await app().request("/api/admin/conversations");
+        const body = (await res.json()) as {
+            items: Array<{ user1: { name: string }; user2: { name: string } }>;
+        };
+        expect(body.items[0].user1.name).toBe("张三");
+        expect(body.items[0].user2.name).toBe("李四");
+    });
+
+    it("GET /conversations/:id/messages 会话不存在返回 404", async () => {
+        vi.mocked(adminRepo.findAdminConversationById).mockResolvedValue(
+            undefined,
+        );
+        const res = await app().request(
+            "/api/admin/conversations/conv-missing/messages",
+        );
+        expect(res.status).toBe(404);
+        expect(await res.json()).toEqual({ error: "会话不存在" });
+    });
+
+    it("GET /conversations/:id/messages 返回消息列表与总数", async () => {
+        vi.mocked(adminRepo.findAdminConversationById).mockResolvedValue({
+            id: "conv-1",
+        } as never);
+        vi.mocked(adminRepo.countAdminMessages).mockResolvedValue(2);
+        vi.mocked(adminRepo.listAdminMessages).mockResolvedValue([
+            {
+                id: "m1",
+                conversationId: "conv-1",
+                senderId: "u1",
+                content: "你好",
+                read: true,
+                createdAt: new Date("2026-01-01T00:00:00Z"),
+                senderName: "张三",
+                senderImage: null,
+            },
+        ] as never);
+        const res = await app().request(
+            "/api/admin/conversations/conv-1/messages",
+        );
+        expect(res.status).toBe(200);
+        const body = (await res.json()) as { total: number; items: unknown[] };
+        expect(body.total).toBe(2);
+        expect(body.items[0]).toMatchObject({
+            id: "m1",
+            content: "你好",
+            sender: { id: "u1", name: "张三" },
+        });
+    });
+
+    it("DELETE /messages/:id 消息不存在返回 404", async () => {
+        vi.mocked(adminRepo.findAdminMessageById).mockResolvedValue(undefined);
+        const res = await app().request("/api/admin/messages/m-missing", {
+            method: "DELETE",
+        });
+        expect(res.status).toBe(404);
+        expect(await res.json()).toEqual({ error: "消息不存在" });
+    });
+
+    it("DELETE /messages/:id 成功删除消息", async () => {
+        vi.mocked(adminRepo.findAdminMessageById).mockResolvedValue({
+            id: "m1",
+        } as never);
+        const res = await app().request("/api/admin/messages/m1", {
+            method: "DELETE",
+        });
+        expect(res.status).toBe(200);
+        expect(adminRepo.deleteAdminMessage).toHaveBeenCalledWith("m1");
+    });
+
+    it("DELETE /conversations/:id 成功删除会话", async () => {
+        vi.mocked(adminRepo.findAdminConversationById).mockResolvedValue({
+            id: "conv-1",
+        } as never);
+        const res = await app().request("/api/admin/conversations/conv-1", {
+            method: "DELETE",
+        });
+        expect(res.status).toBe(200);
+        expect(adminRepo.deleteAdminConversation).toHaveBeenCalledWith(
+            "conv-1",
+        );
+    });
+});
+
+describe("举报管理", () => {
+    beforeEach(() => {
+        mockGetSession.mockResolvedValue(adminSession());
+    });
+
+    it("GET /reports 透传状态与分页参数", async () => {
+        vi.mocked(adminRepo.listAdminReports).mockResolvedValue({
+            total: 0,
+            items: [],
+        });
+        const res = await app().request(
+            "/api/admin/reports?status=pending&page=2&pageSize=10",
+        );
+        expect(res.status).toBe(200);
+        expect(adminRepo.listAdminReports).toHaveBeenCalledWith({
+            status: "pending",
+            page: 2,
+            pageSize: 10,
+        });
+    });
+
+    it("GET /reports 忽略非法状态参数", async () => {
+        vi.mocked(adminRepo.listAdminReports).mockResolvedValue({
+            total: 0,
+            items: [],
+        });
+        await app().request("/api/admin/reports?status=unknown");
+        expect(adminRepo.listAdminReports).toHaveBeenCalledWith({
+            status: undefined,
+            page: 1,
+            pageSize: 20,
+        });
+    });
+
+    it("POST /reports/:id/resolve 举报不存在返回 404", async () => {
+        vi.mocked(adminRepo.findAdminReportById).mockResolvedValue(undefined);
+        const res = await app().request(
+            "/api/admin/reports/r-missing/resolve",
+            {
+                method: "POST",
+            },
+        );
+        expect(res.status).toBe(404);
+        expect(await res.json()).toEqual({ error: "举报不存在" });
+    });
+
+    it("POST /reports/:id/resolve 处理举报", async () => {
+        vi.mocked(adminRepo.findAdminReportById).mockResolvedValue({
+            id: "r1",
+        } as never);
+        const res = await app().request("/api/admin/reports/r1/resolve", {
+            method: "POST",
+        });
+        expect(res.status).toBe(200);
+        expect(adminRepo.handleReport).toHaveBeenCalledWith(
+            "r1",
+            "resolved",
+            "admin-1",
+        );
+        expect(await res.json()).toEqual({
+            ok: true,
+            id: "r1",
+            status: "resolved",
+        });
+    });
+
+    it("POST /reports/:id/dismiss 忽略举报", async () => {
+        vi.mocked(adminRepo.findAdminReportById).mockResolvedValue({
+            id: "r1",
+        } as never);
+        const res = await app().request("/api/admin/reports/r1/dismiss", {
+            method: "POST",
+        });
+        expect(res.status).toBe(200);
+        expect(adminRepo.handleReport).toHaveBeenCalledWith(
+            "r1",
+            "dismissed",
+            "admin-1",
+        );
+    });
+});
+
+describe("成就管理", () => {
+    beforeEach(() => {
+        mockGetSession.mockResolvedValue(adminSession());
+    });
+
+    it("GET /achievements 返回成就目录", async () => {
+        vi.mocked(adminRepo.listAdminAchievements).mockResolvedValue([
+            { id: "a1", name: "首次发布", unlockCount: 5 },
+        ] as never);
+        const res = await app().request("/api/admin/achievements");
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual([
+            { id: "a1", name: "首次发布", unlockCount: 5 },
+        ]);
+    });
+
+    it("GET /achievements/users/:id 用户不存在返回 404", async () => {
+        vi.mocked(adminRepo.findAdminUserById).mockResolvedValue(undefined);
+        const res = await app().request("/api/admin/achievements/users/u-x");
+        expect(res.status).toBe(404);
+    });
+
+    it("GET /achievements/users/:id 返回用户成就", async () => {
+        vi.mocked(adminRepo.findAdminUserById).mockResolvedValue({
+            id: "u1",
+        } as never);
+        vi.mocked(adminRepo.listAdminUserAchievements).mockResolvedValue([
+            { id: "a1", name: "首次发布" },
+        ] as never);
+        const res = await app().request("/api/admin/achievements/users/u1");
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual([{ id: "a1", name: "首次发布" }]);
+    });
+
+    it("POST /achievements/grant 参数不完整返回 400", async () => {
+        const res = await app().request("/api/admin/achievements/grant", {
+            method: "POST",
+            body: JSON.stringify({ userId: "u1" }),
+            headers: { "content-type": "application/json" },
+        });
+        expect(res.status).toBe(400);
+        expect(await res.json()).toEqual({ error: "参数不完整" });
+    });
+
+    it("POST /achievements/grant 成就不存在返回 404", async () => {
+        vi.mocked(adminRepo.findAdminUserById).mockResolvedValue({
+            id: "u1",
+        } as never);
+        vi.mocked(adminRepo.findAchievementById).mockResolvedValue(undefined);
+        const res = await app().request("/api/admin/achievements/grant", {
+            method: "POST",
+            body: JSON.stringify({ userId: "u1", achievementId: "a-x" }),
+            headers: { "content-type": "application/json" },
+        });
+        expect(res.status).toBe(404);
+        expect(await res.json()).toEqual({ error: "成就不存在" });
+    });
+
+    it("POST /achievements/grant 授予成就", async () => {
+        vi.mocked(adminRepo.findAdminUserById).mockResolvedValue({
+            id: "u1",
+        } as never);
+        vi.mocked(adminRepo.findAchievementById).mockResolvedValue({
+            id: "a1",
+        } as never);
+        vi.mocked(adminRepo.grantAchievement).mockResolvedValue({
+            granted: true,
+        });
+        const res = await app().request("/api/admin/achievements/grant", {
+            method: "POST",
+            body: JSON.stringify({ userId: "u1", achievementId: "a1" }),
+            headers: { "content-type": "application/json" },
+        });
+        expect(res.status).toBe(200);
+        expect(adminRepo.grantAchievement).toHaveBeenCalledWith("u1", "a1");
+        expect(await res.json()).toEqual({ ok: true, granted: true });
+    });
+
+    it("POST /achievements/revoke 撤销成就", async () => {
+        const res = await app().request("/api/admin/achievements/revoke", {
+            method: "POST",
+            body: JSON.stringify({ userId: "u1", achievementId: "a1" }),
+            headers: { "content-type": "application/json" },
+        });
+        expect(res.status).toBe(200);
+        expect(adminRepo.revokeAchievement).toHaveBeenCalledWith("u1", "a1");
+    });
+});

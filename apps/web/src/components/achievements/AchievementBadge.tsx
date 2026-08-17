@@ -62,7 +62,7 @@ export const AchievementBadge = memo(function AchievementBadge({
                     className={`size-12 rounded-full flex items-center justify-center ${
                         unlocked
                             ? "bg-primary/15 text-primary"
-                            : "bg-default-100/70 text-foreground/30"
+                            : "bg-default-100/70 text-foreground/45"
                     }`}
                 >
                     <Icon className="size-6" />

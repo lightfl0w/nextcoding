@@ -97,16 +97,19 @@ vi.mock("../src/messages/repository.js", () => ({
     countUnreadMessages: vi.fn(),
     findConversation: vi.fn(),
     findConversationBetween: vi.fn(),
+    findMessage: vi.fn(),
     findOrCreateConversation: vi.fn(),
     findUserProfile: vi.fn(),
     insertMessage: vi.fn(),
     listConversations: vi.fn(),
     listMessages: vi.fn(),
     markConversationRead: vi.fn(),
+    recallMessage: vi.fn(),
     userExists: vi.fn(),
 }));
 
 vi.mock("../src/messages/messageBus.js", () => ({
+    publishMessageRecalled: vi.fn(),
     publishNewMessage: vi.fn(),
     publishToUser: vi.fn(),
     publishUnreadCount: vi.fn(),
@@ -140,19 +143,34 @@ vi.mock("../src/admin/repository.js", () => ({
         }
         return Math.min(Math.floor(size), 50);
     }),
+    countAdminMessages: vi.fn(),
+    deleteAdminConversation: vi.fn(),
+    deleteAdminMessage: vi.fn(),
     deleteComment: vi.fn(),
     deleteTag: vi.fn(),
     deleteUser: vi.fn(),
     deleteWork: vi.fn(),
+    findAchievementById: vi.fn(),
     findAdminCommentById: vi.fn(),
+    findAdminConversationById: vi.fn(),
+    findAdminMessageById: vi.fn(),
+    findAdminReportById: vi.fn(),
     findAdminTagById: vi.fn(),
     findAdminUserById: vi.fn(),
     findAdminWorkById: vi.fn(),
     getDashboardStats: vi.fn(),
+    grantAchievement: vi.fn(),
+    handleReport: vi.fn(),
+    listAdminAchievements: vi.fn(),
+    listAdminConversations: vi.fn(),
+    listAdminMessages: vi.fn(),
+    listAdminReports: vi.fn(),
     listAdminTags: vi.fn(),
+    listAdminUserAchievements: vi.fn(),
     listComments: vi.fn(),
     listUsers: vi.fn(),
     listWorks: vi.fn(),
+    revokeAchievement: vi.fn(),
     setUserRole: vi.fn(),
     unbanUser: vi.fn(),
 }));
@@ -167,6 +185,14 @@ vi.mock("../src/templates/repository.js", () => ({
     createTemplate: vi.fn(),
     findTemplate: vi.fn(),
     listTemplates: vi.fn(),
+}));
+
+vi.mock("../src/reports/repository.js", () => ({
+    REPORT_REASON_MAX_LENGTH: 200,
+    findReportByReporterAndWork: vi.fn(),
+    findReportableWork: vi.fn(),
+    insertReport: vi.fn(),
+    reopenReport: vi.fn(),
 }));
 
 vi.mock("../src/storage/storageClient.js", () => ({

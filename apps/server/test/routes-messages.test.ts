@@ -261,6 +261,127 @@ describe("messageRoutes", () => {
         });
     });
 
+    describe("POST /conversations/:id/recall", () => {
+        function mockConv() {
+            vi.mocked(msgRepo.findConversation).mockResolvedValue({
+                id: "conv-1",
+                user1Id: "user-1",
+                user2Id: "user-2",
+                lastMessageAt: null,
+                createdAt: new Date(),
+            });
+        }
+
+        it("消息不存在返回 404", async () => {
+            mockConv();
+            vi.mocked(msgRepo.findMessage).mockResolvedValue(undefined);
+            const res = await app().request(
+                "/api/messages/conversations/conv-1/recall",
+                {
+                    method: "POST",
+                    body: JSON.stringify({ messageId: "m-x" }),
+                    headers: { "content-type": "application/json" },
+                },
+            );
+            expect(res.status).toBe(404);
+            expect(await res.json()).toEqual({ error: "消息不存在" });
+        });
+
+        it("消息属于其他会话返回 404", async () => {
+            mockConv();
+            vi.mocked(msgRepo.findMessage).mockResolvedValue({
+                id: "m1",
+                conversationId: "conv-other",
+                senderId: "user-1",
+                recalled: false,
+            });
+            const res = await app().request(
+                "/api/messages/conversations/conv-1/recall",
+                {
+                    method: "POST",
+                    body: JSON.stringify({ messageId: "m1" }),
+                    headers: { "content-type": "application/json" },
+                },
+            );
+            expect(res.status).toBe(404);
+        });
+
+        it("只能撤回自己发送的消息", async () => {
+            mockConv();
+            vi.mocked(msgRepo.findMessage).mockResolvedValue({
+                id: "m1",
+                conversationId: "conv-1",
+                senderId: "user-2",
+                recalled: false,
+            });
+            const res = await app().request(
+                "/api/messages/conversations/conv-1/recall",
+                {
+                    method: "POST",
+                    body: JSON.stringify({ messageId: "m1" }),
+                    headers: { "content-type": "application/json" },
+                },
+            );
+            expect(res.status).toBe(403);
+            expect(await res.json()).toEqual({
+                error: "只能撤回自己发送的消息",
+            });
+        });
+
+        it("撤回成功并通知双方", async () => {
+            mockConv();
+            vi.mocked(msgRepo.findMessage).mockResolvedValue({
+                id: "m1",
+                conversationId: "conv-1",
+                senderId: "user-1",
+                recalled: false,
+            });
+            const res = await app().request(
+                "/api/messages/conversations/conv-1/recall",
+                {
+                    method: "POST",
+                    body: JSON.stringify({ messageId: "m1" }),
+                    headers: { "content-type": "application/json" },
+                },
+            );
+            expect(res.status).toBe(200);
+            expect(await res.json()).toEqual({ ok: true });
+            expect(msgRepo.recallMessage).toHaveBeenCalledWith("m1", "user-1");
+            expect(messageBus.publishMessageRecalled).toHaveBeenCalledTimes(2);
+            expect(messageBus.publishMessageRecalled).toHaveBeenCalledWith(
+                "user-1",
+                "conv-1",
+                "m1",
+            );
+            expect(messageBus.publishMessageRecalled).toHaveBeenCalledWith(
+                "user-2",
+                "conv-1",
+                "m1",
+            );
+        });
+
+        it("重复撤回幂等返回成功且不重复通知", async () => {
+            mockConv();
+            vi.mocked(msgRepo.findMessage).mockResolvedValue({
+                id: "m1",
+                conversationId: "conv-1",
+                senderId: "user-1",
+                recalled: true,
+            });
+            const res = await app().request(
+                "/api/messages/conversations/conv-1/recall",
+                {
+                    method: "POST",
+                    body: JSON.stringify({ messageId: "m1" }),
+                    headers: { "content-type": "application/json" },
+                },
+            );
+            expect(res.status).toBe(200);
+            expect(msgRepo.recallMessage).not.toHaveBeenCalled();
+            expect(messageBus.publishMessageRecalled).not.toHaveBeenCalled();
+        });
+    });
+
     describe("GET /unread-count", () => {
         it("返回未读消息数", async () => {
             vi.mocked(msgRepo.countUnreadMessages).mockResolvedValue(5);

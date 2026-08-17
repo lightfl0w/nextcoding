@@ -1,11 +1,7 @@
 import { Card } from "@heroui/react";
 import type { UserSettings } from "~/lib/api/settings";
 import { ToggleSwitch } from "./ToggleSwitch";
-
-interface NotificationSettingsProps {
-    settings: UserSettings;
-    onChange: (updates: Partial<UserSettings>) => void;
-}
+import type { SettingsSectionProps } from "./types";
 
 const NOTIFICATION_OPTIONS: Array<{
     key: keyof Pick<
@@ -49,7 +45,7 @@ const NOTIFICATION_OPTIONS: Array<{
 export function NotificationSettings({
     settings,
     onChange,
-}: NotificationSettingsProps) {
+}: SettingsSectionProps) {
     return (
         <div className="flex flex-col gap-4">
             <div>

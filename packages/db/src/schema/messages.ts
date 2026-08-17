@@ -43,6 +43,9 @@ export const message = sqliteTable(
             .references(() => user.id, { onDelete: "cascade" }),
         content: text("content").notNull(),
         read: integer("read", { mode: "boolean" }).default(false).notNull(),
+        recalled: integer("recalled", { mode: "boolean" })
+            .default(false)
+            .notNull(),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
             .notNull(),

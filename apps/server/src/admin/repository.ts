@@ -1,5 +1,6 @@
 import {
     account,
+    achievement,
     activity,
     bookmark,
     conversation,
@@ -8,6 +9,7 @@ import {
     message,
     notification,
     remix,
+    report,
     session,
     spark,
     tag,
@@ -21,6 +23,7 @@ import {
     workVersion,
 } from "@nextcoding/db";
 import { and, count, desc, eq, gte, inArray, like, or, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/sqlite-core";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TREND_DAYS = 7;
@@ -578,4 +581,372 @@ export async function deleteUser(id: string) {
     await deleteWorkRows(ownWorks.map((row) => row.id));
 
     await db.delete(user).where(eq(user.id, id));
+}
+
+export interface AdminConversationFilters {
+    search?: string;
+    page: number;
+    pageSize: number;
+}
+
+/**
+ * 会话列表（管理员视角）：展示双方用户与消息概况，
+ * 支持按参与者姓名/邮箱或消息内容关键词搜索，返回分页计数。
+ */
+export async function listAdminConversations(
+    filters: AdminConversationFilters,
+) {
+    const user1 = alias(user, "user1");
+    const user2 = alias(user, "user2");
+
+    const conditions = [];
+    if (filters.search) {
+        const keyword = `%${escapeLike(filters.search)}%`;
+        conditions.push(
+            sql`(
+                exists(
+                    select 1 from ${user}
+                    where ${user.id} = ${conversation.user1Id}
+                      and (${user.name} like ${keyword} or ${user.email} like ${keyword})
+                )
+                or exists(
+                    select 1 from ${user}
+                    where ${user.id} = ${conversation.user2Id}
+                      and (${user.name} like ${keyword} or ${user.email} like ${keyword})
+                )
+                or exists(
+                    select 1 from ${message}
+                    where ${message.conversationId} = ${conversation.id}
+                      and ${message.content} like ${keyword}
+                )
+            )`,
+        );
+    }
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [totalRow, items] = await Promise.all([
+        db
+            .select({ value: count(conversation.id) })
+            .from(conversation)
+            .where(where)
+            .get(),
+        db
+            .select({
+                id: conversation.id,
+                user1Id: conversation.user1Id,
+                user1Name: user1.name,
+                user1Image: user1.image,
+                user1Email: user1.email,
+                user2Id: conversation.user2Id,
+                user2Name: user2.name,
+                user2Image: user2.image,
+                user2Email: user2.email,
+                lastMessageAt: conversation.lastMessageAt,
+                createdAt: conversation.createdAt,
+                messageCount: sql<number>`(
+                    select count(*) from ${message}
+                    where ${message.conversationId} = ${conversation.id}
+                )`,
+                lastMessage: sql<string | null>`(
+                    select ${message.content} from ${message}
+                    where ${message.conversationId} = ${conversation.id}
+                    order by ${message.createdAt} desc limit 1
+                )`,
+            })
+            .from(conversation)
+            .leftJoin(user1, eq(user1.id, conversation.user1Id))
+            .leftJoin(user2, eq(user2.id, conversation.user2Id))
+            .where(where)
+            .orderBy(desc(conversation.lastMessageAt))
+            .limit(filters.pageSize)
+            .offset((filters.page - 1) * filters.pageSize)
+            .all(),
+    ]);
+
+    return { total: totalRow?.value ?? 0, items };
+}
+
+export function findAdminConversationById(id: string) {
+    return db
+        .select({
+            id: conversation.id,
+            user1Id: conversation.user1Id,
+            user2Id: conversation.user2Id,
+        })
+        .from(conversation)
+        .where(eq(conversation.id, id))
+        .get();
+}
+
+export function countAdminMessages(conversationId: string) {
+    return db
+        .select({ value: count(message.id) })
+        .from(message)
+        .where(eq(message.conversationId, conversationId))
+        .get()
+        .then((row) => row?.value ?? 0);
+}
+
+/**
+ * 会话消息列表：按时间倒序返回，附带发送者信息。
+ */
+export function listAdminMessages(
+    conversationId: string,
+    limit: number,
+    offset: number,
+) {
+    return db
+        .select({
+            id: message.id,
+            conversationId: message.conversationId,
+            senderId: message.senderId,
+            content: message.content,
+            read: message.read,
+            createdAt: message.createdAt,
+            senderName: user.name,
+            senderImage: user.image,
+        })
+        .from(message)
+        .leftJoin(user, eq(user.id, message.senderId))
+        .where(eq(message.conversationId, conversationId))
+        .orderBy(desc(message.createdAt))
+        .limit(limit)
+        .offset(offset);
+}
+
+export function findAdminMessageById(id: string) {
+    return db
+        .select({ id: message.id, content: message.content })
+        .from(message)
+        .where(eq(message.id, id))
+        .get();
+}
+
+/**
+ * 删除单条消息：清理引用它的通知，并刷新会话的最后消息时间。
+ */
+export async function deleteAdminMessage(id: string) {
+    const row = await db
+        .select({ conversationId: message.conversationId })
+        .from(message)
+        .where(eq(message.id, id))
+        .get();
+    if (!row) {
+        return;
+    }
+
+    await db.delete(notification).where(eq(notification.messageId, id));
+    await db.delete(message).where(eq(message.id, id));
+
+    const last = await db
+        .select({ createdAt: message.createdAt })
+        .from(message)
+        .where(eq(message.conversationId, row.conversationId))
+        .orderBy(desc(message.createdAt))
+        .limit(1)
+        .get();
+    await db
+        .update(conversation)
+        .set({ lastMessageAt: last?.createdAt ?? null })
+        .where(eq(conversation.id, row.conversationId));
+}
+
+/**
+ * 删除整个会话：连带清理其消息与相关通知。
+ */
+export async function deleteAdminConversation(id: string) {
+    const rows = await db
+        .select({ id: message.id })
+        .from(message)
+        .where(eq(message.conversationId, id))
+        .all();
+    const messageIds = rows.map((row) => row.id);
+    if (messageIds.length > 0) {
+        await db
+            .delete(notification)
+            .where(inArray(notification.messageId, messageIds));
+    }
+    await db.delete(message).where(eq(message.conversationId, id));
+    await db.delete(conversation).where(eq(conversation.id, id));
+}
+
+export interface AdminReportFilters {
+    status?: "pending" | "resolved" | "dismissed";
+    page: number;
+    pageSize: number;
+}
+
+/**
+ * 举报列表（管理员视角）：展示作品、举报人与处理情况，支持按状态筛选。
+ */
+export async function listAdminReports(filters: AdminReportFilters) {
+    const reporter = alias(user, "reporter");
+    const handler = alias(user, "handler");
+
+    const conditions = [];
+    if (filters.status) {
+        conditions.push(eq(report.status, filters.status));
+    }
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [totalRow, items] = await Promise.all([
+        db
+            .select({ value: count(report.id) })
+            .from(report)
+            .where(where)
+            .get(),
+        db
+            .select({
+                id: report.id,
+                reason: report.reason,
+                status: report.status,
+                handledAt: report.handledAt,
+                createdAt: report.createdAt,
+                workId: work.id,
+                workTitle: work.title,
+                workStatus: work.status,
+                reporterId: report.reporterId,
+                reporterName: reporter.name,
+                handlerId: report.handledBy,
+                handlerName: handler.name,
+            })
+            .from(report)
+            .leftJoin(work, eq(work.id, report.workId))
+            .leftJoin(reporter, eq(reporter.id, report.reporterId))
+            .leftJoin(handler, eq(handler.id, report.handledBy))
+            .where(where)
+            .orderBy(desc(report.createdAt))
+            .limit(filters.pageSize)
+            .offset((filters.page - 1) * filters.pageSize)
+            .all(),
+    ]);
+
+    return { total: totalRow?.value ?? 0, items };
+}
+
+export function findAdminReportById(id: string) {
+    return db
+        .select({ id: report.id, status: report.status })
+        .from(report)
+        .where(eq(report.id, id))
+        .get();
+}
+
+/**
+ * 处理/忽略举报：记录处理人与时间。
+ */
+export async function handleReport(
+    id: string,
+    status: "resolved" | "dismissed",
+    adminId: string,
+) {
+    await db
+        .update(report)
+        .set({ status, handledBy: adminId, handledAt: new Date() })
+        .where(eq(report.id, id));
+}
+
+export interface AdminAchievementRow {
+    id: string;
+    key: string;
+    name: string;
+    description: string;
+    icon: string;
+    category: string | null;
+    threshold: number | null;
+    createdAt: Date;
+    unlockCount: number;
+}
+
+/**
+ * 成就目录：全部成就及各自的解锁人数。
+ */
+export function listAdminAchievements() {
+    return db
+        .select({
+            id: achievement.id,
+            key: achievement.key,
+            name: achievement.name,
+            description: achievement.description,
+            icon: achievement.icon,
+            category: achievement.category,
+            threshold: achievement.threshold,
+            createdAt: achievement.createdAt,
+            unlockCount: sql<number>`(
+                select count(*) from user_achievement ua
+                where ua.achievement_id = achievement.id
+            )`,
+        })
+        .from(achievement)
+        .orderBy(achievement.category, achievement.threshold);
+}
+
+export function findAchievementById(id: string) {
+    return db
+        .select({ id: achievement.id, name: achievement.name })
+        .from(achievement)
+        .where(eq(achievement.id, id))
+        .get();
+}
+
+/**
+ * 某用户已获得的成就列表。
+ */
+export function listAdminUserAchievements(userId: string) {
+    return db
+        .select({
+            id: achievement.id,
+            key: achievement.key,
+            name: achievement.name,
+            icon: achievement.icon,
+            category: achievement.category,
+            unlockedAt: userAchievement.unlockedAt,
+        })
+        .from(userAchievement)
+        .innerJoin(
+            achievement,
+            eq(achievement.id, userAchievement.achievementId),
+        )
+        .where(eq(userAchievement.userId, userId))
+        .orderBy(desc(userAchievement.unlockedAt));
+}
+
+/**
+ * 授予成就：已获得时幂等返回。
+ */
+export async function grantAchievement(userId: string, achievementId: string) {
+    const existing = await db
+        .select({ id: userAchievement.id })
+        .from(userAchievement)
+        .where(
+            and(
+                eq(userAchievement.userId, userId),
+                eq(userAchievement.achievementId, achievementId),
+            ),
+        )
+        .get();
+    if (existing) {
+        return { granted: false };
+    }
+    await db.insert(userAchievement).values({
+        id: crypto.randomUUID(),
+        userId,
+        achievementId,
+        unlockedAt: new Date(),
+    });
+    return { granted: true };
+}
+
+/**
+ * 撤销成就。
+ */
+export async function revokeAchievement(userId: string, achievementId: string) {
+    await db
+        .delete(userAchievement)
+        .where(
+            and(
+                eq(userAchievement.userId, userId),
+                eq(userAchievement.achievementId, achievementId),
+            ),
+        );
 }

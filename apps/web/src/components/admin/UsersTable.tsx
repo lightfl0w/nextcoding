@@ -1,9 +1,10 @@
-import { Avatar, Button, Chip, Dropdown, Label, Table } from "@heroui/react";
-import { MoreHorizontal, Users } from "lucide-react";
+import { Avatar, Chip, Table } from "@heroui/react";
+import { Users } from "lucide-react";
 import { EmptyState } from "~/components/ui/EmptyState";
 import type { AdminUser } from "~/lib/api/admin";
 import { formatDate } from "~/lib/format";
 import { AdminTableShell } from "./AdminTableShell";
+import { RowActions } from "./RowActions";
 
 interface UsersTableProps {
     items: AdminUser[];
@@ -128,74 +129,50 @@ function TableRow({
                 </span>
             </Table.Cell>
             <Table.Cell>
-                <Dropdown>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        aria-label={`管理用户 ${user.name ?? user.email}`}
-                        isIconOnly
-                    >
-                        <MoreHorizontal className="size-4" />
-                    </Button>
-                    <Dropdown.Popover>
-                        <Dropdown.Menu
-                            onAction={(key) => {
-                                if (key === "role-admin") {
-                                    onSetRole(user, "admin");
-                                } else if (key === "role-user") {
-                                    onSetRole(user, "user");
-                                } else if (key === "ban") {
-                                    onRequestBan(user);
-                                } else if (key === "unban") {
-                                    onRequestUnban(user);
-                                } else if (key === "delete") {
-                                    onRequestDelete(user);
-                                }
-                            }}
-                        >
-                            <Dropdown.Item
-                                id="role-admin"
-                                textValue="设为管理员"
-                                isDisabled={
-                                    user.role === "admin" || isCurrentUser
-                                }
-                            >
-                                <Label>设为管理员</Label>
-                            </Dropdown.Item>
-                            <Dropdown.Item
-                                id="role-user"
-                                textValue="设为普通用户"
-                                isDisabled={
-                                    user.role !== "admin" || isCurrentUser
-                                }
-                            >
-                                <Label>设为普通用户</Label>
-                            </Dropdown.Item>
-                            <Dropdown.Item
-                                id="ban"
-                                textValue="封禁用户"
-                                isDisabled={user.banned || isCurrentUser}
-                            >
-                                <Label>封禁用户</Label>
-                            </Dropdown.Item>
-                            <Dropdown.Item
-                                id="unban"
-                                textValue="解封用户"
-                                isDisabled={!user.banned}
-                            >
-                                <Label>解封用户</Label>
-                            </Dropdown.Item>
-                            <Dropdown.Item
-                                id="delete"
-                                textValue="删除用户"
-                                variant="danger"
-                                isDisabled={isCurrentUser}
-                            >
-                                <Label>删除用户</Label>
-                            </Dropdown.Item>
-                        </Dropdown.Menu>
-                    </Dropdown.Popover>
-                </Dropdown>
+                <RowActions
+                    label={`管理用户 ${user.name ?? user.email}`}
+                    actions={[
+                        {
+                            id: "role-admin",
+                            label: "设为管理员",
+                            isDisabled: user.role === "admin" || isCurrentUser,
+                        },
+                        {
+                            id: "role-user",
+                            label: "设为普通用户",
+                            isDisabled: user.role !== "admin" || isCurrentUser,
+                        },
+                        {
+                            id: "ban",
+                            label: "封禁用户",
+                            isDisabled: user.banned || isCurrentUser,
+                        },
+                        {
+                            id: "unban",
+                            label: "解封用户",
+                            isDisabled: !user.banned,
+                        },
+                        {
+                            id: "delete",
+                            label: "删除用户",
+                            variant: "danger",
+                            isDisabled: isCurrentUser,
+                        },
+                    ]}
+                    onAction={(key) => {
+                        if (key === "role-admin") {
+                            onSetRole(user, "admin");
+                        } else if (key === "role-user") {
+                            onSetRole(user, "user");
+                        } else if (key === "ban") {
+                            onRequestBan(user);
+                        } else if (key === "unban") {
+                            onRequestUnban(user);
+                        } else if (key === "delete") {
+                            onRequestDelete(user);
+                        }
+                    }}
+                />
             </Table.Cell>
         </Table.Row>
     );

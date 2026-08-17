@@ -18,7 +18,7 @@ export function WorkDetailHeader({
             <Link
                 to="/discover"
                 title="返回发现页"
-                className="size-9 -ml-1 rounded-xl flex items-center justify-center text-foreground/70 hover:text-foreground hover:bg-default-100 transition-colors shrink-0"
+                className="size-9 -ml-1 rounded-xl flex items-center justify-center text-foreground/70 hover:text-foreground hover:bg-hover transition-colors shrink-0"
             >
                 <Undo2 className="size-4" />
             </Link>

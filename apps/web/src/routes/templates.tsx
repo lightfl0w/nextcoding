@@ -103,7 +103,7 @@ function TemplateCard({
     onUse: (id: string) => void;
 }) {
     return (
-        <Card className="p-0 shadow-none rounded-2xl border border-default-200/70 hover:border-default-300 transition-colors">
+        <Card className="p-0 shadow-none rounded-2xl border border-default-200/70 hover:border-default-300 transition-[transform,border-color] duration-200 hover:-translate-y-0.5">
             <Card.Content className="p-5 flex flex-col gap-3">
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex flex-col gap-1 min-w-0">

@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ChatRouteImport } from './routes/chat'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as DraftsRouteImport } from './routes/drafts'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
@@ -22,11 +23,15 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TemplatesRouteImport } from './routes/templates'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminAchievementsRouteImport } from './routes/admin/achievements'
 import { Route as AdminCommentsRouteImport } from './routes/admin/comments'
+import { Route as AdminMessagesRouteImport } from './routes/admin/messages'
+import { Route as AdminReportsRouteImport } from './routes/admin/reports'
 import { Route as AdminTagsRouteImport } from './routes/admin/tags'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminWorksRouteImport } from './routes/admin/works'
-import { Route as MessagesIdRouteImport } from './routes/messages/$id'
+import { Route as ChatIndexRouteImport } from './routes/chat/index'
+import { Route as ChatIdRouteImport } from './routes/chat/$id'
 import { Route as TagsIndexRouteImport } from './routes/tags/index'
 import { Route as TagsSlugRouteImport } from './routes/tags/$slug'
 import { Route as UserIdIndexRouteImport } from './routes/user/$id/index'
@@ -57,6 +62,11 @@ const AdminRoute = AdminRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DiscoverRoute = DiscoverRouteImport.update({
@@ -99,9 +109,24 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAchievementsRoute = AdminAchievementsRouteImport.update({
+  id: '/achievements',
+  path: '/achievements',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCommentsRoute = AdminCommentsRouteImport.update({
   id: '/comments',
   path: '/comments',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMessagesRoute = AdminMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminTagsRoute = AdminTagsRouteImport.update({
@@ -119,10 +144,15 @@ const AdminWorksRoute = AdminWorksRouteImport.update({
   path: '/works',
   getParentRoute: () => AdminRoute,
 } as any)
-const MessagesIdRoute = MessagesIdRouteImport.update({
+const ChatIndexRoute = ChatIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ChatRoute,
+} as any)
+const ChatIdRoute = ChatIdRouteImport.update({
   id: '/$id',
   path: '/$id',
-  getParentRoute: () => MessagesRoute,
+  getParentRoute: () => ChatRoute,
 } as any)
 const TagsIndexRoute = TagsIndexRouteImport.update({
   id: '/tags/',
@@ -161,20 +191,25 @@ export interface FileRoutesByFullPath {
   '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/chat': typeof ChatRouteWithChildren
   '/discover': typeof DiscoverRoute
   '/drafts': typeof DraftsRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/messages': typeof MessagesRouteWithChildren
+  '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/templates': typeof TemplatesRoute
+  '/admin/achievements': typeof AdminAchievementsRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/messages': typeof AdminMessagesRoute
+  '/admin/reports': typeof AdminReportsRoute
   '/admin/tags': typeof AdminTagsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/works': typeof AdminWorksRoute
-  '/messages/$id': typeof MessagesIdRoute
+  '/chat/$id': typeof ChatIdRoute
   '/tags/$slug': typeof TagsSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/chat/': typeof ChatIndexRoute
   '/tags/': typeof TagsIndexRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
@@ -189,17 +224,21 @@ export interface FileRoutesByTo {
   '/discover': typeof DiscoverRoute
   '/drafts': typeof DraftsRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/messages': typeof MessagesRouteWithChildren
+  '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/templates': typeof TemplatesRoute
+  '/admin/achievements': typeof AdminAchievementsRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/messages': typeof AdminMessagesRoute
+  '/admin/reports': typeof AdminReportsRoute
   '/admin/tags': typeof AdminTagsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/works': typeof AdminWorksRoute
-  '/messages/$id': typeof MessagesIdRoute
+  '/chat/$id': typeof ChatIdRoute
   '/tags/$slug': typeof TagsSlugRoute
   '/admin': typeof AdminIndexRoute
+  '/chat': typeof ChatIndexRoute
   '/tags': typeof TagsIndexRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
@@ -213,20 +252,25 @@ export interface FileRoutesById {
   '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/chat': typeof ChatRouteWithChildren
   '/discover': typeof DiscoverRoute
   '/drafts': typeof DraftsRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/messages': typeof MessagesRouteWithChildren
+  '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/templates': typeof TemplatesRoute
+  '/admin/achievements': typeof AdminAchievementsRoute
   '/admin/comments': typeof AdminCommentsRoute
+  '/admin/messages': typeof AdminMessagesRoute
+  '/admin/reports': typeof AdminReportsRoute
   '/admin/tags': typeof AdminTagsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/works': typeof AdminWorksRoute
-  '/messages/$id': typeof MessagesIdRoute
+  '/chat/$id': typeof ChatIdRoute
   '/tags/$slug': typeof TagsSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/chat/': typeof ChatIndexRoute
   '/tags/': typeof TagsIndexRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
@@ -241,6 +285,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/auth'
+    | '/chat'
     | '/discover'
     | '/drafts'
     | '/leaderboard'
@@ -248,13 +293,17 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/templates'
+    | '/admin/achievements'
     | '/admin/comments'
+    | '/admin/messages'
+    | '/admin/reports'
     | '/admin/tags'
     | '/admin/users'
     | '/admin/works'
-    | '/messages/$id'
+    | '/chat/$id'
     | '/tags/$slug'
     | '/admin/'
+    | '/chat/'
     | '/tags/'
     | '/work/$id/edit'
     | '/work/new/edit'
@@ -273,13 +322,17 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/templates'
+    | '/admin/achievements'
     | '/admin/comments'
+    | '/admin/messages'
+    | '/admin/reports'
     | '/admin/tags'
     | '/admin/users'
     | '/admin/works'
-    | '/messages/$id'
+    | '/chat/$id'
     | '/tags/$slug'
     | '/admin'
+    | '/chat'
     | '/tags'
     | '/work/$id/edit'
     | '/work/new/edit'
@@ -292,6 +345,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/auth'
+    | '/chat'
     | '/discover'
     | '/drafts'
     | '/leaderboard'
@@ -299,13 +353,17 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/templates'
+    | '/admin/achievements'
     | '/admin/comments'
+    | '/admin/messages'
+    | '/admin/reports'
     | '/admin/tags'
     | '/admin/users'
     | '/admin/works'
-    | '/messages/$id'
+    | '/chat/$id'
     | '/tags/$slug'
     | '/admin/'
+    | '/chat/'
     | '/tags/'
     | '/work/$id/edit'
     | '/work/new/edit'
@@ -319,10 +377,11 @@ export interface RootRouteChildren {
   AccountRoute: typeof AccountRoute
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ChatRoute: typeof ChatRouteWithChildren
   DiscoverRoute: typeof DiscoverRoute
   DraftsRoute: typeof DraftsRoute
   LeaderboardRoute: typeof LeaderboardRoute
-  MessagesRoute: typeof MessagesRouteWithChildren
+  MessagesRoute: typeof MessagesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   TemplatesRoute: typeof TemplatesRoute
@@ -369,6 +428,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/discover': {
@@ -427,11 +493,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/achievements': {
+      id: '/admin/achievements'
+      path: '/achievements'
+      fullPath: '/admin/achievements'
+      preLoaderRoute: typeof AdminAchievementsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/comments': {
       id: '/admin/comments'
       path: '/comments'
       fullPath: '/admin/comments'
       preLoaderRoute: typeof AdminCommentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/messages': {
+      id: '/admin/messages'
+      path: '/messages'
+      fullPath: '/admin/messages'
+      preLoaderRoute: typeof AdminMessagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/tags': {
@@ -455,12 +542,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminWorksRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/messages/$id': {
-      id: '/messages/$id'
+    '/chat/': {
+      id: '/chat/'
+      path: '/'
+      fullPath: '/chat/'
+      preLoaderRoute: typeof ChatIndexRouteImport
+      parentRoute: typeof ChatRoute
+    }
+    '/chat/$id': {
+      id: '/chat/$id'
       path: '/$id'
-      fullPath: '/messages/$id'
-      preLoaderRoute: typeof MessagesIdRouteImport
-      parentRoute: typeof MessagesRoute
+      fullPath: '/chat/$id'
+      preLoaderRoute: typeof ChatIdRouteImport
+      parentRoute: typeof ChatRoute
     }
     '/tags/': {
       id: '/tags/'
@@ -508,7 +602,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminAchievementsRoute: typeof AdminAchievementsRoute
   AdminCommentsRoute: typeof AdminCommentsRoute
+  AdminMessagesRoute: typeof AdminMessagesRoute
+  AdminReportsRoute: typeof AdminReportsRoute
   AdminTagsRoute: typeof AdminTagsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminWorksRoute: typeof AdminWorksRoute
@@ -516,7 +613,10 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAchievementsRoute: AdminAchievementsRoute,
   AdminCommentsRoute: AdminCommentsRoute,
+  AdminMessagesRoute: AdminMessagesRoute,
+  AdminReportsRoute: AdminReportsRoute,
   AdminTagsRoute: AdminTagsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminWorksRoute: AdminWorksRoute,
@@ -525,17 +625,17 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
-interface MessagesRouteChildren {
-  MessagesIdRoute: typeof MessagesIdRoute
+interface ChatRouteChildren {
+  ChatIdRoute: typeof ChatIdRoute
+  ChatIndexRoute: typeof ChatIndexRoute
 }
 
-const MessagesRouteChildren: MessagesRouteChildren = {
-  MessagesIdRoute: MessagesIdRoute,
+const ChatRouteChildren: ChatRouteChildren = {
+  ChatIdRoute: ChatIdRoute,
+  ChatIndexRoute: ChatIndexRoute,
 }
 
-const MessagesRouteWithChildren = MessagesRoute._addFileChildren(
-  MessagesRouteChildren,
-)
+const ChatRouteWithChildren = ChatRoute._addFileChildren(ChatRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -543,10 +643,11 @@ const rootRouteChildren: RootRouteChildren = {
   AccountRoute: AccountRoute,
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
+  ChatRoute: ChatRouteWithChildren,
   DiscoverRoute: DiscoverRoute,
   DraftsRoute: DraftsRoute,
   LeaderboardRoute: LeaderboardRoute,
-  MessagesRoute: MessagesRouteWithChildren,
+  MessagesRoute: MessagesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   TemplatesRoute: TemplatesRoute,

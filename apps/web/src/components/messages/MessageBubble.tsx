@@ -1,50 +1,101 @@
-import { Avatar } from "@heroui/react";
+import { Avatar, Button } from "@heroui/react";
+import { Undo2 } from "lucide-react";
 import { memo } from "react";
 import type { Message } from "~/lib/api/messages";
-import { formatDate } from "~/lib/format";
+import { formatTime } from "~/lib/format";
 
 interface MessageBubbleProps {
     message: Message;
     isOwn: boolean;
+    onRecall?: (message: Message) => void;
 }
 
 export const MessageBubble = memo(function MessageBubble({
     message,
     isOwn,
+    onRecall,
 }: MessageBubbleProps) {
+    const senderName = message.sender.name ?? "未命名用户";
+    const align = isOwn ? "justify-end" : "justify-start";
+
+    if (message.recalled) {
+        return (
+            <div className={`flex ${align}`}>
+                <div className="flex max-w-[70%] items-center gap-2.5 px-1 py-1">
+                    <BubbleAvatar
+                        name={senderName}
+                        image={message.sender.image}
+                    />
+                    <div className="flex items-baseline gap-1.5">
+                        <span className="text-sm text-foreground/45 italic">
+                            已撤回一条消息
+                        </span>
+                        <span className="text-[11px] text-foreground/45 tabular-nums">
+                            {formatTime(message.createdAt)}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div
-            className={`flex gap-2.5 ${isOwn ? "flex-row-reverse" : "flex-row"}`}
-        >
-            {!isOwn && (
-                <Avatar size="sm" className="shrink-0 mt-1">
-                    {message.sender.image ? (
-                        <Avatar.Image
-                            alt={message.sender.name ?? "用户"}
-                            src={message.sender.image}
-                        />
-                    ) : null}
-                    <Avatar.Fallback>
-                        {(message.sender.name ?? "用").charAt(0).toUpperCase()}
-                    </Avatar.Fallback>
-                </Avatar>
-            )}
+        <div className={`group flex ${align}`}>
             <div
-                className={`flex flex-col ${isOwn ? "items-end" : "items-start"} max-w-[75%]`}
+                className={`flex max-w-[70%] items-start gap-2.5 ${
+                    isOwn ? "flex-row-reverse" : "flex-row"
+                }`}
             >
+                <BubbleAvatar name={senderName} image={message.sender.image} />
                 <div
-                    className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${
-                        isOwn
-                            ? "bg-primary text-primary-foreground rounded-br-md"
-                            : "bg-default-100/70 border border-default-200/70 text-foreground rounded-bl-md"
+                    className={`flex min-w-0 flex-col ${
+                        isOwn ? "items-end" : "items-start"
                     }`}
                 >
-                    {message.content}
+                    <div
+                        className={`mb-1 flex items-center gap-2 px-1 ${
+                            isOwn ? "flex-row-reverse" : "flex-row"
+                        }`}
+                    >
+                        {isOwn && onRecall && (
+                            <Button
+                                isIconOnly
+                                variant="ghost"
+                                size="sm"
+                                onPress={() => onRecall(message)}
+                                aria-label="撤回消息"
+                                className="size-6 rounded-full opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 touch-manipulation"
+                            >
+                                <Undo2 className="size-3.5" />
+                            </Button>
+                        )}
+                        <span className="text-xs text-foreground/60">
+                            {senderName}
+                        </span>
+                        <span className="text-[11px] text-foreground/50 tabular-nums">
+                            {formatTime(message.createdAt)}
+                        </span>
+                    </div>
+                    <div
+                        className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed break-words whitespace-pre-wrap ${
+                            isOwn
+                                ? "bg-primary text-primary-foreground rounded-br-md"
+                                : "bg-default-100/70 border border-default-200/70 text-foreground rounded-bl-md"
+                        }`}
+                    >
+                        {message.content}
+                    </div>
                 </div>
-                <span className="text-[11px] text-foreground/35 mt-1 px-1 tabular-nums">
-                    {formatDate(message.createdAt)}
-                </span>
             </div>
         </div>
     );
 });
+
+function BubbleAvatar({ name, image }: { name: string; image: string | null }) {
+    return (
+        <Avatar size="sm" className="mt-1 shrink-0">
+            {image ? <Avatar.Image alt={name} src={image} /> : null}
+            <Avatar.Fallback>{name.charAt(0).toUpperCase()}</Avatar.Fallback>
+        </Avatar>
+    );
+}

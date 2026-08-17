@@ -4,6 +4,7 @@ import type { UserProfile, Work } from "./types";
 export interface MyStats {
     givenSparks: number;
     receivedSparks: number;
+    sparkBalance: number;
 }
 
 export interface UploadedAvatar {

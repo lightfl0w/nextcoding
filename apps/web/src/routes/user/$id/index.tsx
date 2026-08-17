@@ -1,6 +1,17 @@
-import { Avatar, Button, Skeleton, Tabs } from "@heroui/react";
-import { createFileRoute, useParams } from "@tanstack/react-router";
-import { Activity, Award, Bookmark, FileText, UserX } from "lucide-react";
+import { Avatar, Button, Skeleton, Tabs, toast } from "@heroui/react";
+import {
+    createFileRoute,
+    useNavigate,
+    useParams,
+} from "@tanstack/react-router";
+import {
+    Activity,
+    Award,
+    Bookmark,
+    FileText,
+    MessageCircle,
+    UserX,
+} from "lucide-react";
 import { useState } from "react";
 import { AchievementGrid } from "~/components/achievements/AchievementGrid";
 import { ActivityFeed } from "~/components/activities/ActivityFeed";
@@ -12,6 +23,7 @@ import { useUserAchievements } from "~/hooks/useUserAchievements";
 import { useUserActivities } from "~/hooks/useUserActivities";
 import { useUserWorks } from "~/hooks/useUserWorks";
 import type { UserProfile } from "~/lib/api";
+import { createConversation } from "~/lib/api/messages";
 import { formatCount, formatDate } from "~/lib/format";
 
 export const Route = createFileRoute("/user/$id/")({
@@ -28,6 +40,26 @@ function UserProfileRoute() {
     const { user } = useAuth();
     const { data: profile, isLoading, error } = useUser(userId);
     const follow = useFollowUser(profile);
+    const navigate = useNavigate();
+    const [sendingMessage, setSendingMessage] = useState(false);
+
+    const startChat = async () => {
+        if (!profile) {
+            return;
+        }
+        setSendingMessage(true);
+        try {
+            const conversation = await createConversation(profile.id);
+            await navigate({
+                to: "/chat/$id",
+                params: { id: conversation.id },
+            });
+        } catch (error) {
+            toast.danger((error as Error).message);
+        } finally {
+            setSendingMessage(false);
+        }
+    };
 
     if (isLoading) {
         return <ProfileSkeleton />;
@@ -53,19 +85,32 @@ function UserProfileRoute() {
                                 加入于 {formatDate(profile.createdAt)}
                             </p>
                             {!isMe && (
-                                <Button
-                                    size="sm"
-                                    variant={
-                                        profile.isFollowedByMe
-                                            ? "secondary"
-                                            : "primary"
-                                    }
-                                    isDisabled={follow.pending}
-                                    onPress={follow.toggleFollow}
-                                    className="mt-1"
-                                >
-                                    {profile.isFollowedByMe ? "已关注" : "关注"}
-                                </Button>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="gap-1.5"
+                                        isDisabled={sendingMessage}
+                                        onPress={startChat}
+                                    >
+                                        <MessageCircle className="size-4" />
+                                        发私信
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant={
+                                            profile.isFollowedByMe
+                                                ? "secondary"
+                                                : "primary"
+                                        }
+                                        isDisabled={follow.pending}
+                                        onPress={follow.toggleFollow}
+                                    >
+                                        {profile.isFollowedByMe
+                                            ? "已关注"
+                                            : "关注"}
+                                    </Button>
+                                </div>
                             )}
                         </div>
 

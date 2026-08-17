@@ -75,7 +75,7 @@ function RouteComponent() {
                     {features.map((feature) => (
                         <Card
                             key={feature.title}
-                            className="p-0 shadow-none rounded-2xl border border-default-200/70 transition-colors hover:border-default-300"
+                            className="p-0 shadow-none rounded-2xl border border-default-200/70"
                         >
                             <div className="p-5 flex flex-col gap-3">
                                 <div className="size-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">

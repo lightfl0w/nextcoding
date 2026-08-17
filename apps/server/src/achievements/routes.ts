@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { type AuthenticatedEnv, requireSession } from "../http/guards.js";
-import { jsonError } from "../http/responses.js";
 import {
     countUserFollowers,
     countUserReceivedSparks,
@@ -53,13 +52,4 @@ achievementRoutes.get("/progress", requireSession, async (c) => {
     );
 
     return c.json(results);
-});
-
-achievementRoutes.get("/:id/achievements", async (c) => {
-    const userId = c.req.param("id");
-    if (!userId) {
-        return jsonError(c, "用户 ID 不能为空", 400);
-    }
-    const rows = await listUserAchievements(userId);
-    return c.json(rows);
 });
