@@ -28,7 +28,7 @@ export function ForgotForm({ redirect }: { redirect: string }) {
         setIsSubmitting(true);
         const { error: resetError } = await authClient.requestPasswordReset({
             email,
-            redirectTo: `${window.location.origin}/reset-password`,
+            redirectTo: `${import.meta.env.BETTER_AUTH_URL}/reset-password`,
         });
         setIsSubmitting(false);
 

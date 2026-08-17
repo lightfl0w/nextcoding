@@ -16,7 +16,7 @@ const BACKEND_URL = env.BACKEND_URL || "http://localhost:3000";
 
 const config = defineConfig({
     envDir: "../../",
-    envPrefix: ["VITE_", "BACKEND_"],
+    envPrefix: ["VITE_", "BACKEND_", "BETTER_AUTH_"],
     resolve: {
         tsconfigPaths: true,
         dedupe: ["react", "react-dom"],
