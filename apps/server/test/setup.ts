@@ -20,6 +20,7 @@ vi.mock("../src/works/repository.js", () => ({
     findWorkDetail: vi.fn(),
     findWorkFileByKey: vi.fn(),
     findWorkOwnerId: vi.fn(),
+    findWorkUpdatedAt: vi.fn(),
     insertComment: vi.fn(),
     insertVersion: vi.fn(),
     insertWork: vi.fn(),
@@ -38,6 +39,7 @@ vi.mock("../src/works/repository.js", () => ({
     renameVersionMessage: vi.fn(),
     renameWorkFile: vi.fn(),
     setWorkFileVersion: vi.fn(),
+    touchWork: vi.fn(),
     updateWorkTitle: vi.fn(),
     workExists: vi.fn(),
 }));

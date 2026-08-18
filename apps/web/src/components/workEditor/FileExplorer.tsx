@@ -132,7 +132,7 @@ export const FileExplorer = memo(function FileExplorer({
     };
 
     return (
-        <aside className="w-52 border-r border-default-200 overflow-y-auto p-2 flex flex-col gap-1 shrink-0">
+        <aside className="flex-1 min-h-0 overflow-y-auto p-2 flex flex-col gap-1">
             <div className="flex items-center justify-between px-1 pb-1">
                 <span className="text-xs font-medium text-foreground/60">
                     文件

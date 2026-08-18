@@ -6,10 +6,24 @@ import {
     useOverlayState,
 } from "@heroui/react";
 import { useBlocker, useNavigate } from "@tanstack/react-router";
-import { FileCode } from "lucide-react";
+import {
+    FileCode,
+    Files,
+    History,
+    PanelLeftClose,
+    PanelLeftOpen,
+} from "lucide-react";
 import type * as Monaco from "monaco-editor";
 import { useTheme } from "next-themes";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+    memo,
+    type ReactNode,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import { useSWRConfig } from "swr";
 
 import { MonacoWrapper } from "~/components/editor/MonacoWrapper";
@@ -132,7 +146,6 @@ export function WorkEditor({ workId }: { workId: string | null }) {
         trackFile,
         forgetFile,
         flushSave,
-        flushAll,
     } = useDraftSaver({
         workId,
         files,
@@ -142,11 +155,38 @@ export function WorkEditor({ workId }: { workId: string | null }) {
         autoSave: autoSaveDraft,
     });
 
+    const collectTree = useCallback(async (): Promise<
+        Record<string, string>
+    > => {
+        const entries = await Promise.all(
+            files.map(async (file) => {
+                const content =
+                    readDraft(file.key) ?? (await loadContent(file.key));
+                return [file.name, content] as const;
+            }),
+        );
+        return Object.fromEntries(entries);
+    }, [files, readDraft, loadContent]);
+
     const diff = useDiffPreview({ workId, activeKey, readDraft });
     const versionHistory = useVersionHistory(workId);
     const compareDialogState = useOverlayState();
     const pushDialogState = useOverlayState();
     const [isGitBusy, setIsGitBusy] = useState(false);
+    const [sidebarTab, setSidebarTab] = useState<"files" | "versions">("files");
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+
+    const toggleSidebar = useCallback(
+        (tab: "files" | "versions") => {
+            if (sidebarOpen && sidebarTab === tab) {
+                setSidebarOpen(false);
+            } else {
+                setSidebarTab(tab);
+                setSidebarOpen(true);
+            }
+        },
+        [sidebarOpen, sidebarTab],
+    );
     const runner = useEditorRun({
         files,
         activeKey,
@@ -254,15 +294,20 @@ export function WorkEditor({ workId }: { workId: string | null }) {
                 }
                 return;
             }
-            await flushAll();
-            await versionHistory.publish(trimmed);
+            const tree = await collectTree();
+            const outcome = await versionHistory.publish(trimmed, tree);
+            if (outcome && "conflict" in outcome) {
+                await Promise.all([reload(), versionHistory.refresh()]);
+            }
         },
         [
             workId,
             persistPendingWork,
             navigate,
-            flushAll,
+            collectTree,
             versionHistory.publish,
+            versionHistory.refresh,
+            reload,
         ],
     );
 
@@ -287,8 +332,11 @@ export function WorkEditor({ workId }: { workId: string | null }) {
         const date = new Date(now);
         const hh = String(date.getHours()).padStart(2, "0");
         const mm = String(date.getMinutes()).padStart(2, "0");
-        void versionHistory.publish(`自动快照 ${hh}:${mm}`);
-    }, [isSaving, autoSnapshot, workId, versionHistory.publish]);
+        void (async () => {
+            const tree = await collectTree();
+            await versionHistory.publish(`自动快照 ${hh}:${mm}`, tree);
+        })();
+    }, [isSaving, autoSnapshot, workId, versionHistory.publish, collectTree]);
 
     const handleExportGit = useCallback(async () => {
         if (workId === null) {
@@ -347,26 +395,95 @@ export function WorkEditor({ workId }: { workId: string | null }) {
             />
 
             <div className="flex-1 flex min-h-0">
-                <FileExplorer
-                    files={files}
-                    activeKey={activeKey}
-                    isComposing={fileActions.isComposing}
-                    draftName={fileActions.draftName}
-                    nameError={fileActions.nameError}
-                    renamingKey={fileActions.renamingKey}
-                    renameDraft={fileActions.renameDraft}
-                    onOpenFile={openFile}
-                    onDeleteFile={fileActions.removeFile}
-                    onDeleteFolder={fileActions.removeFolder}
-                    onStartComposing={fileActions.startComposing}
-                    onCancelComposing={fileActions.cancelComposing}
-                    onChangeDraftName={fileActions.changeDraftName}
-                    onConfirmComposing={fileActions.confirmComposing}
-                    onStartRename={fileActions.startRename}
-                    onCancelRename={fileActions.cancelRename}
-                    onChangeRenameDraft={fileActions.changeRenameDraft}
-                    onConfirmRename={fileActions.confirmRename}
-                />
+                <div className="w-11 shrink-0 border-r border-default-200 bg-surface flex flex-col items-center gap-1 py-2">
+                    <SidebarTab
+                        active={sidebarOpen && sidebarTab === "files"}
+                        icon={<Files className="size-4" />}
+                        label="文件"
+                        onClick={() => toggleSidebar("files")}
+                    />
+                    <SidebarTab
+                        active={sidebarOpen && sidebarTab === "versions"}
+                        icon={<History className="size-4" />}
+                        label="版本"
+                        onClick={() => toggleSidebar("versions")}
+                    />
+                    <div className="flex-1" />
+                    <button
+                        type="button"
+                        onClick={() => setSidebarOpen((open) => !open)}
+                        title={sidebarOpen ? "折叠侧边栏" : "展开侧边栏"}
+                        aria-label={sidebarOpen ? "折叠侧边栏" : "展开侧边栏"}
+                        className="flex items-center justify-center size-8 rounded-md text-foreground/60 hover:bg-hover hover:text-foreground"
+                    >
+                        {sidebarOpen ? (
+                            <PanelLeftClose className="size-4" />
+                        ) : (
+                            <PanelLeftOpen className="size-4" />
+                        )}
+                    </button>
+                </div>
+                {sidebarOpen && (
+                    <div className="w-64 shrink-0 border-r border-default-200 bg-surface flex flex-col min-h-0">
+                        <div className="px-2.5 py-1.5 border-b border-default-200 shrink-0 text-xs font-medium text-foreground/70">
+                            {sidebarTab === "files" ? "文件" : "版本"}
+                        </div>
+                        <div className="flex-1 min-h-0 flex flex-col">
+                            {sidebarTab === "files" ? (
+                                <FileExplorer
+                                    files={files}
+                                    activeKey={activeKey}
+                                    isComposing={fileActions.isComposing}
+                                    draftName={fileActions.draftName}
+                                    nameError={fileActions.nameError}
+                                    renamingKey={fileActions.renamingKey}
+                                    renameDraft={fileActions.renameDraft}
+                                    onOpenFile={openFile}
+                                    onDeleteFile={fileActions.removeFile}
+                                    onDeleteFolder={fileActions.removeFolder}
+                                    onStartComposing={
+                                        fileActions.startComposing
+                                    }
+                                    onCancelComposing={
+                                        fileActions.cancelComposing
+                                    }
+                                    onChangeDraftName={
+                                        fileActions.changeDraftName
+                                    }
+                                    onConfirmComposing={
+                                        fileActions.confirmComposing
+                                    }
+                                    onStartRename={fileActions.startRename}
+                                    onCancelRename={fileActions.cancelRename}
+                                    onChangeRenameDraft={
+                                        fileActions.changeRenameDraft
+                                    }
+                                    onConfirmRename={fileActions.confirmRename}
+                                />
+                            ) : (
+                                <VersionHistoryPanel
+                                    versions={versionHistory.versions}
+                                    onCompare={diff.compareWith}
+                                    onRestore={versionHistory.restore}
+                                    onRemove={versionHistory.remove}
+                                    onRename={versionHistory.rename}
+                                    onCompareVersions={() => {
+                                        if (workId !== null) {
+                                            compareDialogState.open();
+                                        }
+                                    }}
+                                    onExportGit={() => void handleExportGit()}
+                                    onPushRemote={() => {
+                                        if (workId !== null) {
+                                            pushDialogState.open();
+                                        }
+                                    }}
+                                    isBusy={isGitBusy}
+                                />
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 <div className="flex-1 flex flex-col min-w-0">
                     <EditorTabs
@@ -392,24 +509,24 @@ export function WorkEditor({ workId }: { workId: string | null }) {
                     </div>
                 </div>
 
-                <VersionHistoryPanel
-                    versions={versionHistory.versions}
-                    onCompare={diff.compareWith}
-                    onRestore={versionHistory.restore}
-                    onRemove={versionHistory.remove}
-                    onRename={versionHistory.rename}
-                    onCompareVersions={() => {
-                        if (workId !== null) {
-                            compareDialogState.open();
-                        }
-                    }}
-                    onExportGit={() => void handleExportGit()}
-                    onPushRemote={() => {
-                        if (workId !== null) {
-                            pushDialogState.open();
-                        }
-                    }}
-                    isBusy={isGitBusy}
+                <RunPanel
+                    placement="right"
+                    open={runner.isPanelOpen}
+                    running={runner.running}
+                    output={runner.output}
+                    result={runner.result}
+                    label={runLabel}
+                    awaitingInput={runner.awaitingInput}
+                    onSubmitInput={runner.submitInput}
+                    onCancelInput={runner.cancelInput}
+                    onClose={runner.closePanel}
+                    onClear={runner.clear}
+                    mode={runner.mode}
+                    terminalId={runner.terminalId}
+                    canvasId={runner.canvasId}
+                    onStop={runner.stop}
+                    loadStage={runner.loadStage}
+                    loopHint={runner.loopHint}
                 />
             </div>
 
@@ -429,25 +546,48 @@ export function WorkEditor({ workId }: { workId: string | null }) {
                 <PushToRemoteDialog state={pushDialogState} workId={workId} />
             )}
 
-            <RunPanel
-                open={runner.isPanelOpen}
-                running={runner.running}
-                output={runner.output}
-                result={runner.result}
-                label={runLabel}
-                awaitingInput={runner.awaitingInput}
-                onSubmitInput={runner.submitInput}
-                onCancelInput={runner.cancelInput}
-                onClose={runner.closePanel}
-                onClear={runner.clear}
-            />
-
             <LeaveDraftDialog
                 blocked={blocked}
                 onStay={() => blocker.reset?.()}
                 onLeave={() => blocker.proceed?.()}
             />
         </div>
+    );
+}
+
+/**
+ * 左侧栏页签按钮。
+ * @param props.active - 是否选中。
+ * @param props.icon - 图标。
+ * @param props.label - 文案。
+ * @param props.onClick - 点击切换。
+ */
+function SidebarTab({
+    active,
+    icon,
+    label,
+    onClick,
+}: {
+    active: boolean;
+    icon: ReactNode;
+    label: string;
+    onClick: () => void;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            title={label}
+            aria-label={label}
+            aria-pressed={active}
+            className={`flex items-center justify-center size-8 rounded-md transition-colors ${
+                active
+                    ? "bg-primary-100 text-primary"
+                    : "text-foreground/60 hover:bg-hover hover:text-foreground"
+            }`}
+        >
+            {icon}
+        </button>
     );
 }
 

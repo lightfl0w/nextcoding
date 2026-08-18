@@ -44,7 +44,7 @@ export const VersionHistoryPanel = memo(function VersionHistoryPanel({
     isBusy,
 }: VersionHistoryPanelProps) {
     return (
-        <aside className="w-64 border-l border-default-200 overflow-y-auto p-3 flex flex-col gap-2 shrink-0">
+        <aside className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-2">
             <div className="flex items-center justify-between">
                 <div className="text-xs font-medium text-foreground/60">
                     版本历史

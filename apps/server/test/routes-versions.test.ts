@@ -41,6 +41,28 @@ describe("versionRoutes", () => {
             expect(await res.json()).toHaveLength(1);
         });
 
+        it("If-None-Match 命中时返回 304 且不查版本", async () => {
+            vi.mocked(workRepo.findWorkUpdatedAt).mockResolvedValue(
+                new Date(123),
+            );
+            const res = await app().request("/api/works/work-1/versions", {
+                headers: { "if-none-match": '"123"' },
+            });
+            expect(res.status).toBe(304);
+            expect(workRepo.listVersionSummaries).not.toHaveBeenCalled();
+        });
+
+        it("返回 ETag 头（基于作品更新时间）", async () => {
+            vi.mocked(workRepo.findWorkUpdatedAt).mockResolvedValue(
+                new Date(456),
+            );
+            vi.mocked(workRepo.listVersionSummaries).mockResolvedValue([]);
+            const res = await app().request("/api/works/work-1/versions");
+            expect(res.status).toBe(200);
+            expect(res.headers.get("etag")).toBe('"456"');
+            expect(res.headers.get("cache-control")).toBe("no-cache");
+        });
+
         it("摘要携带提交者信息，无提交者时返回 null", async () => {
             vi.mocked(workRepo.listVersionSummaries).mockResolvedValue([
                 {
@@ -245,6 +267,334 @@ describe("versionRoutes", () => {
             expect(workRepo.insertVersion).toHaveBeenCalledWith(
                 expect.objectContaining({ message: null }),
             );
+        });
+    });
+
+    describe("PUT /:id/versions", () => {
+        it("需要作者权限", async () => {
+            mockGetSession.mockResolvedValue(makeSession({ id: "someone" }));
+            vi.mocked(workRepo.findWorkOwnerId).mockResolvedValue("owner");
+            const res = await app().request("/api/works/work-1/versions", {
+                method: "PUT",
+                body: JSON.stringify({ files: { "main.js": "x" } }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(403);
+        });
+
+        it("files 缺失或格式非法返回 400", async () => {
+            asOwner();
+            for (const body of [
+                {},
+                { files: [] },
+                { files: { "../escape.js": "x" } },
+                { files: { "main.js": { nope: true } } },
+            ]) {
+                const res = await app().request("/api/works/work-1/versions", {
+                    method: "PUT",
+                    body: JSON.stringify(body),
+                    headers: { "content-type": "application/json" },
+                });
+                expect(res.status).toBe(400);
+            }
+        });
+
+        it("baseVersion 与最新版本不一致时返回 409 与当前版本", async () => {
+            asOwner();
+            vi.mocked(workRepo.listWorkFiles).mockResolvedValue([]);
+            vi.mocked(workRepo.nextVersionNumber).mockResolvedValue(3);
+            const res = await app().request("/api/works/work-1/versions", {
+                method: "PUT",
+                body: JSON.stringify({
+                    files: { "main.js": "x" },
+                    baseVersion: 1,
+                }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(409);
+            expect(await res.json()).toEqual({
+                error: "作品已被他人更新，请先获取最新版本",
+                currentVersion: 2,
+            });
+            expect(workRepo.insertVersion).not.toHaveBeenCalled();
+        });
+
+        it("baseVersion 匹配时提交成功", async () => {
+            asOwner();
+            vi.mocked(workRepo.listWorkFiles).mockResolvedValue([]);
+            vi.mocked(workRepo.nextVersionNumber).mockResolvedValue(3);
+            vi.mocked(workRepo.insertVersion).mockResolvedValue(
+                undefined as never,
+            );
+            const res = await app().request("/api/works/work-1/versions", {
+                method: "PUT",
+                body: JSON.stringify({
+                    files: { "main.js": "x" },
+                    baseVersion: 2,
+                }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(201);
+            expect(workRepo.insertVersion).toHaveBeenCalled();
+        });
+
+        it("整树提交：新增/变更/删除文件并写快照", async () => {
+            asOwner();
+            const bytesA = new TextEncoder().encode("aaa");
+            const bytesB = new TextEncoder().encode("bbb");
+            vi.mocked(workRepo.listWorkFiles).mockResolvedValue([
+                makeWorkFileRow({
+                    id: "f-a",
+                    key: "works/work-1/a.js",
+                    name: "a.js",
+                }),
+                makeWorkFileRow({
+                    id: "f-b",
+                    key: "works/work-1/b.js",
+                    name: "b.js",
+                }),
+                makeWorkFileRow({
+                    id: "f-old",
+                    key: "works/work-1/old.js",
+                    name: "old.js",
+                }),
+            ]);
+            storage.store.set("works/work-1/a.js", bytesA);
+            storage.store.set("works/work-1/b.js", bytesB);
+            storage.store.set(
+                "works/work-1/old.js",
+                new TextEncoder().encode("orphan"),
+            );
+            vi.mocked(workRepo.nextVersionNumber).mockResolvedValue(2);
+            vi.mocked(workRepo.insertVersion).mockResolvedValue(
+                undefined as never,
+            );
+
+            const newBytes = new TextEncoder().encode("BBB");
+            const res = await app().request("/api/works/work-1/versions", {
+                method: "PUT",
+                body: JSON.stringify({
+                    message: "重构",
+                    files: {
+                        "a.js": "aaa",
+                        "b.js": "BBB",
+                        "c.js": "new-file",
+                    },
+                }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(201);
+            expect(await res.json()).toEqual({
+                id: "work-1",
+                version: 2,
+                message: "重构",
+                fileCount: 3,
+                createdAt: expect.any(String),
+                tree: expect.any(String),
+                hash: expect.any(String),
+            });
+
+            expect(storage.store.get("works/work-1/a.js")).toEqual(bytesA);
+            expect(workRepo.bumpWorkFileVersion).not.toHaveBeenCalledWith(
+                "f-a",
+                expect.any(Number),
+            );
+
+            expect(workRepo.bumpWorkFileVersion).toHaveBeenCalledWith("f-b", 3);
+            expect(storage.store.get("works/work-1/b.js")).toEqual(newBytes);
+
+            expect(workRepo.insertWorkFiles).toHaveBeenCalledWith([
+                expect.objectContaining({
+                    workId: "work-1",
+                    key: "works/work-1/c.js",
+                    name: "c.js",
+                    size: 8,
+                }),
+            ]);
+
+            expect(workRepo.deleteWorkFile).toHaveBeenCalledWith("f-old");
+            expect(storage.store.has("works/work-1/old.js")).toBe(false);
+
+            const snapshotRaw = storage.store.get(
+                "works/work-1/snapshots/v2.json",
+            );
+            expect(snapshotRaw).toBeTruthy();
+            const snapshot = JSON.parse(
+                new TextDecoder().decode(snapshotRaw),
+            ) as {
+                version: number;
+                files: Array<{ name: string; hash: string; size: number }>;
+            };
+            expect(snapshot.version).toBe(2);
+            expect(snapshot.files.map((file) => file.name).sort()).toEqual([
+                "a.js",
+                "b.js",
+                "c.js",
+            ]);
+            expect(
+                storage.store.get(`works/work-1/blobs/${sha256Hex(newBytes)}`),
+            ).toEqual(newBytes);
+            expect(workRepo.insertVersion).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    workId: "work-1",
+                    version: 2,
+                    snapshotKey: "works/work-1/snapshots/v2.json",
+                    message: "重构",
+                }),
+            );
+        });
+
+        it("二进制文件按 base64 解码写入", async () => {
+            asOwner();
+            vi.mocked(workRepo.listWorkFiles).mockResolvedValue([]);
+            vi.mocked(workRepo.nextVersionNumber).mockResolvedValue(1);
+            vi.mocked(workRepo.insertVersion).mockResolvedValue(
+                undefined as never,
+            );
+            const bytes = new Uint8Array([0, 1, 2, 255]);
+            const b64 = Buffer.from(bytes).toString("base64");
+            const res = await app().request("/api/works/work-1/versions", {
+                method: "PUT",
+                body: JSON.stringify({
+                    files: {
+                        "assets/img.png": { b64, contentType: "image/png" },
+                    },
+                }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(201);
+            expect(storage.store.get("works/work-1/assets/img.png")).toEqual(
+                bytes,
+            );
+            const snapshot = JSON.parse(
+                new TextDecoder().decode(
+                    storage.store.get("works/work-1/snapshots/v1.json"),
+                ),
+            ) as { files: Array<{ contentType: string | null }> };
+            expect(snapshot.files[0].contentType).toBe("image/png");
+        });
+
+        it("manifest 模式按哈希引用对象提交", async () => {
+            asOwner();
+            vi.mocked(workRepo.listWorkFiles).mockResolvedValue([]);
+            vi.mocked(workRepo.nextVersionNumber).mockResolvedValue(2);
+            vi.mocked(workRepo.insertVersion).mockResolvedValue(
+                undefined as never,
+            );
+            const bytes = new TextEncoder().encode("from-object");
+            const hash = sha256Hex(bytes);
+            storage.store.set(`works/work-1/blobs/${hash}`, bytes);
+
+            const res = await app().request("/api/works/work-1/versions", {
+                method: "PUT",
+                body: JSON.stringify({
+                    message: "增量提交",
+                    manifest: { "main.py": hash },
+                }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(201);
+            expect(await res.json()).toEqual({
+                id: "work-1",
+                version: 2,
+                message: "增量提交",
+                fileCount: 1,
+                createdAt: expect.any(String),
+                tree: expect.any(String),
+                hash: expect.any(String),
+            });
+
+            expect(storage.store.get("works/work-1/main.py")).toEqual(bytes);
+            expect(workRepo.insertWorkFiles).toHaveBeenCalledWith([
+                expect.objectContaining({
+                    key: "works/work-1/main.py",
+                    name: "main.py",
+                    size: 11,
+                }),
+            ]);
+        });
+
+        it("manifest 引用缺失对象时返回 400", async () => {
+            asOwner();
+            const res = await app().request("/api/works/work-1/versions", {
+                method: "PUT",
+                body: JSON.stringify({
+                    manifest: { "main.py": "a".repeat(64) },
+                }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(400);
+            expect(await res.json()).toEqual({
+                error: expect.stringContaining("缺少对象"),
+            });
+        });
+
+        it("files 与 manifest 同时提供返回 400", async () => {
+            asOwner();
+            const res = await app().request("/api/works/work-1/versions", {
+                method: "PUT",
+                body: JSON.stringify({
+                    files: { "main.py": "x" },
+                    manifest: { "main.py": "a".repeat(64) },
+                }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(400);
+        });
+
+        it("提交树与工作区一致时短路返回 unchanged", async () => {
+            asOwner();
+            const bytes = new TextEncoder().encode("aaa");
+            vi.mocked(workRepo.listWorkFiles).mockResolvedValue([
+                makeWorkFileRow({
+                    id: "f-a",
+                    key: "works/work-1/a.js",
+                    name: "a.js",
+                }),
+            ]);
+            storage.store.set("works/work-1/a.js", bytes);
+            vi.mocked(workRepo.nextVersionNumber).mockResolvedValue(2);
+
+            const res = await app().request("/api/works/work-1/versions", {
+                method: "PUT",
+                body: JSON.stringify({ files: { "a.js": "aaa" } }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(200);
+            const body = (await res.json()) as {
+                ok: boolean;
+                unchanged: boolean;
+                version: number;
+                tree: string;
+            };
+            expect(body).toEqual({
+                ok: true,
+                unchanged: true,
+                version: 1,
+                tree: expect.any(String),
+            });
+
+            expect(workRepo.insertVersion).not.toHaveBeenCalled();
+            expect(workRepo.touchWork).not.toHaveBeenCalled();
+            expect(storage.store.has("works/work-1/snapshots/v2.json")).toBe(
+                false,
+            );
+        });
+
+        it("提交成功时 touchWork 刷新作品更新时间", async () => {
+            asOwner();
+            vi.mocked(workRepo.listWorkFiles).mockResolvedValue([]);
+            vi.mocked(workRepo.nextVersionNumber).mockResolvedValue(1);
+            vi.mocked(workRepo.insertVersion).mockResolvedValue(
+                undefined as never,
+            );
+            const res = await app().request("/api/works/work-1/versions", {
+                method: "PUT",
+                body: JSON.stringify({ files: { "main.js": "x" } }),
+                headers: { "content-type": "application/json" },
+            });
+            expect(res.status).toBe(201);
+            expect(workRepo.touchWork).toHaveBeenCalledWith("work-1");
         });
     });
 

@@ -37,6 +37,12 @@ export function useEditorRun({
         awaitingInput,
         submitInput,
         cancelInput,
+        mode,
+        terminalId,
+        canvasId,
+        stop,
+        loadStage,
+        loopHint,
     } = useRunPanel();
 
     const activeFile = useMemo(
@@ -81,6 +87,12 @@ export function useEditorRun({
         awaitingInput,
         submitInput,
         cancelInput,
+        mode,
+        terminalId,
+        canvasId,
+        stop,
+        loadStage,
+        loopHint,
     };
 }
 

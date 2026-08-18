@@ -15,11 +15,23 @@ export function useRunPanel() {
         awaitingInput,
         submitInput,
         cancelInput,
+        mode,
+        terminalId,
+        canvasId,
+        stop,
+        loadStage,
+        loopHint,
     } = useCodeRunner();
     const [isPanelOpen, setIsPanelOpen] = useState(false);
 
     const openPanel = useCallback(() => setIsPanelOpen(true), []);
-    const closePanel = useCallback(() => setIsPanelOpen(false), []);
+    const closePanel = useCallback(() => {
+        setIsPanelOpen(false);
+
+        if (mode === "pygame") {
+            stop();
+        }
+    }, [mode, stop]);
 
     return {
         running,
@@ -30,6 +42,12 @@ export function useRunPanel() {
         awaitingInput,
         submitInput,
         cancelInput,
+        mode,
+        terminalId,
+        canvasId,
+        stop,
+        loadStage,
+        loopHint,
         isPanelOpen,
         openPanel,
         closePanel,

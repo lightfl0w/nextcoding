@@ -59,7 +59,7 @@ interface DraftSaverOptions {
     loadContent: (key: string) => Promise<string>;
     /**
      * 是否开启自动保存。关闭时只记录脏状态，
-     * 内容需通过「保存草稿」手动调用 flushSave/flushAll 落盘。
+     * 内容通过「保存草稿」的整树提交一并落盘。
      */
     autoSave: boolean;
 }

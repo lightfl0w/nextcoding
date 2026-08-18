@@ -62,6 +62,9 @@ export const workVersion = sqliteTable(
         userId: text("user_id").references(() => user.id, {
             onDelete: "set null",
         }),
+        tree: text("tree"),
+        hash: text("hash"),
+        parent: text("parent"),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
             .notNull(),

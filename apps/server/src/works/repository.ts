@@ -367,6 +367,9 @@ export function listVersionSummaries(workId: string, limit: number) {
             version: workVersion.version,
             message: workVersion.message,
             createdAt: workVersion.createdAt,
+            tree: workVersion.tree,
+            hash: workVersion.hash,
+            parent: workVersion.parent,
             authorId: workVersion.userId,
             authorName: user.name,
         })
@@ -433,11 +436,29 @@ export function insertVersion(values: {
     snapshotKey: string;
     message: string | null;
     userId?: string | null;
+    tree: string;
+    hash: string;
+    parent: string | null;
     createdAt: Date;
 }) {
     return db
         .insert(workVersion)
         .values({ id: crypto.randomUUID(), ...values });
+}
+
+export function touchWork(workId: string) {
+    return db
+        .update(work)
+        .set({ updatedAt: new Date() })
+        .where(eq(work.id, workId));
+}
+
+export async function findWorkUpdatedAt(workId: string) {
+    const [row] = await db
+        .select({ updatedAt: work.updatedAt })
+        .from(work)
+        .where(eq(work.id, workId));
+    return row?.updatedAt ?? null;
 }
 
 export function listComments(workId: string, limit: number) {

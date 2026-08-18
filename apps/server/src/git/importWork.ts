@@ -23,7 +23,12 @@ import {
     insertWork,
     insertWorkFiles,
 } from "../works/repository.js";
-import { type Snapshot, serializeSnapshot } from "../works/snapshot.js";
+import {
+    computeCommitHash,
+    computeTreeHash,
+    type Snapshot,
+    serializeSnapshot,
+} from "../works/snapshot.js";
 import { validatePublicGitUrl } from "./safeUrl.js";
 
 export interface GitImportOptions {
@@ -75,6 +80,9 @@ interface PendingVersion {
     snapshotKey: string;
     message: string;
     createdAt: Date;
+    tree: string;
+    hash: string;
+    parent: string | null;
     entries: Array<{
         key: string;
         name: string;
@@ -165,6 +173,7 @@ export async function importWorkFromGit(
         const skipped: Array<{ path: string; reason: string }> = [];
         let fileCount = 0;
         let totalBytes = 0;
+        let previousHash: string | null = null;
         const headBytes: ImportedFile[] = [];
 
         for (const [index, commit] of ordered.entries()) {
@@ -208,11 +217,23 @@ export async function importWorkFromGit(
             const createdAt = new Date(
                 (commit.commit.committer?.timestamp ?? 0) * 1000,
             );
+            const tree = computeTreeHash(entries);
+            const parent = previousHash;
+            const hash = computeCommitHash({
+                tree,
+                parent,
+                message: commit.commit.message,
+                createdAt: createdAt.getTime(),
+            });
+            previousHash = hash;
             const snapshot: Snapshot = {
                 version,
                 message: commit.commit.message,
                 createdAt: createdAt.getTime(),
                 files: entries,
+                tree,
+                hash,
+                parent,
             };
             const snapshotKey = snapshotStorageKey(workId, version);
             await storage.put(snapshotKey, serializeSnapshot(snapshot), {
@@ -223,6 +244,9 @@ export async function importWorkFromGit(
                 snapshotKey,
                 message: commit.commit.message,
                 createdAt,
+                tree,
+                hash,
+                parent,
                 entries,
             });
             progress(
@@ -254,6 +278,9 @@ export async function importWorkFromGit(
                 snapshotKey: version.snapshotKey,
                 message: version.message,
                 userId: options.userId,
+                tree: version.tree,
+                hash: version.hash,
+                parent: version.parent,
                 createdAt: version.createdAt,
             });
         }

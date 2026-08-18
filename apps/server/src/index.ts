@@ -28,7 +28,6 @@ const CORS_ORIGINS = (
 
 const app = new Hono();
 
-// 必须在 cors 之前：upgradeWebSocket 与修改 headers 的中间件冲突
 registerWsRoutes(app);
 
 app.use(

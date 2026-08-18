@@ -32,6 +32,14 @@ import {
     notificationText,
 } from "../src/lib/notifications";
 import {
+    buildEntryCommand,
+    buildVirtualFilesScript,
+    detectBusyGameLoop,
+    detectPygameProject,
+    PYTHON_RUN_TIMEOUT_MS,
+    pyscriptProgressLabel,
+} from "../src/lib/pyscript";
+import {
     detectRuntime,
     formatOutputLines,
     languageLabel,
@@ -483,5 +491,217 @@ describe("authSearch", () => {
             "/work/1",
         );
         expect(validateAuthSearch({}).redirect).toBeUndefined();
+    });
+});
+
+describe("pyscript", () => {
+    describe("detectPygameProject", () => {
+        it("识别 import pygame", () => {
+            expect(
+                detectPygameProject({
+                    "main.py": "import pygame\npygame.init()",
+                }),
+            ).toBe(true);
+        });
+
+        it("识别 from pygame import", () => {
+            expect(
+                detectPygameProject({
+                    "main.py": "from pygame.locals import QUIT",
+                }),
+            ).toBe(true);
+        });
+
+        it("识别 from pygame.locals import", () => {
+            expect(
+                detectPygameProject({
+                    "main.py": "from pygame import display",
+                }),
+            ).toBe(true);
+        });
+
+        it("任意文件出现 pygame 即命中", () => {
+            expect(
+                detectPygameProject({
+                    "main.py": "print('hello')",
+                    "game.py": "import pygame",
+                }),
+            ).toBe(true);
+        });
+
+        it("普通 Python 不命中", () => {
+            expect(
+                detectPygameProject({
+                    "main.py": "print('hello')",
+                    "utils.py": "import math",
+                }),
+            ).toBe(false);
+            expect(
+                detectPygameProject({
+                    "main.py": "# 提到 pygame 的注释",
+                }),
+            ).toBe(false);
+        });
+
+        it("注释里的 import pygame 不命中", () => {
+            expect(
+                detectPygameProject({
+                    "main.py": "# import pygame 用法示例\nprint(1)",
+                }),
+            ).toBe(false);
+        });
+
+        it("未导入直接调用 pygame 不命中（避免误判）", () => {
+            expect(
+                detectPygameProject({
+                    "main.py": "pygame.init()",
+                }),
+            ).toBe(false);
+        });
+
+        it("字符串里的 pygame 不命中", () => {
+            expect(
+                detectPygameProject({
+                    "main.py": 'print("pygame 教程见文档")',
+                }),
+            ).toBe(false);
+        });
+
+        it("pygame 仅出现在无关文件扩展名时不误判", () => {
+            expect(
+                detectPygameProject({
+                    "main.py": "print(1)",
+                    "README.md": "本项目不使用 pygame",
+                }),
+            ).toBe(false);
+        });
+    });
+
+    describe("pyscriptProgressLabel", () => {
+        it("已知阶段映射为中文文案", () => {
+            expect(pyscriptProgressLabel("Loading Pyodide")).toBe(
+                "正在下载 Python 运行环境…",
+            );
+            expect(pyscriptProgressLabel("Loading interpreter")).toBe(
+                "正在初始化解释器…",
+            );
+            expect(pyscriptProgressLabel("Loaded Pyodide")).toBe("环境就绪");
+        });
+
+        it("未知阶段与非字符串返回 null", () => {
+            expect(pyscriptProgressLabel("Something else")).toBeNull();
+            expect(pyscriptProgressLabel(42)).toBeNull();
+            expect(pyscriptProgressLabel(undefined)).toBeNull();
+        });
+    });
+
+    describe("detectBusyGameLoop", () => {
+        it("纯 while 循环（无 await）判定为忙循环", () => {
+            expect(
+                detectBusyGameLoop(
+                    "import pygame\nwhile True:\n    pygame.display.flip()",
+                ),
+            ).toBe(true);
+        });
+
+        it("循环内使用 asyncio.sleep 判定为非忙循环", () => {
+            expect(
+                detectBusyGameLoop(
+                    "import asyncio\nwhile True:\n    pygame.display.flip()\n    await asyncio.sleep(1 / 60)",
+                ),
+            ).toBe(false);
+        });
+
+        it("循环内使用其他 await 判定为非忙循环", () => {
+            expect(
+                detectBusyGameLoop(
+                    "async def tick():\n    while True:\n        await some_task()",
+                ),
+            ).toBe(false);
+        });
+
+        it("无 while 的代码判定为非忙循环", () => {
+            expect(detectBusyGameLoop("import pygame\npygame.init()")).toBe(
+                false,
+            );
+        });
+
+        it("注释里的 while 不计入（仅 while 在注释中）", () => {
+            expect(
+                detectBusyGameLoop("# while True: 死循环示例\nprint(1)"),
+            ).toBe(false);
+        });
+
+        it("空代码与空白行不误判", () => {
+            expect(detectBusyGameLoop("")).toBe(false);
+            expect(detectBusyGameLoop("   \n  \n")).toBe(false);
+        });
+    });
+
+    describe("buildVirtualFilesScript", () => {
+        it("写入根目录文件", () => {
+            const script = buildVirtualFilesScript({
+                "main.py": "print(1)",
+            });
+            expect(script).toContain(
+                'pathlib.Path("/main.py").parent.mkdir(parents=True, exist_ok=True)',
+            );
+            expect(script).toContain(
+                'pathlib.Path("/main.py").write_text("print(1)", encoding="utf-8")',
+            );
+        });
+
+        it("无前导斜杠的文件名自动补全", () => {
+            const script = buildVirtualFilesScript({
+                "main.py": "x = 1",
+            });
+            expect(script).toContain('Path("/main.py")');
+        });
+
+        it("子目录文件自动创建父目录", () => {
+            const script = buildVirtualFilesScript({
+                "utils/helper.py": "def f():\n    pass",
+            });
+            expect(script).toContain(
+                'pathlib.Path("/utils/helper.py").parent.mkdir(parents=True, exist_ok=True)',
+            );
+            expect(script).toContain(
+                'pathlib.Path("/utils/helper.py").write_text("def f():\\n    pass", encoding="utf-8")',
+            );
+        });
+
+        it("特殊字符内容正确转义", () => {
+            const script = buildVirtualFilesScript({
+                "main.py": "print(\"hello\")\nprint('world')\n# 中文\n",
+            });
+            expect(script).toContain(
+                'write_text("print(\\"hello\\")\\nprint(\'world\')\\n# 中文\\n", encoding="utf-8")',
+            );
+        });
+    });
+
+    describe("buildEntryCommand", () => {
+        it("默认入口路径带前导斜杠", () => {
+            const script = buildEntryCommand("/main.py");
+            expect(script).toContain('runpy.run_path("/main.py"');
+            expect(script).toContain('run_name="__main__"');
+        });
+
+        it("无前导斜杠自动补全", () => {
+            const script = buildEntryCommand("main.py");
+            expect(script).toContain('runpy.run_path("/main.py"');
+        });
+
+        it("包含退出码记录与异常捕获", () => {
+            const script = buildEntryCommand("main.py");
+            expect(script).toContain("__ps_exit__ = 0");
+            expect(script).toContain("except BaseException:");
+            expect(script).toContain("__ps_exit__ = 1");
+            expect(script).toContain("traceback.print_exc()");
+        });
+    });
+
+    it("Python 运行超时默认 30s", () => {
+        expect(PYTHON_RUN_TIMEOUT_MS).toBe(30_000);
     });
 });

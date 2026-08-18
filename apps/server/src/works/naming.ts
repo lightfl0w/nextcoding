@@ -15,6 +15,10 @@ export function snapshotStorageKey(workId: string, version: number): string {
     return `works/${workId}/snapshots/v${version}.json`;
 }
 
+export function commitStorageKey(workId: string, hash: string): string {
+    return `works/${workId}/commits/${hash}`;
+}
+
 export function blobStorageKey(workId: string, hash: string): string {
     return `works/${workId}/blobs/${hash}`;
 }
@@ -26,4 +30,8 @@ export function fileNameFromKey(key: string): string {
 export function parseVersionNumber(raw: string): number | null {
     const version = Number(raw);
     return Number.isInteger(version) && version >= 1 ? version : null;
+}
+
+export function isBlobHash(value: string): boolean {
+    return /^[0-9a-f]{64}$/.test(value);
 }

@@ -33,6 +33,12 @@ export function useWorkRunner(workId: string, runtime: RuntimeInfo | null) {
         awaitingInput,
         submitInput,
         cancelInput,
+        mode,
+        terminalId,
+        canvasId,
+        stop,
+        loadStage,
+        loopHint,
     } = useRunPanel();
     const { mutate } = useSWRConfig();
     const [activeVersion, setActiveVersion] = useState<number | null>(null);
@@ -144,6 +150,12 @@ export function useWorkRunner(workId: string, runtime: RuntimeInfo | null) {
         awaitingInput,
         submitInput,
         cancelInput,
+        mode,
+        terminalId,
+        canvasId,
+        stop,
+        loadStage,
+        loopHint,
     };
 }
 

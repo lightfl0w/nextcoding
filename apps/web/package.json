@@ -16,6 +16,7 @@
         "@heroui/react": "^3.2.4",
         "@heroui/styles": "^3.2.4",
         "@nextcoding/auth": "workspace:*",
+        "@pyscript/core": "^0.7.31",
         "@tailwindcss/vite": "^4.1.18",
         "@tanstack/react-router": "latest",
         "@wterm/dom": "^0.3.3",

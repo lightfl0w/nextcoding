@@ -7,6 +7,7 @@ import { commentRoutes } from "./routes/commentRoutes.js";
 import { fileRoutes } from "./routes/fileRoutes.js";
 import { leaderboardRoutes } from "./routes/leaderboardRoutes.js";
 import { remixRoutes } from "./routes/remixRoutes.js";
+import { repoRoutes } from "./routes/repoRoutes.js";
 import { sparkRoutes } from "./routes/sparkRoutes.js";
 import { versionRoutes } from "./routes/versionRoutes.js";
 
@@ -15,6 +16,7 @@ export const workRoutes = new Hono()
     .route("/", commentRoutes)
     .route("/", fileRoutes)
     .route("/", versionRoutes)
+    .route("/", repoRoutes)
     .route("/", catalogRoutes)
     .route("/", sparkRoutes)
     .route("/", remixRoutes)

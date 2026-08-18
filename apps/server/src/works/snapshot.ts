@@ -10,6 +10,7 @@ import {
 } from "./content.js";
 import { blobStorageKey } from "./naming.js";
 import type { WorkFileRow } from "./repository.js";
+import { findVersion } from "./repository.js";
 
 export interface SnapshotFile {
     key: string;
@@ -26,6 +27,133 @@ export interface Snapshot {
     message: string | null;
     createdAt: number;
     files: SnapshotFile[];
+    tree?: string;
+    hash?: string;
+    parent?: string | null;
+}
+
+/**
+ * 计算文件树的稳定内容哈希（树对象地址）。
+ *
+ * 对清单按文件名排序后拼接 `name\tcontentType\tsize\thash` 行再取 SHA-256。
+ * 相同内容的树必然得到相同哈希，可用于增量同步与版本引用。
+ *
+ * @param files - 快照文件条目。
+ */
+export function computeTreeHash(files: SnapshotFile[]): string {
+    const lines = files
+        .map(
+            (file) =>
+                `${file.name}\t${file.contentType ?? ""}\t${file.size ?? 0}\t${file.hash ?? ""}`,
+        )
+        .sort()
+        .join("\n");
+    return sha256Hex(fromText(lines));
+}
+
+/**
+ * 计算提交的内容寻址哈希。
+ *
+ * 哈希覆盖树哈希、父提交哈希、消息与创建时间，因此提交哈希同时承诺
+ * 整棵文件树与完整历史（篡改任一祖先会改变全部后代哈希，与 git 一致）。
+ *
+ * @param input.tree - 本次提交的树哈希。
+ * @param input.parent - 父提交哈希；无则 null。
+ * @param input.message - 提交消息。
+ * @param input.createdAt - 提交时间（毫秒）。
+ */
+export function computeCommitHash(input: {
+    tree: string;
+    parent: string | null;
+    message: string | null;
+    createdAt: number;
+}): string {
+    const canonical = JSON.stringify({
+        tree: input.tree,
+        parent: input.parent,
+        message: input.message ?? "",
+        createdAt: input.createdAt,
+    });
+    return sha256Hex(fromText(canonical));
+}
+
+export interface CommitRef {
+    version: number;
+    message: string | null;
+    createdAt: number;
+    tree: string;
+    hash: string;
+    parent: string | null;
+}
+
+/**
+ * 构建提交哈希链（按版本升序）。
+ *
+ * 从快照解析树哈希并逐版本计算提交哈希；已有 `hash/parent` 字段的快照
+ * 直接沿用，旧格式快照按 `parent = 前一提交哈希` 补齐，因此新旧数据可以混链。
+ *
+ * @param workId - 作品 ID。
+ * @param summaries - 版本摘要，新版本在前（listVersionSummaries 的返回顺序）。
+ * @returns 按版本升序的提交引用。
+ */
+export async function buildCommitChain(
+    workId: string,
+    summaries: Array<{
+        version: number;
+        message: string | null;
+        createdAt: Date;
+        hash?: string | null;
+        tree?: string | null;
+        parent?: string | null;
+    }>,
+): Promise<CommitRef[]> {
+    const storage = getStorage();
+    const refs: CommitRef[] = [];
+    let previous: string | null = null;
+
+    for (const summary of [...summaries].reverse()) {
+        if (summary.hash && summary.tree) {
+            const parent = summary.parent ?? previous;
+            refs.push({
+                version: summary.version,
+                message: summary.message,
+                createdAt: summary.createdAt.getTime(),
+                tree: summary.tree,
+                hash: summary.hash,
+                parent,
+            });
+            previous = summary.hash;
+            continue;
+        }
+
+        const row = await findVersion(workId, summary.version);
+        if (!row) {
+            continue;
+        }
+        const raw = await storage.get(row.snapshotKey);
+        if (!raw) {
+            continue;
+        }
+        const snapshot = parseSnapshot(raw);
+        const tree = computeTreeHash(snapshotFilesOf(snapshot));
+        const parent = snapshot.parent ?? previous;
+        const hash = computeCommitHash({
+            tree,
+            parent,
+            message: snapshot.message ?? summary.message,
+            createdAt: snapshot.createdAt ?? summary.createdAt.getTime(),
+        });
+        refs.push({
+            version: summary.version,
+            message: summary.message,
+            createdAt: summary.createdAt.getTime(),
+            tree,
+            hash,
+            parent,
+        });
+        previous = hash;
+    }
+    return refs;
 }
 
 /**

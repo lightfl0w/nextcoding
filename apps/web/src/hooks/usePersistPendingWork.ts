@@ -1,11 +1,6 @@
 import { toast } from "@heroui/react";
 import { useCallback, useRef } from "react";
-import {
-    createWork,
-    createWorkFile,
-    publishVersion,
-    saveFileContent,
-} from "~/lib/api";
+import { commitWorkTree, createWork } from "~/lib/api";
 
 interface PersistPendingWorkOptions {
     title: string;
@@ -19,7 +14,8 @@ interface PersistPendingWorkOptions {
  * @param options.files - 待创建的文件列表。
  * @param options.readDraft - 读取文件草稿内容。
  * @returns 持久化函数与进行中标记。
- * @remarks 失败时提示并返回 `null`；`persistingRef` 供离开确认使用。
+ * @remarks 创建作品后一次性整树提交，避免逐文件上传；
+ * 失败时提示并返回 `null`；`persistingRef` 供离开确认使用。
  */
 export function usePersistPendingWork({
     title,
@@ -33,21 +29,12 @@ export function usePersistPendingWork({
             persistingRef.current = true;
             try {
                 const { id } = await createWork(title.trim() || "未命名作品");
-                for (const file of files) {
-                    const content = readDraft(file.key) ?? "";
-                    const created = await createWorkFile(id, file.name);
-                    if (created.outcome !== "created") {
-                        throw new Error(`创建文件失败：${file.name}`);
-                    }
-                    await saveFileContent(
-                        id,
-                        created.key,
-                        content,
-                        created.version,
-                    );
-                }
-                if (message !== null) {
-                    await publishVersion(id, message);
+                const tree = Object.fromEntries(
+                    files.map((file) => [file.name, readDraft(file.key) ?? ""]),
+                );
+                const committed = await commitWorkTree(id, tree, { message });
+                if (committed.outcome === "conflict") {
+                    throw new Error("作品刚被更新，请重试");
                 }
                 return id;
             } catch (error) {

@@ -1,11 +1,12 @@
 import { toast } from "@heroui/react";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import useSWR from "swr";
 import type { WorkVersion } from "~/lib/api";
 import {
+    type CommitFilePayload,
+    commitWorkTree,
     deleteVersion,
     fetchVersions,
-    publishVersion,
     renameVersionMessage,
     restoreVersion,
     workVersionsPath,
@@ -13,11 +14,14 @@ import {
 
 const NO_VERSIONS: WorkVersion[] = [];
 
+export type PublishOutcome = { version: number } | { conflict: number } | null;
+
 /**
  * 版本历史。
  * @param workId - 作品 ID；`null`（待创建模式）时返回空版本且不可发布。
  * @returns 版本列表与保存草稿/回滚动作。
- * @remarks 保存草稿成功后本地追加记录。
+ * @remarks 保存草稿通过整树提交完成，携带客户端基于的最新版本号做乐观锁；
+ * 版本落后时返回 conflict，调用方应刷新本地文件树后重试。
  */
 export function useVersionHistory(workId: string | null) {
     const { data: versions = NO_VERSIONS, mutate } = useSWR(
@@ -25,23 +29,50 @@ export function useVersionHistory(workId: string | null) {
         () => fetchVersions(workId as string),
     );
 
+    const latestVersionRef = useRef<number | undefined>(undefined);
+    latestVersionRef.current = versions[0]?.version;
+
     const publish = useCallback(
-        async (message: string | null): Promise<boolean> => {
+        async (
+            message: string | null,
+            tree: Record<string, CommitFilePayload> = {},
+        ): Promise<PublishOutcome> => {
             if (workId === null) {
-                return false;
+                return null;
             }
             try {
-                const created = await publishVersion(workId, message);
+                const committed = await commitWorkTree(workId, tree, {
+                    message,
+                    baseVersion: latestVersionRef.current,
+                });
+                if (committed.outcome === "conflict") {
+                    toast.warning(
+                        `作品已被更新到 v${committed.currentVersion}，已同步最新状态`,
+                    );
+                    return { conflict: committed.currentVersion };
+                }
+                if (committed.outcome === "unchanged") {
+                    toast.success("没有变更，未产生新版本");
+                    return { version: committed.version };
+                }
+                const created: WorkVersion = {
+                    version: committed.version,
+                    message: committed.message,
+                    createdAt: new Date().toISOString(),
+                    author: null,
+                };
                 mutate((current = []) => [created, ...current], false);
-                toast.success(`已保存草稿 v${created.version}`);
-                return true;
+                toast.success(`已保存草稿 v${committed.version}`);
+                return { version: committed.version };
             } catch (error) {
                 toast.danger((error as Error).message);
-                return false;
+                return null;
             }
         },
         [workId, mutate],
     );
+
+    const refresh = useCallback(() => mutate(), [mutate]);
 
     const restore = useCallback(
         async (version: number) => {
@@ -110,5 +141,12 @@ export function useVersionHistory(workId: string | null) {
         [workId, mutate],
     );
 
-    return { versions, publish, restore, remove, rename };
+    return {
+        versions,
+        publish,
+        refresh,
+        restore,
+        remove,
+        rename,
+    };
 }

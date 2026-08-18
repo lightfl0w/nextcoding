@@ -153,6 +153,12 @@ function WorkDetailRoute() {
                                 onCancelInput={runner.cancelInput}
                                 onClose={runner.closePanel}
                                 onClear={runner.clear}
+                                mode={runner.mode}
+                                terminalId={runner.terminalId}
+                                canvasId={runner.canvasId}
+                                onStop={runner.stop}
+                                loadStage={runner.loadStage}
+                                loopHint={runner.loopHint}
                             />
                         </div>
 
