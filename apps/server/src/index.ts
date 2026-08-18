@@ -8,6 +8,7 @@ import { achievementRoutes } from "./achievements/routes.js";
 import { activityFeedRoutes, activityUserRoutes } from "./activities/routes.js";
 import { adminRoutes } from "./admin/routes.js";
 import { messageRoutes } from "./messages/routes.js";
+import { openapiJson } from "./openapi/document.js";
 import { registerWsRoutes, wss } from "./realtime/io.js";
 import { settingsRoutes } from "./settings/routes.js";
 import { storageRoutes } from "./storage/routes.js";
@@ -57,6 +58,8 @@ app.route("/api/works", workRoutes);
 app.route("/api/notifications", notificationRoutes);
 app.route("/api/messages", messageRoutes);
 app.route("/api/storage", storageRoutes);
+
+app.get("/openapi.json", (c) => c.json(openapiJson));
 
 app.notFound((c) => c.json({ error: "接口不存在" }, 404));
 app.onError((err, c) => {
