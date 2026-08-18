@@ -11,7 +11,7 @@ import { and, count, desc, eq, sql } from "drizzle-orm";
 
 export const NOTIFICATION_PAGE_SIZE = 100;
 
-export type NotificationType = "spark" | "remix" | "comment";
+export type NotificationType = "spark" | "remix" | "comment" | "template";
 
 export function findSpark(workId: string, userId: string) {
     return db

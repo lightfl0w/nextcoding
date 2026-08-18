@@ -1,27 +1,19 @@
-import { Button, Card, Chip, toast } from "@heroui/react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Code, FileText, Gamepad2, Layout, Wrench } from "lucide-react";
+import { Button, toast } from "@heroui/react";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { LayoutTemplate } from "lucide-react";
 import { useState } from "react";
+import { TemplateCard } from "~/components/templates/TemplateCard";
 import { EmptyState } from "~/components/ui/EmptyState";
 import { PageHeader } from "~/components/ui/PageHeader";
 import { useAuth } from "~/hooks/useAuth";
 import { useTemplates } from "~/hooks/useTemplates";
-import type { Template } from "~/lib/api/templates";
+import type { TemplateSort } from "~/lib/api/templates";
 import { applyTemplate } from "~/lib/api/templates";
-import { formatCount } from "~/lib/format";
+import { TEMPLATE_CATEGORIES } from "~/lib/templateCategories";
 
 export const Route = createFileRoute("/templates")({
     component: TemplatesPage,
 });
-
-const CATEGORIES = [
-    { id: undefined, label: "全部", icon: Layout },
-    { id: "basic", label: "基础", icon: FileText },
-    { id: "web", label: "网页", icon: Code },
-    { id: "algorithm", label: "算法", icon: Code },
-    { id: "game", label: "游戏", icon: Gamepad2 },
-    { id: "tool", label: "工具", icon: Wrench },
-] as const;
 
 const SKELETON_KEYS = Array.from(
     { length: 6 },
@@ -30,113 +22,111 @@ const SKELETON_KEYS = Array.from(
 
 function TemplatesPage() {
     const [category, setCategory] = useState<string | undefined>();
-    const { templates, isLoading } = useTemplates(category);
+    const [sort, setSort] = useState<TemplateSort>("hot");
+    const { templates, isLoading } = useTemplates(category, sort);
     const { isLoggedIn } = useAuth();
     const navigate = useNavigate();
 
     const handleUseTemplate = async (templateId: string) => {
         if (!isLoggedIn) {
-            toast.warning("请先登录");
+            navigate({
+                to: "/auth",
+                search: {
+                    mode: "login",
+                    redirect: "/templates",
+                },
+            });
             return;
         }
         try {
             const result = await applyTemplate(templateId);
+            toast.success("已基于模板创建草稿");
             navigate({ to: "/work/$id/edit", params: { id: result.id } });
-        } catch {
-            toast.danger("使用模板失败");
+        } catch (error) {
+            toast.danger((error as Error).message);
         }
     };
 
     return (
-        <div className="mx-auto w-full max-w-7xl p-8 flex flex-col gap-6">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
             <PageHeader
-                title="作品模板"
-                description="从模板开始创建作品，快速上手"
+                title="模板市场"
+                description="从优秀模板一键起步，快速产出你的作品"
             />
 
-            <div className="flex flex-wrap gap-2">
-                {CATEGORIES.map((cat) => (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap gap-2">
                     <Button
-                        key={cat.id ?? "all"}
                         size="sm"
-                        variant={category === cat.id ? "primary" : "ghost"}
-                        onPress={() => setCategory(cat.id)}
-                        className="gap-1.5"
+                        variant={category === undefined ? "primary" : "ghost"}
+                        onPress={() => setCategory(undefined)}
                     >
-                        <cat.icon className="size-3.5" />
-                        {cat.label}
+                        全部
                     </Button>
-                ))}
+                    {TEMPLATE_CATEGORIES.map((item) => (
+                        <Button
+                            key={item.id}
+                            size="sm"
+                            variant={category === item.id ? "primary" : "ghost"}
+                            onPress={() => setCategory(item.id)}
+                        >
+                            #{item.label}
+                        </Button>
+                    ))}
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <Button
+                        size="sm"
+                        variant={sort === "hot" ? "primary" : "ghost"}
+                        onPress={() => setSort("hot")}
+                    >
+                        热度优先
+                    </Button>
+                    <Button
+                        size="sm"
+                        variant={sort === "latest" ? "primary" : "ghost"}
+                        onPress={() => setSort("latest")}
+                    >
+                        最新发布
+                    </Button>
+                    <Link
+                        to="/leaderboard"
+                        search={{ type: "templates" }}
+                        className="text-sm text-primary hover:underline ml-1"
+                    >
+                        查看模板热度榜 →
+                    </Link>
+                </div>
             </div>
 
-            {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {SKELETON_KEYS.map((key) => (
-                        <div
-                            key={key}
-                            className="rounded-2xl border border-default-200/70 h-40 animate-pulse bg-default-100/50"
-                        />
-                    ))}
-                </div>
-            ) : templates.length === 0 ? (
-                <EmptyState icon={FileText} title="暂无模板" />
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {templates.map((template) => (
-                        <TemplateCard
-                            key={template.id}
-                            template={template}
-                            onUse={handleUseTemplate}
-                        />
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-}
-
-function TemplateCard({
-    template,
-    onUse,
-}: {
-    template: Template;
-    onUse: (id: string) => void;
-}) {
-    return (
-        <Card className="p-0 shadow-none rounded-2xl border border-default-200/70 hover:border-default-300 transition-[transform,border-color] duration-200 hover:-translate-y-0.5">
-            <Card.Content className="p-5 flex flex-col gap-3">
-                <div className="flex items-start justify-between gap-2">
-                    <div className="flex flex-col gap-1 min-w-0">
-                        <h3 className="text-base font-semibold truncate">
-                            {template.title}
-                        </h3>
-                        {template.description && (
-                            <p className="text-sm text-foreground/60 line-clamp-2">
-                                {template.description}
-                            </p>
-                        )}
+            <div className="flex flex-col gap-4 min-w-0">
+                {isLoading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {SKELETON_KEYS.map((key) => (
+                            <div
+                                key={key}
+                                className="rounded-2xl border border-default-200/70 h-56 animate-pulse bg-default-100/50"
+                            />
+                        ))}
                     </div>
-                    {template.category && (
-                        <Chip size="sm" variant="soft">
-                            {template.category}
-                        </Chip>
-                    )}
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-foreground/45">
-                    <span>{template.fileCount} 个文件</span>
-                    <span>{formatCount(template.useCount)} 次使用</span>
-                </div>
-
-                <Button
-                    size="sm"
-                    variant="primary"
-                    fullWidth
-                    onPress={() => onUse(template.id)}
-                >
-                    使用此模板
-                </Button>
-            </Card.Content>
-        </Card>
+                ) : templates.length === 0 ? (
+                    <EmptyState
+                        icon={LayoutTemplate}
+                        title="该分类下暂无模板"
+                        hint="换个分类看看，或把自己的作品开放为模板"
+                    />
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {templates.map((template) => (
+                            <TemplateCard
+                                key={template.id}
+                                template={template}
+                                onUse={handleUseTemplate}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
     );
 }

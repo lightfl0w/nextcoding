@@ -13,7 +13,7 @@ export interface ActivityWork {
 
 export interface Activity {
     id: string;
-    type: "spark" | "remix" | "comment" | "publish" | "follow";
+    type: "spark" | "remix" | "comment" | "publish" | "follow" | "template";
     actor: ActivityUser | null;
     work: ActivityWork | null;
     targetUser: ActivityUser | null;

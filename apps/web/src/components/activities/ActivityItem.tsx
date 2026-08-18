@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import {
     FileText,
     GitFork,
+    LayoutTemplate,
     MessageCircle,
     Sparkles,
     UserPlus,
@@ -28,6 +29,7 @@ export const ActivityItem = memo(function ActivityItem({
         comment: MessageCircle,
         publish: FileText,
         follow: UserPlus,
+        template: LayoutTemplate,
     } as const;
 
     const Icon = iconMap[type];
@@ -78,6 +80,12 @@ export const ActivityItem = memo(function ActivityItem({
                         {type === "publish" && work && (
                             <>
                                 发布了新作品 <WorkLink work={work} />
+                            </>
+                        )}
+                        {type === "template" && work && (
+                            <>
+                                发布了新模板 <WorkLink work={work} />
+                                ，快来使用吧
                             </>
                         )}
                         {type === "follow" && targetUser && (

@@ -276,16 +276,20 @@ describe("notifications", () => {
                 makeNotification({ id: "3", type: "remix", read: false }),
                 makeNotification({ id: "4", type: "comment", read: false }),
                 makeNotification({ id: "5", type: "comment", read: true }),
+                makeNotification({ id: "6", type: "template", read: false }),
+                makeNotification({ id: "7", type: "template", read: true }),
             ]);
             expect(counts).toEqual({
-                total: 5,
-                unread: 3,
+                total: 7,
+                unread: 4,
                 spark: 2,
                 remix: 1,
                 comment: 2,
+                template: 2,
                 sparkUnread: 1,
                 remixUnread: 1,
                 commentUnread: 1,
+                templateUnread: 1,
             });
         });
 
@@ -296,9 +300,11 @@ describe("notifications", () => {
                 spark: 0,
                 remix: 0,
                 comment: 0,
+                template: 0,
                 sparkUnread: 0,
                 remixUnread: 0,
                 commentUnread: 0,
+                templateUnread: 0,
             });
         });
     });

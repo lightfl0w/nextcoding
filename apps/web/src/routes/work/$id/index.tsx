@@ -1,6 +1,7 @@
-import { Card, Chip } from "@heroui/react";
+import { Card, Chip, useOverlayState } from "@heroui/react";
 import {
     createFileRoute,
+    Link,
     useNavigate,
     useParams,
 } from "@tanstack/react-router";
@@ -20,16 +21,19 @@ import {
     WorkDetailSkeleton,
     WorkNotFound,
 } from "~/components/workDetail/WorkDetailSkeleton";
+import { WorkTemplatePanel } from "~/components/workDetail/WorkTemplatePanel";
 import { useAuth } from "~/hooks/useAuth";
 import { useComments } from "~/hooks/useComments";
 import { useFocusedComment } from "~/hooks/useFocusedComment";
 import { useFollowAuthor } from "~/hooks/useFollowAuthor";
+import { useTemplate } from "~/hooks/useTemplate";
 import { useVersionHistory } from "~/hooks/useVersionHistory";
 import { useWork } from "~/hooks/useWork";
 import { useWorkDetailActions } from "~/hooks/useWorkDetailActions";
 import { useWorkRemixes, useWorkSource } from "~/hooks/useWorkRemixes";
 import { useWorkRunner } from "~/hooks/useWorkRunner";
 import { useWorkSpark } from "~/hooks/useWorkSpark";
+import { useWorkTemplateCreator } from "~/hooks/useWorkTemplateCreator";
 import { detectRuntime } from "~/lib/run";
 
 export const Route = createFileRoute("/work/$id/")({
@@ -79,6 +83,9 @@ function WorkDetailRoute() {
         navigate,
     });
     const follow = useFollowAuthor(work);
+    const templateCreator = useWorkTemplateCreator(work);
+    const templateState = useOverlayState();
+    const { template: basedOnTemplate } = useTemplate(work?.templateId ?? null);
 
     if (isLoading) {
         return <WorkDetailSkeleton />;
@@ -106,6 +113,20 @@ function WorkDetailRoute() {
                             {work.title}
                         </h1>
                     </div>
+                    {basedOnTemplate && (
+                        <div className="mt-2 flex items-center gap-1.5 text-sm text-foreground/55">
+                            <Sparkles className="size-3.5 text-primary" />
+                            <span>基于模板</span>
+                            <Link
+                                to="/templates/$id"
+                                params={{ id: basedOnTemplate.id }}
+                                className="text-accent hover:underline font-medium"
+                            >
+                                《{basedOnTemplate.title}》
+                            </Link>
+                            <span>创作</span>
+                        </div>
+                    )}
                 </div>
 
                 <WorkActions
@@ -117,9 +138,13 @@ function WorkDetailRoute() {
                     isOwner={isOwner}
                     isRunning={runner.running}
                     sparked={spark.sparked}
+                    isTemplate={work.isTemplate}
+                    templateUseCount={work.templateUseCount}
+                    isUsingTemplate={templateCreator.pending}
                     onRun={() => runner.runCurrent(work.files)}
                     onSpark={handleSpark}
                     onRemix={handleRemix}
+                    onUseTemplate={templateCreator.handleUse}
                 />
 
                 {tags.length > 0 && (
@@ -190,6 +215,16 @@ function WorkDetailRoute() {
                         <SectionCard title="创作脉络" icon={GitFork}>
                             <CreationTree source={source} remixes={remixes} />
                         </SectionCard>
+
+                        {isOwner && (
+                            <SectionCard title="模板设置" icon={Sparkles}>
+                                <WorkTemplatePanel
+                                    work={work}
+                                    state={templateState}
+                                    isOwner={isOwner}
+                                />
+                            </SectionCard>
+                        )}
 
                         <SectionCard title="版本历史" icon={Hash}>
                             <VersionTimeline

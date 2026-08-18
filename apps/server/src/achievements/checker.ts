@@ -3,14 +3,18 @@ import {
     countUserReceivedSparks,
     countUserRemixes,
     countUserSparks,
+    countUserTemplateMaxUses,
+    countUserTemplates,
+    countUserTemplateTotalUses,
     countUserWorks,
     unlockAchievement,
 } from "./repository.js";
 
 interface AchievementCheck {
     key: string;
-    fetchCount: (userId: string) => Promise<number>;
     threshold: number;
+    fetchCount?: (userId: string) => Promise<number>;
+    isUnlocked?: (userId: string) => Promise<boolean>;
 }
 
 const ACHIEVEMENT_CHECKS: AchievementCheck[] = [
@@ -26,6 +30,23 @@ const ACHIEVEMENT_CHECKS: AchievementCheck[] = [
     { key: "follower_100", fetchCount: countUserFollowers, threshold: 100 },
     { key: "give_spark_10", fetchCount: countUserSparks, threshold: 10 },
     { key: "give_spark_100", fetchCount: countUserSparks, threshold: 100 },
+    { key: "template_first", fetchCount: countUserTemplates, threshold: 1 },
+    {
+        key: "template_used_100",
+        fetchCount: countUserTemplateMaxUses,
+        threshold: 100,
+    },
+    {
+        key: "template_master",
+        threshold: 5,
+        isUnlocked: async (userId) => {
+            const [templates, totalUses] = await Promise.all([
+                countUserTemplates(userId),
+                countUserTemplateTotalUses(userId),
+            ]);
+            return templates >= 5 && totalUses >= 1000;
+        },
+    },
 ];
 
 export async function checkAndUnlockAchievements(userId: string) {
@@ -37,17 +58,20 @@ export async function checkAndUnlockAchievements(userId: string) {
     }> = [];
 
     for (const check of ACHIEVEMENT_CHECKS) {
-        const current = await check.fetchCount(userId);
-        if (current >= check.threshold) {
-            const result = await unlockAchievement(userId, check.key);
-            if (result) {
-                unlocked.push({
-                    key: result.key,
-                    name: result.name,
-                    description: result.description,
-                    icon: result.icon,
-                });
-            }
+        const passed = check.isUnlocked
+            ? await check.isUnlocked(userId)
+            : ((await check.fetchCount?.(userId)) ?? 0) >= check.threshold;
+        if (!passed) {
+            continue;
+        }
+        const result = await unlockAchievement(userId, check.key);
+        if (result) {
+            unlocked.push({
+                key: result.key,
+                name: result.name,
+                description: result.description,
+                icon: result.icon,
+            });
         }
     }
 

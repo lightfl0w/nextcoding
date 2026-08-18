@@ -42,20 +42,26 @@ describe("templateRoutes", () => {
         it("支持分类筛选", async () => {
             vi.mocked(templateRepo.listTemplates).mockResolvedValue([]);
             await app().request("/api/templates?category=web");
-            expect(templateRepo.listTemplates).toHaveBeenCalledWith("web", 50);
+            expect(templateRepo.listTemplates).toHaveBeenCalledWith(
+                "web",
+                "hot",
+                50,
+            );
         });
     });
 
     describe("GET /:id", () => {
         it("模板不存在返回 404", async () => {
-            vi.mocked(templateRepo.findTemplate).mockResolvedValue(undefined);
+            vi.mocked(templateRepo.findTemplateDetail).mockResolvedValue(
+                undefined,
+            );
             const res = await app().request("/api/templates/nope");
             expect(res.status).toBe(404);
             expect(await res.json()).toEqual({ error: "模板不存在" });
         });
 
         it("返回模板详情", async () => {
-            vi.mocked(templateRepo.findTemplate).mockResolvedValue(
+            vi.mocked(templateRepo.findTemplateDetail).mockResolvedValue(
                 templateRow(),
             );
             const res = await app().request("/api/templates/tpl-1");

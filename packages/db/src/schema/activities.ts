@@ -11,7 +11,14 @@ export const activity = sqliteTable(
             .notNull()
             .references(() => user.id, { onDelete: "cascade" }),
         type: text("type", {
-            enum: ["spark", "remix", "comment", "publish", "follow"],
+            enum: [
+                "spark",
+                "remix",
+                "comment",
+                "publish",
+                "follow",
+                "template",
+            ],
         }).notNull(),
         actorId: text("actor_id").references(() => user.id, {
             onDelete: "set null",

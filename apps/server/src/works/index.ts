@@ -9,6 +9,7 @@ import { leaderboardRoutes } from "./routes/leaderboardRoutes.js";
 import { remixRoutes } from "./routes/remixRoutes.js";
 import { repoRoutes } from "./routes/repoRoutes.js";
 import { sparkRoutes } from "./routes/sparkRoutes.js";
+import { workTemplateRoutes } from "./routes/templateRoutes.js";
 import { versionRoutes } from "./routes/versionRoutes.js";
 
 export const workRoutes = new Hono()
@@ -17,9 +18,10 @@ export const workRoutes = new Hono()
     .route("/", fileRoutes)
     .route("/", versionRoutes)
     .route("/", repoRoutes)
+    .route("/", leaderboardRoutes)
     .route("/", catalogRoutes)
     .route("/", sparkRoutes)
     .route("/", remixRoutes)
+    .route("/", workTemplateRoutes)
     .route("/", bookmarkRoutes)
-    .route("/", reportRoutes)
-    .route("/", leaderboardRoutes);
+    .route("/", reportRoutes);

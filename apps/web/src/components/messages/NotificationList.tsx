@@ -1,5 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, GitFork, MessageSquare, Sparkles } from "lucide-react";
+import {
+    ChevronRight,
+    GitFork,
+    LayoutTemplate,
+    MessageSquare,
+    Sparkles,
+} from "lucide-react";
 import type { AppNotification } from "~/lib/api";
 import { formatDate } from "~/lib/format";
 import {
@@ -98,7 +104,12 @@ function NotificationContent({ item }: { item: AppNotification }) {
             ? { tile: "bg-warning/15 text-warning", Icon: Sparkles }
             : item.type === "comment"
               ? { tile: "bg-success/15 text-success", Icon: MessageSquare }
-              : { tile: "bg-accent/10 text-accent", Icon: GitFork };
+              : item.type === "template"
+                ? {
+                      tile: "bg-primary/15 text-primary",
+                      Icon: LayoutTemplate,
+                  }
+                : { tile: "bg-accent/10 text-accent", Icon: GitFork };
     const tileColor = variant.tile;
     const Icon = variant.Icon;
 

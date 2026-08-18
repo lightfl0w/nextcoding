@@ -14,7 +14,7 @@ export interface LeaderboardContributor {
 }
 
 export type LeaderboardPeriod = "weekly" | "monthly" | "all";
-export type LeaderboardType = "works" | "contributors";
+export type LeaderboardType = "works" | "contributors" | "templates";
 
 export function leaderboardPath(
     period: LeaderboardPeriod = "weekly",

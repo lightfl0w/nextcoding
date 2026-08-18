@@ -15,14 +15,21 @@ describe("api/templates", () => {
         });
 
         it("拼接 limit 参数", () => {
-            const path = templatesPath(undefined, 10);
+            const path = templatesPath(undefined, "hot", 10);
             expect(
                 new URL(path, "http://localhost").searchParams.get("limit"),
             ).toBe("10");
         });
 
+        it("拼接 sort 参数", () => {
+            const path = templatesPath(undefined, "latest");
+            expect(
+                new URL(path, "http://localhost").searchParams.get("sort"),
+            ).toBe("latest");
+        });
+
         it("同时拼接 category 和 limit", () => {
-            const path = templatesPath("backend", 5);
+            const path = templatesPath("backend", "hot", 5);
             expect(path).toContain("category=backend");
             expect(path).toContain("limit=5");
         });

@@ -34,6 +34,7 @@ import { Route as ChatIndexRouteImport } from './routes/chat/index'
 import { Route as ChatIdRouteImport } from './routes/chat/$id'
 import { Route as TagsIndexRouteImport } from './routes/tags/index'
 import { Route as TagsSlugRouteImport } from './routes/tags/$slug'
+import { Route as TemplatesIdIndexRouteImport } from './routes/templates/$id/index'
 import { Route as UserIdIndexRouteImport } from './routes/user/$id/index'
 import { Route as WorkIdIndexRouteImport } from './routes/work/$id/index'
 import { Route as WorkIdEditRouteImport } from './routes/work/$id/edit'
@@ -164,6 +165,11 @@ const TagsSlugRoute = TagsSlugRouteImport.update({
   path: '/tags/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TemplatesIdIndexRoute = TemplatesIdIndexRouteImport.update({
+  id: '/$id/',
+  path: '/$id/',
+  getParentRoute: () => TemplatesRoute,
+} as any)
 const UserIdIndexRoute = UserIdIndexRouteImport.update({
   id: '/user/$id/',
   path: '/user/$id/',
@@ -198,7 +204,7 @@ export interface FileRoutesByFullPath {
   '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
-  '/templates': typeof TemplatesRoute
+  '/templates': typeof TemplatesRouteWithChildren
   '/admin/achievements': typeof AdminAchievementsRoute
   '/admin/comments': typeof AdminCommentsRoute
   '/admin/messages': typeof AdminMessagesRoute
@@ -213,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/tags/': typeof TagsIndexRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
+  '/templates/$id/': typeof TemplatesIdIndexRoute
   '/user/$id/': typeof UserIdIndexRoute
   '/work/$id/': typeof WorkIdIndexRoute
 }
@@ -227,7 +234,7 @@ export interface FileRoutesByTo {
   '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
-  '/templates': typeof TemplatesRoute
+  '/templates': typeof TemplatesRouteWithChildren
   '/admin/achievements': typeof AdminAchievementsRoute
   '/admin/comments': typeof AdminCommentsRoute
   '/admin/messages': typeof AdminMessagesRoute
@@ -242,6 +249,7 @@ export interface FileRoutesByTo {
   '/tags': typeof TagsIndexRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
+  '/templates/$id': typeof TemplatesIdIndexRoute
   '/user/$id': typeof UserIdIndexRoute
   '/work/$id': typeof WorkIdIndexRoute
 }
@@ -259,7 +267,7 @@ export interface FileRoutesById {
   '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
-  '/templates': typeof TemplatesRoute
+  '/templates': typeof TemplatesRouteWithChildren
   '/admin/achievements': typeof AdminAchievementsRoute
   '/admin/comments': typeof AdminCommentsRoute
   '/admin/messages': typeof AdminMessagesRoute
@@ -274,6 +282,7 @@ export interface FileRoutesById {
   '/tags/': typeof TagsIndexRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
+  '/templates/$id/': typeof TemplatesIdIndexRoute
   '/user/$id/': typeof UserIdIndexRoute
   '/work/$id/': typeof WorkIdIndexRoute
 }
@@ -307,6 +316,7 @@ export interface FileRouteTypes {
     | '/tags/'
     | '/work/$id/edit'
     | '/work/new/edit'
+    | '/templates/$id/'
     | '/user/$id/'
     | '/work/$id/'
   fileRoutesByTo: FileRoutesByTo
@@ -336,6 +346,7 @@ export interface FileRouteTypes {
     | '/tags'
     | '/work/$id/edit'
     | '/work/new/edit'
+    | '/templates/$id'
     | '/user/$id'
     | '/work/$id'
   id:
@@ -367,6 +378,7 @@ export interface FileRouteTypes {
     | '/tags/'
     | '/work/$id/edit'
     | '/work/new/edit'
+    | '/templates/$id/'
     | '/user/$id/'
     | '/work/$id/'
   fileRoutesById: FileRoutesById
@@ -384,7 +396,7 @@ export interface RootRouteChildren {
   MessagesRoute: typeof MessagesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
-  TemplatesRoute: typeof TemplatesRoute
+  TemplatesRoute: typeof TemplatesRouteWithChildren
   TagsSlugRoute: typeof TagsSlugRoute
   TagsIndexRoute: typeof TagsIndexRoute
   WorkIdEditRoute: typeof WorkIdEditRoute
@@ -570,6 +582,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TagsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/templates/$id/': {
+      id: '/templates/$id/'
+      path: '/$id'
+      fullPath: '/templates/$id/'
+      preLoaderRoute: typeof TemplatesIdIndexRouteImport
+      parentRoute: typeof TemplatesRoute
+    }
     '/user/$id/': {
       id: '/user/$id/'
       path: '/user/$id'
@@ -637,6 +656,18 @@ const ChatRouteChildren: ChatRouteChildren = {
 
 const ChatRouteWithChildren = ChatRoute._addFileChildren(ChatRouteChildren)
 
+interface TemplatesRouteChildren {
+  TemplatesIdIndexRoute: typeof TemplatesIdIndexRoute
+}
+
+const TemplatesRouteChildren: TemplatesRouteChildren = {
+  TemplatesIdIndexRoute: TemplatesIdIndexRoute,
+}
+
+const TemplatesRouteWithChildren = TemplatesRoute._addFileChildren(
+  TemplatesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -650,7 +681,7 @@ const rootRouteChildren: RootRouteChildren = {
   MessagesRoute: MessagesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
-  TemplatesRoute: TemplatesRoute,
+  TemplatesRoute: TemplatesRouteWithChildren,
   TagsSlugRoute: TagsSlugRoute,
   TagsIndexRoute: TagsIndexRoute,
   WorkIdEditRoute: WorkIdEditRoute,

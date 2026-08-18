@@ -48,6 +48,10 @@ export interface WorkFile {
 export type WorkDetail = Work & {
     userId: string;
     status: "draft" | "published";
+    isTemplate: boolean;
+    templateUseCount: number;
+    templateId: string | null;
+    templateKey: string | null;
     files: WorkFile[];
 };
 
@@ -89,7 +93,7 @@ export interface WorkSource {
 
 export interface AppNotification {
     id: string;
-    type: "spark" | "remix" | "comment";
+    type: "spark" | "remix" | "comment" | "template";
     read: boolean;
     createdAt: string;
     actor: { id: string; name: string | null } | null;

@@ -103,4 +103,28 @@ export const ACHIEVEMENT_SEEDS = [
         category: "explore",
         threshold: 100,
     },
+    {
+        key: "template_first",
+        name: "模板先锋",
+        description: "发布你的第一个模板",
+        icon: "LayoutTemplate",
+        category: "template",
+        threshold: 1,
+    },
+    {
+        key: "template_used_100",
+        name: "万人师表",
+        description: "单个模板被使用超过 100 次",
+        icon: "GraduationCap",
+        category: "template",
+        threshold: 100,
+    },
+    {
+        key: "template_master",
+        name: "模板大师",
+        description: "拥有 5 个模板且总使用量超 1000 次",
+        icon: "Crown",
+        category: "template",
+        threshold: 5,
+    },
 ];

@@ -46,6 +46,7 @@ vi.mock("@nextcoding/db", () => {
 });
 
 import { Hono } from "hono";
+import { workRoutes } from "../src/works/index.js";
 import { leaderboardRoutes } from "../src/works/routes/leaderboardRoutes.js";
 
 describe("leaderboardRoutes", () => {
@@ -132,6 +133,17 @@ describe("leaderboardRoutes", () => {
             rowsMock.mockReturnValue([]);
             await app().request("/api/works/leaderboard?limit=999");
             expect(rowsMock).toHaveBeenCalled();
+        });
+
+        it("与完整 workRoutes 组合时静态路径优先于 /:id（回归）", async () => {
+            rowsMock.mockReturnValue([workRow({ sparkCount: 5 })]);
+            const full = new Hono().route("/api/works", workRoutes);
+            const res = await full.request(
+                "/api/works/leaderboard?period=weekly&type=works&limit=20",
+            );
+            expect(res.status).toBe(200);
+            const body = (await res.json()) as Array<Record<string, unknown>>;
+            expect(body[0]).toMatchObject({ position: 1 });
         });
     });
 });

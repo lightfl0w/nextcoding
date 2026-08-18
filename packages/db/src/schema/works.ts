@@ -20,6 +20,11 @@ export const work = sqliteTable(
         views: integer("views").default(0).notNull(),
         likes: integer("likes").default(0).notNull(),
         sparks: integer("sparks").default(0).notNull(),
+        isTemplate: integer("is_template", { mode: "boolean" })
+            .default(false)
+            .notNull(),
+        templateUseCount: integer("template_use_count").default(0).notNull(),
+        templateId: text("template_id"),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
             .notNull(),

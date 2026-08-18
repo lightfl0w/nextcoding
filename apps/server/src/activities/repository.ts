@@ -3,7 +3,13 @@ import { desc, eq, sql } from "drizzle-orm";
 
 export const ACTIVITY_PAGE_SIZE = 50;
 
-export type ActivityType = "spark" | "remix" | "comment" | "publish" | "follow";
+export type ActivityType =
+    | "spark"
+    | "remix"
+    | "comment"
+    | "publish"
+    | "follow"
+    | "template";
 
 export function userExists(userId: string) {
     return db

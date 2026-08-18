@@ -79,6 +79,16 @@
                     }
                 }
             }
+        },
+        {
+            "includes": ["apps/web/src/assets/*.css"],
+            "linter": {
+                "rules": {
+                    "complexity": {
+                        "noImportantStyles": "off"
+                    }
+                }
+            }
         }
     ]
 }

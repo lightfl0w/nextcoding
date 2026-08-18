@@ -233,8 +233,7 @@ function RunPanelHeader({
             {mode === "pygame" && running && (
                 <Button
                     size="sm"
-                    variant="flat"
-                    color="danger"
+                    variant="danger"
                     className="gap-1 h-7 min-w-0 px-2"
                     onPress={onStop}
                     aria-label="停止运行"

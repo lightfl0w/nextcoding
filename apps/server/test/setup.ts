@@ -143,6 +143,9 @@ vi.mock("../src/achievements/repository.js", () => ({
     countUserRemixes: vi.fn(),
     countUserSparks: vi.fn(),
     countUserWorks: vi.fn(),
+    countUserTemplateMaxUses: vi.fn(),
+    countUserTemplates: vi.fn(),
+    countUserTemplateTotalUses: vi.fn(),
     findUserAchievement: vi.fn(),
     listAchievements: vi.fn(),
     listUserAchievements: vi.fn(),
@@ -203,9 +206,21 @@ vi.mock("../src/settings/repository.js", () => ({
 
 vi.mock("../src/templates/repository.js", () => ({
     bumpTemplateUseCount: vi.fn(),
+    bumpWorkTemplateUseCount: vi.fn(),
+    countTemplateUses: vi.fn(),
     createTemplate: vi.fn(),
+    deleteTemplateByWork: vi.fn(),
     findTemplate: vi.fn(),
+    findTemplateByWork: vi.fn(),
+    findTemplateDetail: vi.fn(),
+    findWorkTemplateFlag: vi.fn(),
+    insertTemplateUse: vi.fn(),
+    listTemplateLeaderboard: vi.fn(),
     listTemplates: vi.fn(),
+    listTemplateUses: vi.fn(),
+    rateTemplate: vi.fn(),
+    setWorkIsTemplate: vi.fn(),
+    sumTemplateDerivedStats: vi.fn(),
 }));
 
 vi.mock("../src/reports/repository.js", () => ({

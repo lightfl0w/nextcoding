@@ -1,10 +1,18 @@
 import { relations, sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { user } from "./auth.js";
+import { work } from "./works.js";
 
 export const template = sqliteTable(
     "template",
     {
         id: text("id").primaryKey(),
+        authorId: text("author_id").references(() => user.id, {
+            onDelete: "set null",
+        }),
+        workId: text("work_id").references(() => work.id, {
+            onDelete: "set null",
+        }),
         title: text("title").notNull(),
         description: text("description"),
         category: text("category"),
@@ -12,6 +20,8 @@ export const template = sqliteTable(
         coverUrl: text("cover_url"),
         fileCount: integer("file_count").default(0).notNull(),
         useCount: integer("use_count").default(0).notNull(),
+        rating: integer("rating").default(0).notNull(),
+        ratingCount: integer("rating_count").default(0).notNull(),
         snapshotKey: text("snapshot_key").notNull(),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
@@ -20,7 +30,54 @@ export const template = sqliteTable(
             .$onUpdate(() => new Date())
             .notNull(),
     },
-    (table) => [index("template_category_idx").on(table.category)],
+    (table) => [
+        index("template_category_idx").on(table.category),
+        index("template_authorId_idx").on(table.authorId),
+    ],
 );
 
-export const templateRelations = relations(template, () => ({}));
+export const templateUse = sqliteTable(
+    "template_use",
+    {
+        id: text("id").primaryKey(),
+        templateId: text("template_id")
+            .notNull()
+            .references(() => template.id, { onDelete: "cascade" }),
+        workId: text("work_id")
+            .notNull()
+            .references(() => work.id, { onDelete: "cascade" }),
+        userId: text("user_id")
+            .notNull()
+            .references(() => user.id, { onDelete: "cascade" }),
+        createdAt: integer("created_at", { mode: "timestamp_ms" })
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+            .notNull(),
+    },
+    (table) => [
+        index("template_use_templateId_idx").on(table.templateId),
+        index("template_use_workId_idx").on(table.workId),
+    ],
+);
+
+export const templateRelations = relations(template, ({ one, many }) => ({
+    author: one(user, {
+        fields: [template.authorId],
+        references: [user.id],
+    }),
+    uses: many(templateUse),
+}));
+
+export const templateUseRelations = relations(templateUse, ({ one }) => ({
+    template: one(template, {
+        fields: [templateUse.templateId],
+        references: [template.id],
+    }),
+    work: one(work, {
+        fields: [templateUse.workId],
+        references: [work.id],
+    }),
+    user: one(user, {
+        fields: [templateUse.userId],
+        references: [user.id],
+    }),
+}));

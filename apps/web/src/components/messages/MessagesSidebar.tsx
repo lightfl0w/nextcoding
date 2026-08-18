@@ -24,6 +24,7 @@ function typeCounts(
         spark: { count: counts.spark, unread: counts.sparkUnread },
         remix: { count: counts.remix, unread: counts.remixUnread },
         comment: { count: counts.comment, unread: counts.commentUnread },
+        template: { count: counts.template, unread: counts.templateUnread },
     };
 }
 

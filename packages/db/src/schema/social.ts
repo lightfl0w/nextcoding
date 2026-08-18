@@ -68,6 +68,7 @@ export const notification = sqliteTable(
                 "follow",
                 "message",
                 "achievement",
+                "template",
             ],
         }).notNull(),
         actorId: text("actor_id").references(() => user.id, {

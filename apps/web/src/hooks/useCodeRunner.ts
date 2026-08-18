@@ -540,7 +540,7 @@ export function useCodeRunner() {
                     attachInputListeners(canvas);
                     pygameRunningRef.current = true;
                     pygameStartedAtRef.current = performance.now();
-                    pygameWorkerRef.current.postMessage({
+                    pygameWorkerRef.current?.postMessage({
                         type: "run",
                         files,
                         entryPoint,

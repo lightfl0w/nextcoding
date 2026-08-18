@@ -1,31 +1,44 @@
 import { Hono } from "hono";
 import { type AuthenticatedEnv, requireSession } from "../http/guards.js";
-import { jsonError } from "../http/responses.js";
-import { getStorage } from "../storage/storageClient.js";
-import { insertWork, insertWorkFiles } from "../works/repository.js";
+import { jsonError, readJsonBody } from "../http/responses.js";
+import type { TemplateSort } from "./repository.js";
 import {
-    bumpTemplateUseCount,
+    countTemplateUses,
     findTemplate,
+    findTemplateDetail,
+    listTemplateLeaderboard,
     listTemplates,
+    listTemplateUses,
+    rateTemplate,
+    sumTemplateDerivedStats,
 } from "./repository.js";
+import { useTemplateForUser } from "./service.js";
 
 export const templateRoutes = new Hono<AuthenticatedEnv>();
 
 templateRoutes.get("/", async (c) => {
     const category = c.req.query("category") || undefined;
+    const sort = parseSort(c.req.query("sort"));
     const rawLimit = Number(c.req.query("limit"));
     const limit =
         Number.isFinite(rawLimit) && rawLimit > 0
             ? Math.min(rawLimit, 100)
             : 50;
 
-    const rows = await listTemplates(category, limit);
+    const rows = await listTemplates(category, sort, limit);
     return c.json(rows);
+});
+
+templateRoutes.get("/leaderboard", async (c) => {
+    const rawLimit = Number(c.req.query("limit"));
+    const limit =
+        Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 20) : 10;
+    return c.json(await listTemplateLeaderboard(limit));
 });
 
 templateRoutes.get("/:id", async (c) => {
     const id = c.req.param("id");
-    const row = await findTemplate(id);
+    const row = await findTemplateDetail(id);
     if (!row) {
         return jsonError(c, "模板不存在", 404);
     }
@@ -33,80 +46,99 @@ templateRoutes.get("/:id", async (c) => {
 });
 
 templateRoutes.post("/:id/use", requireSession, async (c) => {
+    try {
+        const result = await useTemplateForUser(
+            c.req.param("id"),
+            c.get("userId"),
+        );
+        return c.json(
+            { id: result.id, title: result.title, files: result.files },
+            201,
+        );
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "模板使用失败";
+        if (message === "模板不存在") {
+            return jsonError(c, message, 404);
+        }
+        return jsonError(c, message, 500);
+    }
+});
+
+templateRoutes.post("/:id/rate", requireSession, async (c) => {
     const id = c.req.param("id");
     const tpl = await findTemplate(id);
     if (!tpl) {
         return jsonError(c, "模板不存在", 404);
     }
 
-    const storage = getStorage();
-    const raw = await storage.get(tpl.snapshotKey);
-    if (!raw) {
-        return jsonError(c, "模板数据不存在", 500);
+    const body = await readJsonBody(c);
+    const rawScore = body.score;
+    if (typeof rawScore !== "number" || !Number.isInteger(rawScore)) {
+        return jsonError(c, "评分必须是整数", 400);
+    }
+    if (rawScore < 1 || rawScore > 5) {
+        return jsonError(c, "评分范围是 1-5", 400);
     }
 
-    let snapshot: {
-        files?: Array<{
-            name: string;
-            content?: string;
-            contentType?: string;
-        }>;
-    };
-    try {
-        const text = new TextDecoder().decode(raw);
-        snapshot = JSON.parse(text);
-    } catch {
-        return jsonError(c, "模板数据格式错误", 500);
-    }
-
-    const files = snapshot.files ?? [];
-    const workId = crypto.randomUUID();
-    const userId = c.get("userId");
-
-    await insertWork({
-        id: workId,
-        userId,
-        title: tpl.title,
-        description: tpl.description,
-        tags: tpl.tags,
-        status: "draft",
-    });
-
-    const workFiles = files.map((file) => {
-        const key = `works/${workId}/files/${file.name}`;
-        const content = file.content ?? "";
-        const bytes = new TextEncoder().encode(content);
-        return {
-            key,
-            name: file.name,
-            size: bytes.length,
-            contentType: file.contentType ?? null,
-            bytes,
-        };
-    });
-
-    await Promise.all(
-        workFiles.map((f) =>
-            storage.put(f.key, f.bytes, {
-                contentType: f.contentType ?? undefined,
-            }),
-        ),
-    );
-
-    await insertWorkFiles(
-        workFiles.map((f) => ({
-            workId,
-            key: f.key,
-            name: f.name,
-            size: f.size,
-            contentType: f.contentType,
-        })),
-    );
-
-    await bumpTemplateUseCount(id);
-
-    return c.json(
-        { id: workId, title: tpl.title, files: workFiles.length },
-        201,
-    );
+    await rateTemplate(id, rawScore);
+    return c.json({ ok: true, score: rawScore });
 });
+
+templateRoutes.get("/:id/uses", async (c) => {
+    const id = c.req.param("id");
+    const tpl = await findTemplate(id);
+    if (!tpl) {
+        return jsonError(c, "模板不存在", 404);
+    }
+    const rawLimit = Number(c.req.query("limit"));
+    const limit =
+        Number.isFinite(rawLimit) && rawLimit > 0
+            ? Math.min(rawLimit, 100)
+            : 50;
+    return c.json(await listTemplateUses(id, limit));
+});
+
+templateRoutes.get("/:id/tree", async (c) => {
+    const id = c.req.param("id");
+    const tpl = await findTemplateDetail(id);
+    if (!tpl) {
+        return jsonError(c, "模板不存在", 404);
+    }
+    const derived = await listTemplateUses(id, 100);
+    return c.json({ template: tpl, derived });
+});
+
+templateRoutes.get("/:id/stats", requireSession, async (c) => {
+    const id = c.req.param("id");
+    const tpl = await findTemplate(id);
+    if (!tpl) {
+        return jsonError(c, "模板不存在", 404);
+    }
+    const userId = c.get("userId");
+    if (!tpl.authorId || tpl.authorId !== userId) {
+        return jsonError(c, "仅模板作者可查看数据面板", 403);
+    }
+
+    const [uses, totalUses, stats] = await Promise.all([
+        listTemplateUses(id, 100),
+        countTemplateUses(id),
+        sumTemplateDerivedStats(id),
+    ]);
+
+    return c.json({
+        template: {
+            id: tpl.id,
+            title: tpl.title,
+            useCount: tpl.useCount,
+            rating: tpl.rating,
+            ratingCount: tpl.ratingCount,
+        },
+        uses,
+        totalUses,
+        stats,
+    });
+});
+
+function parseSort(raw: string | undefined): TemplateSort {
+    return raw === "latest" ? "latest" : "hot";
+}

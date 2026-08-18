@@ -4,10 +4,11 @@ import {
     follow,
     remix,
     spark,
+    template,
     userAchievement,
     work,
 } from "@nextcoding/db";
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, sql } from "drizzle-orm";
 import { ACHIEVEMENT_SEEDS } from "./seed.js";
 
 /**
@@ -150,5 +151,45 @@ export async function countUserFollowers(userId: string) {
         .select({ total: count() })
         .from(follow)
         .where(eq(follow.followingId, userId));
+    return row?.total ?? 0;
+}
+
+/**
+ * 用户发布的模板数量。
+ * @param userId - 用户 ID。
+ */
+export async function countUserTemplates(userId: string) {
+    const [row] = await db
+        .select({ total: count() })
+        .from(template)
+        .where(eq(template.authorId, userId));
+    return row?.total ?? 0;
+}
+
+/**
+ * 用户全部模板的累计使用次数。
+ * @param userId - 用户 ID。
+ */
+export async function countUserTemplateTotalUses(userId: string) {
+    const [row] = await db
+        .select({
+            total: sql<number>`coalesce(sum(${template.useCount}), 0)`,
+        })
+        .from(template)
+        .where(eq(template.authorId, userId));
+    return row?.total ?? 0;
+}
+
+/**
+ * 用户单个模板的最高使用次数。
+ * @param userId - 用户 ID。
+ */
+export async function countUserTemplateMaxUses(userId: string) {
+    const [row] = await db
+        .select({
+            total: sql<number>`coalesce(max(${template.useCount}), 0)`,
+        })
+        .from(template)
+        .where(eq(template.authorId, userId));
     return row?.total ?? 0;
 }

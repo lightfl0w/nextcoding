@@ -13,8 +13,10 @@ export function useLeaderboard(
     type: LeaderboardType = "works",
     limit?: number,
 ) {
+    const key =
+        type === "templates" ? null : leaderboardPath(period, type, limit);
     return useSWR<LeaderboardWork[] | LeaderboardContributor[]>(
-        leaderboardPath(period, type, limit),
+        key,
         fetchLeaderboard,
     );
 }

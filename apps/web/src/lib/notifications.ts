@@ -1,7 +1,12 @@
 import type { AppNotification } from "./api";
 
 export type NotificationFilter = "all" | "unread";
-export type NotificationTypeFilter = "all" | "spark" | "remix" | "comment";
+export type NotificationTypeFilter =
+    | "all"
+    | "spark"
+    | "remix"
+    | "comment"
+    | "template";
 
 export type NotificationGroup = {
     key: string;
@@ -15,15 +20,17 @@ export type NotificationCounts = {
     spark: number;
     remix: number;
     comment: number;
+    template: number;
     sparkUnread: number;
     remixUnread: number;
     commentUnread: number;
+    templateUnread: number;
 };
 
 /**
  * 通知文案。
  * @param item - 通知数据。
- * @returns 火花、二创、评论回复三种类型的文案。
+ * @returns 火花、二创、评论回复、模板使用四种类型的文案。
  */
 export function notificationText(item: AppNotification): string {
     const actor = item.actor?.name ?? "某位用户";
@@ -34,6 +41,9 @@ export function notificationText(item: AppNotification): string {
     if (item.type === "comment") {
         const snippet = item.comment?.content ?? "";
         return `${actor} 回复了你在《${workTitle}》的评论：${snippet}`;
+    }
+    if (item.type === "template") {
+        return `${actor} 使用了你的模板《${workTitle}》，生成了新作品`;
     }
     return `${actor} 二创了你的作品《${workTitle}》，快去看看吧`;
 }
@@ -59,9 +69,11 @@ export function countNotifications(
         spark: 0,
         remix: 0,
         comment: 0,
+        template: 0,
         sparkUnread: 0,
         remixUnread: 0,
         commentUnread: 0,
+        templateUnread: 0,
     };
     for (const item of items) {
         counts.total += 1;
@@ -77,6 +89,11 @@ export function countNotifications(
             counts.remix += 1;
             if (!item.read) {
                 counts.remixUnread += 1;
+            }
+        } else if (item.type === "template") {
+            counts.template += 1;
+            if (!item.read) {
+                counts.templateUnread += 1;
             }
         } else {
             counts.comment += 1;

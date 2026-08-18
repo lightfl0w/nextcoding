@@ -17,6 +17,7 @@ const PERIOD_TABS: Array<{ id: LeaderboardPeriod; label: string }> = [
 const TYPE_TABS: Array<{ id: LeaderboardType; label: string }> = [
     { id: "works", label: "作品" },
     { id: "contributors", label: "作者" },
+    { id: "templates", label: "模板" },
 ];
 
 export function LeaderboardTabs({
