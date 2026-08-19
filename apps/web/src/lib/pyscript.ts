@@ -106,21 +106,67 @@ export const CANCEL_PYGAME_TASKS = [
     "        _ps_task.cancel()",
 ].join("\n");
 
-const WHILE_LOOP = /\bwhile\b/;
+const CLASS_STATEMENT = /^\s*class\s+\w/;
 
-const YIELD_AWAIT = /\basyncio\.sleep\b|\bawait\b/;
+const SYNC_DEF_STATEMENT = /^\s*def\s+\w/;
+
+const ASYNC_DEF_STATEMENT = /^\s*async\s+def\s+\w/;
+
+const WHILE_STATEMENT = /^\s*while\b/;
 
 /**
- * 判断 pygame 游戏循环是否会让出主线程。
+ * 判断 pygame 游戏循环是否会让出事件循环。
  * @param code - 入口源码。
- * @returns 存在 `while` 循环但没有任何 `await`/`asyncio.sleep` 时返回
- * `true`——此类游戏会占满主线程导致页面卡死，应提示加
- * `await asyncio.sleep(1/60)`。注释行不计入匹配。
+ * @returns 存在位于类方法（类内同步 `def`）中、未含 `await`/`asyncio.sleep`
+ * 的 `while` 循环时返回 `true`。
+ * @remarks 顶层 `while` 与模块级函数内的 `while` 都会被 pygame worker 的
+ * AST 转换自动注入 `await asyncio.sleep(0)` 与停止检查，无需提示；类方法
+ * 不在转换范围（属性调用无法可靠补 `await`），其纯同步循环会饿死 worker
+ * 的事件循环，导致游戏无法响应停止与输入。注释行不计入匹配。
  */
 export function detectBusyGameLoop(code: string): boolean {
-    const codeLines = code
-        .split("\n")
-        .filter((line) => !line.trimStart().startsWith("#"))
-        .join("\n");
-    return WHILE_LOOP.test(codeLines) && !YIELD_AWAIT.test(codeLines);
+    const lines = code.split("\n");
+    const classIndents: number[] = [];
+    const defScopes: Array<{ indent: number; sync: boolean }> = [];
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed === "" || trimmed.startsWith("#")) {
+            continue;
+        }
+        const indent = line.length - line.trimStart().length;
+        while (
+            classIndents.length > 0 &&
+            indent <= classIndents[classIndents.length - 1]
+        ) {
+            classIndents.pop();
+        }
+        while (
+            defScopes.length > 0 &&
+            indent <= defScopes[defScopes.length - 1].indent
+        ) {
+            defScopes.pop();
+        }
+        if (CLASS_STATEMENT.test(line)) {
+            classIndents.push(indent);
+            continue;
+        }
+        if (ASYNC_DEF_STATEMENT.test(line)) {
+            defScopes.push({ indent, sync: false });
+            continue;
+        }
+        if (SYNC_DEF_STATEMENT.test(line)) {
+            defScopes.push({
+                indent,
+                sync: classIndents.length > 0,
+            });
+            continue;
+        }
+        if (WHILE_STATEMENT.test(line)) {
+            const scope = defScopes[defScopes.length - 1];
+            if (scope?.sync) {
+                return true;
+            }
+        }
+    }
+    return false;
 }

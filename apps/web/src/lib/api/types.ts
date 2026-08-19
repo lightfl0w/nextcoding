@@ -48,10 +48,7 @@ export interface WorkFile {
 export type WorkDetail = Work & {
     userId: string;
     status: "draft" | "published";
-    isTemplate: boolean;
-    templateUseCount: number;
     templateId: string | null;
-    templateKey: string | null;
     files: WorkFile[];
 };
 

@@ -125,6 +125,7 @@ export function WorkEditor({ workId }: { workId: string | null }) {
             title,
             files: pending.files,
             readDraft,
+            readContent: pending.readContent,
         });
 
     const { publishWorkAction } = usePublishWork({

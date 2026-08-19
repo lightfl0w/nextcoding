@@ -6,6 +6,11 @@ interface PersistPendingWorkOptions {
     title: string;
     files: ReadonlyArray<{ key: string; name: string }>;
     readDraft: (key: string) => string | null;
+    /**
+     * 备选内容源。草稿（Monaco 模型）尚未建立时回退到这里，
+     * 避免未打开过的文件被写成空内容。
+     */
+    readContent?: (key: string) => string | null;
 }
 
 /**
@@ -21,6 +26,7 @@ export function usePersistPendingWork({
     title,
     files,
     readDraft,
+    readContent,
 }: PersistPendingWorkOptions) {
     const persistingRef = useRef(false);
 
@@ -30,7 +36,10 @@ export function usePersistPendingWork({
             try {
                 const { id } = await createWork(title.trim() || "未命名作品");
                 const tree = Object.fromEntries(
-                    files.map((file) => [file.name, readDraft(file.key) ?? ""]),
+                    files.map((file) => [
+                        file.name,
+                        readDraft(file.key) ?? readContent?.(file.key) ?? "",
+                    ]),
                 );
                 const committed = await commitWorkTree(id, tree, { message });
                 if (committed.outcome === "conflict") {
@@ -43,7 +52,7 @@ export function usePersistPendingWork({
                 return null;
             }
         },
-        [title, files, readDraft],
+        [title, files, readDraft, readContent],
     );
 
     return { persist, persistingRef };

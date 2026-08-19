@@ -10,19 +10,28 @@ import { Check, Crop } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Cropper, { type Area } from "react-easy-crop";
 
-const OUTPUT_SIZE = 512;
+const DEFAULT_OUTPUT_SIZE = 512;
 const OUTPUT_TYPE = "image/png";
+const MAX_ZOOM = 3;
 
 /**
- * 将图片文件裁剪为指定区域，输出为正方形 PNG。
+ * 将图片文件裁剪为指定区域，输出为 PNG。
  * @param image - 已加载的 HTMLImageElement。
  * @param pixelCrop - 裁剪区域（原始像素坐标）。
- * @returns 裁剪后的 File 对象。
+ * @param outputWidth - 输出宽度。
+ * @param outputHeight - 输出高度。
+ * @param fileName - 输出文件名。
  */
-function cropImage(image: HTMLImageElement, pixelCrop: Area): Promise<File> {
+function cropImage(
+    image: HTMLImageElement,
+    pixelCrop: Area,
+    outputWidth: number,
+    outputHeight: number,
+    fileName: string,
+): Promise<File> {
     const canvas = document.createElement("canvas");
-    canvas.width = OUTPUT_SIZE;
-    canvas.height = OUTPUT_SIZE;
+    canvas.width = outputWidth;
+    canvas.height = outputHeight;
     const ctx = canvas.getContext("2d");
     if (!ctx) {
         throw new Error("Canvas 2D 上下文不可用");
@@ -35,8 +44,8 @@ function cropImage(image: HTMLImageElement, pixelCrop: Area): Promise<File> {
         pixelCrop.height,
         0,
         0,
-        OUTPUT_SIZE,
-        OUTPUT_SIZE,
+        outputWidth,
+        outputHeight,
     );
     return new Promise((resolve, reject) => {
         canvas.toBlob(
@@ -45,7 +54,7 @@ function cropImage(image: HTMLImageElement, pixelCrop: Area): Promise<File> {
                     reject(new Error("裁剪失败"));
                     return;
                 }
-                resolve(new File([blob], "avatar.png", { type: OUTPUT_TYPE }));
+                resolve(new File([blob], fileName, { type: OUTPUT_TYPE }));
             },
             OUTPUT_TYPE,
             0.92,
@@ -54,18 +63,30 @@ function cropImage(image: HTMLImageElement, pixelCrop: Area): Promise<File> {
 }
 
 /**
- * 头像裁剪弹窗。
+ * 图片裁剪弹窗。
  * 用户选择图片文件后弹出，支持拖拽定位与缩放，
  * 确认后通过 onCrop 回调返回裁剪好的 File。
  */
-export function AvatarCropModal({
+export function ImageCropModal({
     file,
     onCrop,
     onCancel,
+    title = "裁剪图片",
+    aspect = 1,
+    cropShape = "round",
+    outputWidth = DEFAULT_OUTPUT_SIZE,
+    outputHeight = DEFAULT_OUTPUT_SIZE,
+    fileName = "cropped.png",
 }: {
     file: File | null;
     onCrop: (croppedFile: File) => void;
     onCancel: () => void;
+    title?: string;
+    aspect?: number;
+    cropShape?: "rect" | "round";
+    outputWidth?: number;
+    outputHeight?: number;
+    fileName?: string;
 }) {
     const state = useOverlayState();
     const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -109,6 +130,9 @@ export function AvatarCropModal({
             const croppedFile = await cropImage(
                 imageElRef.current,
                 croppedAreaRef.current,
+                outputWidth,
+                outputHeight,
+                fileName,
             );
             state.close();
             onCrop(croppedFile);
@@ -151,24 +175,27 @@ export function AvatarCropModal({
                         <Modal.Header>
                             <Modal.Heading className="flex items-center gap-2">
                                 <Crop className="size-4" />
-                                裁剪头像
+                                {title}
                             </Modal.Heading>
                         </Modal.Header>
                         <Modal.Body className="flex flex-col gap-4">
                             {imageSrc && !imageError && (
-                                <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-default-100">
+                                <div
+                                    className="relative w-full rounded-xl overflow-hidden bg-default-100"
+                                    style={{ aspectRatio: `${aspect}` }}
+                                >
                                     <Cropper
                                         image={imageSrc}
                                         crop={crop}
                                         zoom={zoom}
-                                        aspect={1}
-                                        cropShape="round"
+                                        aspect={aspect}
+                                        cropShape={cropShape}
                                         showGrid
                                         onCropChange={setCrop}
                                         onZoomChange={setZoom}
                                         onCropComplete={onCropComplete}
                                         minZoom={1}
-                                        maxZoom={3}
+                                        maxZoom={MAX_ZOOM}
                                     />
                                 </div>
                             )}
@@ -188,7 +215,7 @@ export function AvatarCropModal({
                                 </div>
                                 <Slider
                                     minValue={1}
-                                    maxValue={3}
+                                    maxValue={MAX_ZOOM}
                                     step={0.01}
                                     value={zoom}
                                     onChange={(v) => setZoom(v as number)}

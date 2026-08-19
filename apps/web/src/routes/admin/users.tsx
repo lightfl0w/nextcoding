@@ -175,8 +175,8 @@ function UsersPage() {
                                 value={search.role ?? "all"}
                                 options={[
                                     { value: "all", label: "全部" },
-                                    { value: "admin", label: "管理员" },
-                                    { value: "user", label: "普通用户" },
+                                    { value: "admin", label: "管理" },
+                                    { value: "user", label: "用户" },
                                 ]}
                                 onChange={(role) =>
                                     updateFilter({
@@ -199,7 +199,7 @@ function UsersPage() {
                                 options={[
                                     { value: "all", label: "全部" },
                                     { value: "normal", label: "正常" },
-                                    { value: "banned", label: "已封禁" },
+                                    { value: "banned", label: "封禁" },
                                 ]}
                                 onChange={(banned) =>
                                     updateFilter({

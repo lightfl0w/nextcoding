@@ -70,10 +70,10 @@ describe("CommentsSection 折叠行为", () => {
     function render(comments: Comment[]) {
         return renderToStaticMarkup(
             <CommentsSection
-                workId="w1"
                 comments={comments}
                 isLoading={false}
                 mutate={async () => []}
+                submitComment={async () => {}}
             />,
         );
     }

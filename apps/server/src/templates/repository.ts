@@ -1,7 +1,16 @@
-import { db, template, templateUse, user, work } from "@nextcoding/db";
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import {
+    db,
+    template,
+    templateComment,
+    templateUse,
+    user,
+    work,
+} from "@nextcoding/db";
+import { and, count, desc, eq, like, or, sql } from "drizzle-orm";
 
 export type TemplateSort = "hot" | "latest";
+
+export type TemplateStatus = "pending" | "published" | "rejected";
 
 const templateListColumns = {
     id: template.id,
@@ -10,6 +19,7 @@ const templateListColumns = {
     category: template.category,
     tags: template.tags,
     coverUrl: template.coverUrl,
+    status: template.status,
     fileCount: template.fileCount,
     useCount: template.useCount,
     rating: template.rating,
@@ -22,7 +32,7 @@ const templateListColumns = {
 };
 
 /**
- * 模板列表，按热度或最新排序。
+ * 已上架模板列表，按热度或最新排序。
  * @param category - 分类筛选；缺省返回全部分类。
  * @param sort - `hot` 按使用次数，`latest` 按创建时间。
  * @param limit - 返回数量上限。
@@ -40,11 +50,15 @@ export function listTemplates(
                   desc(template.rating),
                   desc(template.createdAt),
               ];
+    const conditions = [eq(template.status, "published")];
+    if (category) {
+        conditions.push(eq(template.category, category));
+    }
     return db
         .select(templateListColumns)
         .from(template)
         .leftJoin(user, eq(user.id, template.authorId))
-        .where(category ? eq(template.category, category) : undefined)
+        .where(and(...conditions))
         .orderBy(...orderBy)
         .limit(limit);
 }
@@ -79,27 +93,6 @@ export async function findTemplateDetail(id: string) {
     return row ?? null;
 }
 
-/**
- * 按来源作品查询模板记录。
- * @param workId - 作品 ID。
- */
-export async function findTemplateByWork(workId: string) {
-    const [row] = await db
-        .select()
-        .from(template)
-        .where(eq(template.workId, workId))
-        .limit(1);
-    return row ?? null;
-}
-
-/**
- * 按来源作品删除模板记录。
- * @param workId - 作品 ID。
- */
-export function deleteTemplateByWork(workId: string) {
-    return db.delete(template).where(eq(template.workId, workId));
-}
-
 export function bumpTemplateUseCount(id: string) {
     return db
         .update(template)
@@ -118,8 +111,17 @@ export function createTemplate(values: {
     coverUrl: string | null;
     snapshotKey: string;
     fileCount: number;
+    status?: TemplateStatus;
 }) {
     return db.insert(template).values(values);
+}
+
+/**
+ * 删除模板记录。
+ * @param id - 模板 ID。
+ */
+export function deleteTemplateById(id: string) {
+    return db.delete(template).where(eq(template.id, id));
 }
 
 /**
@@ -227,43 +229,7 @@ export function rateTemplate(id: string, score: number) {
 }
 
 /**
- * 查询作品是否已被标记为模板并计数。
- * @param workId - 作品 ID。
- */
-export async function findWorkTemplateFlag(workId: string) {
-    const [row] = await db
-        .select({
-            isTemplate: work.isTemplate,
-            templateUseCount: work.templateUseCount,
-        })
-        .from(work)
-        .where(eq(work.id, workId))
-        .limit(1);
-    return row ?? null;
-}
-
-/**
- * 更新作品的模板开关状态。
- * @param workId - 作品 ID。
- * @param isTemplate - 是否允许作为模板。
- */
-export function setWorkIsTemplate(workId: string, isTemplate: boolean) {
-    return db.update(work).set({ isTemplate }).where(eq(work.id, workId));
-}
-
-/**
- * 作品被用作模板一次（useCount 累计）。
- * @param workId - 作品 ID。
- */
-export function bumpWorkTemplateUseCount(workId: string) {
-    return db
-        .update(work)
-        .set({ templateUseCount: sql`${work.templateUseCount} + 1` })
-        .where(and(eq(work.id, workId), eq(work.isTemplate, true)));
-}
-
-/**
- * 模板热度榜：全量按使用次数排序。
+ * 模板热度榜：仅已上架模板，按使用次数排序。
  * @param limit - 返回数量上限。
  */
 export function listTemplateLeaderboard(limit = 10) {
@@ -277,6 +243,139 @@ export function listTemplateLeaderboard(limit = 10) {
         })
         .from(template)
         .leftJoin(user, eq(user.id, template.authorId))
+        .where(eq(template.status, "published"))
         .orderBy(desc(template.useCount), desc(template.rating))
         .limit(limit);
+}
+
+const adminTemplateColumns = {
+    ...templateListColumns,
+    reviewedAt: template.reviewedAt,
+    derivedCount: sql<number>`(
+        select count(*) from template_use tu
+        where tu.template_id = ${template.id}
+    )`,
+};
+
+/**
+ * 管理后台模板列表：按状态/关键字过滤并分页。
+ * @param options.search - 标题或作者名关键字。
+ * @param options.status - 审核状态过滤。
+ * @param options.page - 页码（从 1 起）。
+ * @param options.pageSize - 每页数量。
+ */
+export async function listAdminTemplates(options: {
+    search?: string;
+    status?: TemplateStatus;
+    page?: number;
+    pageSize?: number;
+}) {
+    const { search, status, page = 1, pageSize = 20 } = options;
+    const conditions = [];
+    if (search) {
+        conditions.push(
+            or(
+                like(template.title, `%${search}%`),
+                like(user.name, `%${search}%`),
+            ),
+        );
+    }
+    if (status) {
+        conditions.push(eq(template.status, status));
+    }
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+    const offset = Math.max(0, (page - 1) * pageSize);
+
+    const [items, [{ total }]] = await Promise.all([
+        db
+            .select(adminTemplateColumns)
+            .from(template)
+            .leftJoin(user, eq(user.id, template.authorId))
+            .where(where)
+            .orderBy(desc(template.createdAt))
+            .limit(pageSize)
+            .offset(offset),
+        db
+            .select({ total: count() })
+            .from(template)
+            .leftJoin(user, eq(user.id, template.authorId))
+            .where(where),
+    ]);
+    return { total, items };
+}
+
+/**
+ * 更新模板审核状态（通过/驳回），记录处理人与时间。
+ * @param id - 模板 ID。
+ * @param status - 目标状态。
+ * @param adminId - 处理管理员 ID。
+ */
+export function setTemplateReviewStatus(
+    id: string,
+    status: TemplateStatus,
+    adminId: string,
+) {
+    return db
+        .update(template)
+        .set({ status, reviewedBy: adminId, reviewedAt: new Date() })
+        .where(eq(template.id, id));
+}
+
+const templateCommentColumns = {
+    id: templateComment.id,
+    content: templateComment.content,
+    parentId: templateComment.parentId,
+    createdAt: templateComment.createdAt,
+    authorId: user.id,
+    authorName: user.name,
+    authorImage: user.image,
+    authorBio: user.bio,
+};
+
+/**
+ * 模板评论列表（带作者信息）。
+ * @param templateId - 模板 ID。
+ * @param limit - 返回数量上限。
+ */
+export function listTemplateComments(templateId: string, limit: number) {
+    return db
+        .select(templateCommentColumns)
+        .from(templateComment)
+        .innerJoin(user, eq(templateComment.userId, user.id))
+        .where(eq(templateComment.templateId, templateId))
+        .orderBy(desc(templateComment.createdAt))
+        .limit(limit);
+}
+
+export async function findTemplateComment(commentId: string) {
+    const [row] = await db
+        .select({
+            id: templateComment.id,
+            templateId: templateComment.templateId,
+            parentId: templateComment.parentId,
+            userId: templateComment.userId,
+        })
+        .from(templateComment)
+        .where(eq(templateComment.id, commentId))
+        .limit(1);
+    return row ?? null;
+}
+
+/**
+ * 新增模板评论，返回新评论 ID 与创建时间。
+ */
+export async function insertTemplateComment(values: {
+    templateId: string;
+    userId: string;
+    parentId: string | null;
+    content: string;
+}) {
+    const [row] = await db
+        .insert(templateComment)
+        .values({ id: crypto.randomUUID(), ...values })
+        .returning({
+            id: templateComment.id,
+            createdAt: templateComment.createdAt,
+        });
+    return row;
 }

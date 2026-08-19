@@ -1,18 +1,27 @@
 import { toast } from "@heroui/react";
 import { useCallback, useState } from "react";
-import { postComment } from "~/lib/api";
 
 export const COMMENT_MAX_LENGTH = 500;
 
 /**
+ * 评论提交函数：把内容发往对应主题（作品/模板）的评论接口。
+ * @param content - 评论内容。
+ * @param parentId - 父评论 ID；`null` 表示发表顶级评论。
+ */
+export type SubmitComment = (
+    content: string,
+    parentId: string | null,
+) => Promise<unknown>;
+
+/**
  * 评论输入与提交。
- * @param workId - 作品 ID。
+ * @param submitComment - 提交函数（作品或模板评论接口）。
  * @param reload - 提交成功后的刷新回调。
  * @param parentId - 回复目标评论 ID；`null` 表示发表顶级评论。
  * @returns `submit` 返回是否发布成功。
  */
 export function useCommentComposer(
-    workId: string,
+    submitComment: SubmitComment,
     reload: () => Promise<unknown>,
     parentId: string | null = null,
 ) {
@@ -27,7 +36,7 @@ export function useCommentComposer(
 
         setIsPosting(true);
         try {
-            await postComment(workId, content, parentId);
+            await submitComment(content, parentId);
             setDraft("");
             await reload();
             return true;
@@ -37,7 +46,7 @@ export function useCommentComposer(
         } finally {
             setIsPosting(false);
         }
-    }, [workId, draft, isPosting, parentId, reload]);
+    }, [submitComment, draft, isPosting, parentId, reload]);
 
     return {
         draft,

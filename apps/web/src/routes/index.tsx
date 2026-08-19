@@ -27,7 +27,7 @@ function Home() {
 
     return (
         <div className="mx-auto w-full max-w-7xl p-8 flex flex-col gap-8">
-            <section className="relative overflow-hidden rounded-3xl border border-default-200/70 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+            <section className="relative overflow-hidden rounded-3xl border border-default-200/70 bg-linear-to-br from-primary/10 via-background to-secondary/10">
                 <div
                     aria-hidden
                     className="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full bg-primary/15 blur-3xl"
@@ -38,7 +38,7 @@ function Home() {
                 />
                 <div
                     aria-hidden
-                    className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:radial-gradient(circle,var(--foreground)_1px,transparent_1px)] [background-size:22px_22px]"
+                    className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:radial-linear(circle,var(--foreground)_1px,transparent_1px)] [background-size:22px_22px]"
                 />
                 <div className="relative z-10 px-8 py-12 flex flex-col items-start gap-6 fade-up">
                     <div className="flex items-center gap-4">

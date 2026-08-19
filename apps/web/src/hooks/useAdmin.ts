@@ -8,6 +8,7 @@ import {
     type AdminReport,
     type AdminStats,
     type AdminTag,
+    type AdminTemplate,
     type AdminUser,
     type AdminUserAchievement,
     type AdminWork,
@@ -22,6 +23,7 @@ import {
     fetchAdminReports,
     fetchAdminStats,
     fetchAdminTags,
+    fetchAdminTemplates,
     fetchAdminUserAchievements,
     fetchAdminUsers,
     fetchAdminWorks,
@@ -77,6 +79,13 @@ export function useAdminReports(query: AdminListQuery = {}) {
     return useSWR<PageResult<AdminReport>>(
         ["/api/admin/reports", query],
         ([, q]) => fetchAdminReports(q as AdminListQuery),
+    );
+}
+
+export function useAdminTemplates(query: AdminListQuery = {}) {
+    return useSWR<PageResult<AdminTemplate>>(
+        ["/api/admin/templates", query],
+        ([, q]) => fetchAdminTemplates(q as AdminListQuery),
     );
 }
 

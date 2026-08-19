@@ -91,13 +91,25 @@ export interface AdminListQuery {
     search?: string;
     role?: "admin" | "user";
     banned?: boolean;
-    status?: "draft" | "published" | "pending" | "resolved" | "dismissed";
+    status?:
+        | "draft"
+        | "published"
+        | "pending"
+        | "resolved"
+        | "dismissed"
+        | "rejected";
     page?: number;
     pageSize?: number;
 }
 
 function adminListPath(
-    resource: "users" | "works" | "comments" | "conversations" | "reports",
+    resource:
+        | "users"
+        | "works"
+        | "comments"
+        | "conversations"
+        | "reports"
+        | "templates",
     query: AdminListQuery = {},
 ) {
     const params = new URLSearchParams();
@@ -343,6 +355,72 @@ export function dismissAdminReport(reportId: string) {
         "POST",
         undefined,
         "忽略举报失败",
+    );
+}
+
+export type AdminTemplateStatus = "pending" | "published" | "rejected";
+
+export interface AdminTemplate {
+    id: string;
+    title: string;
+    description: string | null;
+    category: string | null;
+    tags: string;
+    coverUrl: string | null;
+    status: AdminTemplateStatus;
+    fileCount: number;
+    useCount: number;
+    rating: number;
+    ratingCount: number;
+    createdAt: string;
+    updatedAt: string;
+    authorId: string | null;
+    authorName: string | null;
+    authorImage: string | null;
+    reviewedAt: string | null;
+    derivedCount: number;
+}
+
+export function fetchAdminTemplates(
+    query: AdminListQuery = {},
+): Promise<PageResult<AdminTemplate>> {
+    return getJson<PageResult<AdminTemplate>>(
+        adminListPath("templates", query),
+    );
+}
+
+export function approveAdminTemplate(templateId: string) {
+    return mutateJson<{
+        ok: boolean;
+        id: string;
+        status: AdminTemplateStatus;
+    }>(
+        `/api/admin/templates/${templateId}/approve`,
+        "POST",
+        undefined,
+        "通过模板失败",
+    );
+}
+
+export function rejectAdminTemplate(templateId: string) {
+    return mutateJson<{
+        ok: boolean;
+        id: string;
+        status: AdminTemplateStatus;
+    }>(
+        `/api/admin/templates/${templateId}/reject`,
+        "POST",
+        undefined,
+        "驳回模板失败",
+    );
+}
+
+export function deleteAdminTemplate(templateId: string) {
+    return mutateJson<{ ok: boolean; id: string }>(
+        `/api/admin/templates/${templateId}`,
+        "DELETE",
+        undefined,
+        "删除模板失败",
     );
 }
 

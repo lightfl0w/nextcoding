@@ -12,37 +12,39 @@ import { StarRating } from "./StarRating";
  * 模板热度榜主区域列表：用于排行榜页面的"模板"Tab。
  * @param props.limit - 榜单条数。
  */
-export const TemplateLeaderboardList = memo(
-    function TemplateLeaderboardList({ limit = 20 }: { limit?: number }) {
-        const { templates, isLoading } = useTemplateLeaderboard(limit);
+export const TemplateLeaderboardList = memo(function TemplateLeaderboardList({
+    limit = 20,
+}: {
+    limit?: number;
+}) {
+    const { templates, isLoading } = useTemplateLeaderboard(limit);
 
-        if (isLoading) {
-            return <LoadingState text="正在加载模板榜…" />;
-        }
+    if (isLoading) {
+        return <LoadingState text="正在加载模板榜…" />;
+    }
 
-        if (templates.length === 0) {
-            return (
-                <EmptyState
-                    icon={Trophy}
-                    title="暂无模板上榜"
-                    hint="发布模板并积累使用量即可上榜"
-                />
-            );
-        }
-
+    if (templates.length === 0) {
         return (
-            <div className="flex flex-col gap-2">
-                {templates.map((template, index) => (
-                    <TemplateRow
-                        key={template.id}
-                        position={index + 1}
-                        template={template}
-                    />
-                ))}
-            </div>
+            <EmptyState
+                icon={Trophy}
+                title="暂无模板上榜"
+                hint="发布模板并积累使用量即可上榜"
+            />
         );
-    },
-);
+    }
+
+    return (
+        <div className="flex flex-col gap-2">
+            {templates.map((template, index) => (
+                <TemplateRow
+                    key={template.id}
+                    position={index + 1}
+                    template={template}
+                />
+            ))}
+        </div>
+    );
+});
 
 function getRankStyle(position: number) {
     if (position === 1) {

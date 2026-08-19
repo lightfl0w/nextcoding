@@ -1,5 +1,12 @@
 import { type Context, Hono } from "hono";
 import { jsonError, readJsonBody, readTrimmed } from "../http/responses.js";
+import {
+    deleteTemplateById,
+    findTemplate,
+    listAdminTemplates,
+    setTemplateReviewStatus,
+    type TemplateStatus,
+} from "../templates/repository.js";
 import { type AdminEnv, requireAdmin } from "./guard.js";
 import {
     banUser,
@@ -292,6 +299,57 @@ adminRoutes.post("/reports/:id/resolve", async (c) => {
 
 adminRoutes.post("/reports/:id/dismiss", async (c) => {
     return handleReportAction(c, "dismissed");
+});
+
+const TEMPLATE_STATUSES = new Set<TemplateStatus>([
+    "pending",
+    "published",
+    "rejected",
+]);
+
+adminRoutes.get("/templates", async (c) => {
+    const search =
+        (c.req.query("search") ?? "").trim().slice(0, 64) || undefined;
+    const rawStatus = c.req.query("status");
+    const status = TEMPLATE_STATUSES.has(rawStatus as TemplateStatus)
+        ? (rawStatus as TemplateStatus)
+        : undefined;
+    const result = await listAdminTemplates({
+        search,
+        status,
+        page: clampPage(c.req.query("page")),
+        pageSize: clampPageSize(c.req.query("pageSize")),
+    });
+    return c.json(result);
+});
+
+async function handleTemplateReview(
+    c: Context<AdminEnv>,
+    status: TemplateStatus,
+) {
+    const templateId = c.req.param("id") ?? "";
+    if (!(await findTemplate(templateId))) {
+        return jsonError(c, "模板不存在", 404);
+    }
+    await setTemplateReviewStatus(templateId, status, c.get("adminId"));
+    return c.json({ ok: true, id: templateId, status });
+}
+
+adminRoutes.post("/templates/:id/approve", async (c) => {
+    return handleTemplateReview(c, "published");
+});
+
+adminRoutes.post("/templates/:id/reject", async (c) => {
+    return handleTemplateReview(c, "rejected");
+});
+
+adminRoutes.delete("/templates/:id", async (c) => {
+    const templateId = c.req.param("id");
+    if (!(await findTemplate(templateId))) {
+        return jsonError(c, "模板不存在", 404);
+    }
+    await deleteTemplateById(templateId);
+    return c.json({ ok: true, id: templateId });
 });
 
 adminRoutes.get("/achievements", async (c) => {

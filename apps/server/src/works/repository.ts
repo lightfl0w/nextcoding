@@ -33,12 +33,7 @@ const detailColumns = {
     ...summaryColumns,
     userId: work.userId,
     status: work.status,
-    isTemplate: work.isTemplate,
-    templateUseCount: work.templateUseCount,
     templateId: work.templateId,
-    templateKey: sql<string | null>`(
-        select tpl.id from template tpl where tpl.work_id = ${work.id}
-    )`,
     updatedAt: work.updatedAt,
 };
 

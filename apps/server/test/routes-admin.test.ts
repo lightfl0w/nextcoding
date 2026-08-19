@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as adminRepo from "../src/admin/repository.js";
 import { adminRoutes } from "../src/admin/routes.js";
+import * as templateRepo from "../src/templates/repository.js";
 import { mockGetSession } from "./setup";
 
 function adminSession(userId = "admin-1") {
@@ -648,5 +649,130 @@ describe("成就管理", () => {
         });
         expect(res.status).toBe(200);
         expect(adminRepo.revokeAchievement).toHaveBeenCalledWith("u1", "a1");
+    });
+});
+
+describe("模板审核", () => {
+    function templateRow(overrides: Record<string, unknown> = {}) {
+        return {
+            id: "tpl-1",
+            title: "Python 小游戏",
+            status: "pending",
+            fileCount: 2,
+            createdAt: new Date("2026-01-01T00:00:00Z"),
+            authorId: "user-1",
+            authorName: "张三",
+            ...overrides,
+        };
+    }
+
+    it("GET /templates 透传状态与分页参数", async () => {
+        mockGetSession.mockResolvedValue(adminSession());
+        vi.mocked(templateRepo.listAdminTemplates).mockResolvedValue({
+            total: 1,
+            items: [templateRow()] as never,
+        });
+        const res = await app().request(
+            "/api/admin/templates?status=pending&page=2&pageSize=30",
+        );
+        expect(res.status).toBe(200);
+        expect(templateRepo.listAdminTemplates).toHaveBeenCalledWith({
+            status: "pending",
+            page: 2,
+            pageSize: 30,
+        });
+        expect(await res.json()).toEqual({
+            total: 1,
+            items: [expect.objectContaining({ title: "Python 小游戏" })],
+        });
+    });
+
+    it("GET /templates 非法状态不传 status", async () => {
+        mockGetSession.mockResolvedValue(adminSession());
+        vi.mocked(templateRepo.listAdminTemplates).mockResolvedValue({
+            total: 0,
+            items: [],
+        });
+        await app().request("/api/admin/templates?status=whatever");
+        expect(templateRepo.listAdminTemplates).toHaveBeenCalledWith({
+            status: undefined,
+            page: 1,
+            pageSize: 20,
+        });
+    });
+
+    it("POST /templates/:id/approve 模板不存在返回 404", async () => {
+        mockGetSession.mockResolvedValue(adminSession());
+        vi.mocked(templateRepo.findTemplate).mockResolvedValue(undefined);
+        const res = await app().request("/api/admin/templates/tpl-1/approve", {
+            method: "POST",
+        });
+        expect(res.status).toBe(404);
+        expect(await res.json()).toEqual({ error: "模板不存在" });
+    });
+
+    it("POST /templates/:id/approve 通过审核", async () => {
+        mockGetSession.mockResolvedValue(adminSession());
+        vi.mocked(templateRepo.findTemplate).mockResolvedValue(
+            templateRow() as never,
+        );
+        const res = await app().request("/api/admin/templates/tpl-1/approve", {
+            method: "POST",
+        });
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual({
+            ok: true,
+            id: "tpl-1",
+            status: "published",
+        });
+        expect(templateRepo.setTemplateReviewStatus).toHaveBeenCalledWith(
+            "tpl-1",
+            "published",
+            "admin-1",
+        );
+    });
+
+    it("POST /templates/:id/reject 驳回审核", async () => {
+        mockGetSession.mockResolvedValue(adminSession());
+        vi.mocked(templateRepo.findTemplate).mockResolvedValue(
+            templateRow() as never,
+        );
+        const res = await app().request("/api/admin/templates/tpl-1/reject", {
+            method: "POST",
+        });
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual({
+            ok: true,
+            id: "tpl-1",
+            status: "rejected",
+        });
+        expect(templateRepo.setTemplateReviewStatus).toHaveBeenCalledWith(
+            "tpl-1",
+            "rejected",
+            "admin-1",
+        );
+    });
+
+    it("DELETE /templates/:id 删除模板", async () => {
+        mockGetSession.mockResolvedValue(adminSession());
+        vi.mocked(templateRepo.findTemplate).mockResolvedValue(
+            templateRow() as never,
+        );
+        const res = await app().request("/api/admin/templates/tpl-1", {
+            method: "DELETE",
+        });
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual({ ok: true, id: "tpl-1" });
+        expect(templateRepo.deleteTemplateById).toHaveBeenCalledWith("tpl-1");
+    });
+
+    it("DELETE /templates/:id 模板不存在返回 404", async () => {
+        mockGetSession.mockResolvedValue(adminSession());
+        vi.mocked(templateRepo.findTemplate).mockResolvedValue(undefined);
+        const res = await app().request("/api/admin/templates/tpl-1", {
+            method: "DELETE",
+        });
+        expect(res.status).toBe(404);
+        expect(await res.json()).toEqual({ error: "模板不存在" });
     });
 });

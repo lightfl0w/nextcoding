@@ -206,20 +206,18 @@ vi.mock("../src/settings/repository.js", () => ({
 
 vi.mock("../src/templates/repository.js", () => ({
     bumpTemplateUseCount: vi.fn(),
-    bumpWorkTemplateUseCount: vi.fn(),
     countTemplateUses: vi.fn(),
     createTemplate: vi.fn(),
-    deleteTemplateByWork: vi.fn(),
+    deleteTemplateById: vi.fn(),
     findTemplate: vi.fn(),
-    findTemplateByWork: vi.fn(),
     findTemplateDetail: vi.fn(),
-    findWorkTemplateFlag: vi.fn(),
     insertTemplateUse: vi.fn(),
+    listAdminTemplates: vi.fn(),
     listTemplateLeaderboard: vi.fn(),
     listTemplates: vi.fn(),
     listTemplateUses: vi.fn(),
     rateTemplate: vi.fn(),
-    setWorkIsTemplate: vi.fn(),
+    setTemplateReviewStatus: vi.fn(),
     sumTemplateDerivedStats: vi.fn(),
 }));
 

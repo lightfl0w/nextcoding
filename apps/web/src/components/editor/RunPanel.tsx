@@ -3,7 +3,6 @@ import { Terminal } from "@wterm/react";
 import type { RunResult } from "clientbox";
 import {
     Eraser,
-    Gamepad2,
     Info,
     Square,
     Terminal as TerminalIcon,
@@ -31,7 +30,7 @@ import { useTerminalSession } from "~/hooks/useTerminalSession";
  * @param props.awaitingInput - 程序是否在等待输入。
  * @param props.onSubmitInput - 提交一行输入。
  * @param props.onCancelInput - 结束输入（EOF）。
- * @param props.mode - 渲染模式：clientbox 用 wterm，python 用 PyScript xterm，pygame 显示画布。
+ * @param props.mode - 渲染模式：clientbox/python 终端占满面板；pygame 终端与画布各占一半（右栏纵向分屏、底部横向分屏），标准输出回传到终端半区。
  * @param props.terminalId - PyScript xterm 挂载容器 id。
  * @param props.canvasId - pygame 画布 id。
  * @param props.onStop - 停止 pygame 游戏。
@@ -128,32 +127,54 @@ export const RunPanel = memo(function RunPanel({
                 />
             )}
             {mode === "pygame" && (
-                <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-2 p-3 overflow-auto">
-                    <span className="flex items-center gap-1.5 text-xs text-foreground/50">
-                        <Gamepad2 className="size-3.5" />
-                        图形输出
-                    </span>
-                    <canvas
-                        id={canvasId}
-                        width={320}
-                        height={240}
-                        tabIndex={0}
-                        className="max-w-full border border-default-200 rounded-lg bg-black outline-none focus:border-primary"
-                        style={{ imageRendering: "pixelated" }}
-                    />
-                    {loopHint && (
-                        <p className="flex items-center gap-1.5 text-xs text-warning px-2 text-center leading-relaxed">
-                            <Info className="size-3.5 shrink-0" />
-                            游戏循环未让出主线程，页面会卡顿——建议在循环内加
-                            await asyncio.sleep(1/60)
-                        </p>
-                    )}
-                    {running && (
-                        <span className="flex items-center gap-1.5 text-xs text-foreground/60">
-                            <Spinner size="sm" />
-                            {loadStage ?? "正在加载 Pygame…"}
+                <div
+                    className={`flex-1 min-h-0 flex ${
+                        placement === "right" ? "flex-col" : "flex-row"
+                    }`}
+                >
+                    <div className="flex-1 min-h-0 min-w-0 flex flex-col">
+                        <Terminal
+                            ref={terminal.termRef}
+                            theme={
+                                resolvedTheme === "dark" ? "monokai" : "light"
+                            }
+                            autoResize
+                            cursorBlink
+                            onData={terminal.handleData}
+                            onReady={terminal.handleReady}
+                            className="flex-1 min-h-0 w-full"
+                        />
+                    </div>
+                    <div
+                        className={`flex-1 min-h-0 min-w-0 flex flex-col items-center justify-center gap-2 p-3 overflow-auto border-default-200 ${
+                            placement === "right" ? "border-t" : "border-l"
+                        }`}
+                    >
+                        <canvas
+                            id={canvasId}
+                            width={320}
+                            height={240}
+                            tabIndex={0}
+                            className="max-w-full border border-default-200 rounded-lg bg-black outline-none focus:border-primary"
+                            style={{ imageRendering: "pixelated" }}
+                        />
+                        <span className="text-xs text-foreground/40">
+                            点击画面后可使用键盘与鼠标操作
                         </span>
-                    )}
+                        {loopHint && (
+                            <p className="flex items-center gap-1.5 text-xs text-warning px-2 text-center leading-relaxed">
+                                <Info className="size-3.5 shrink-0" />
+                                游戏循环写在类方法里且未让出事件循环，运行中将无法响应停止与输入——建议把循环移到模块顶层，或改用
+                                async def 并 await 调用
+                            </p>
+                        )}
+                        {running && (
+                            <span className="flex items-center gap-1.5 text-xs text-foreground/60">
+                                <Spinner size="sm" />
+                                {loadStage ?? "正在加载 Pygame…"}
+                            </span>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

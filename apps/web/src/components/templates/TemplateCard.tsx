@@ -26,13 +26,13 @@ export const TemplateCard = memo(function TemplateCard({
             <Link
                 to="/templates/$id"
                 params={{ id: template.id }}
-                className="block relative h-32 overflow-hidden bg-gradient-to-br from-primary/15 via-secondary/10 to-primary/5"
+                className="block relative h-32 overflow-hidden bg-default-100/60 ring-1 ring-inset ring-default-200/60"
             >
                 {template.coverUrl ? (
                     <img
                         src={template.coverUrl}
                         alt={template.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -43,7 +43,7 @@ export const TemplateCard = memo(function TemplateCard({
                     <Chip
                         size="sm"
                         variant="soft"
-                        className="absolute top-2.5 left-2.5 bg-background/80 backdrop-blur-sm"
+                        className="absolute top-2.5 left-2.5 bg-background/80 backdrop-blur-sm shadow-sm"
                     >
                         {templateCategoryLabel(template.category)}
                     </Chip>
@@ -64,6 +64,16 @@ export const TemplateCard = memo(function TemplateCard({
                             {template.description}
                         </p>
                     )}
+                    {Array.isArray(template.tags) &&
+                        template.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                                {template.tags.map((tag) => (
+                                    <Chip key={tag} size="sm" variant="soft">
+                                        {tag}
+                                    </Chip>
+                                ))}
+                            </div>
+                        )}
                 </Link>
 
                 <div className="flex items-center justify-between gap-2 text-xs text-foreground/50">

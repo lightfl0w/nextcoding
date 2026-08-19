@@ -28,12 +28,15 @@ import { Route as AdminCommentsRouteImport } from './routes/admin/comments'
 import { Route as AdminMessagesRouteImport } from './routes/admin/messages'
 import { Route as AdminReportsRouteImport } from './routes/admin/reports'
 import { Route as AdminTagsRouteImport } from './routes/admin/tags'
+import { Route as AdminTemplatesRouteImport } from './routes/admin/templates'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminWorksRouteImport } from './routes/admin/works'
 import { Route as ChatIndexRouteImport } from './routes/chat/index'
 import { Route as ChatIdRouteImport } from './routes/chat/$id'
 import { Route as TagsIndexRouteImport } from './routes/tags/index'
 import { Route as TagsSlugRouteImport } from './routes/tags/$slug'
+import { Route as TemplatesIndexRouteImport } from './routes/templates/index'
+import { Route as TemplatesNewRouteImport } from './routes/templates/new'
 import { Route as TemplatesIdIndexRouteImport } from './routes/templates/$id/index'
 import { Route as UserIdIndexRouteImport } from './routes/user/$id/index'
 import { Route as WorkIdIndexRouteImport } from './routes/work/$id/index'
@@ -135,6 +138,11 @@ const AdminTagsRoute = AdminTagsRouteImport.update({
   path: '/tags',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminTemplatesRoute = AdminTemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -164,6 +172,16 @@ const TagsSlugRoute = TagsSlugRouteImport.update({
   id: '/tags/$slug',
   path: '/tags/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const TemplatesIndexRoute = TemplatesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TemplatesRoute,
+} as any)
+const TemplatesNewRoute = TemplatesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => TemplatesRoute,
 } as any)
 const TemplatesIdIndexRoute = TemplatesIdIndexRouteImport.update({
   id: '/$id/',
@@ -210,13 +228,16 @@ export interface FileRoutesByFullPath {
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/tags': typeof AdminTagsRoute
+  '/admin/templates': typeof AdminTemplatesRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/works': typeof AdminWorksRoute
   '/chat/$id': typeof ChatIdRoute
   '/tags/$slug': typeof TagsSlugRoute
+  '/templates/new': typeof TemplatesNewRoute
   '/admin/': typeof AdminIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/tags/': typeof TagsIndexRoute
+  '/templates/': typeof TemplatesIndexRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
   '/templates/$id/': typeof TemplatesIdIndexRoute
@@ -234,19 +255,21 @@ export interface FileRoutesByTo {
   '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
-  '/templates': typeof TemplatesRouteWithChildren
   '/admin/achievements': typeof AdminAchievementsRoute
   '/admin/comments': typeof AdminCommentsRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/tags': typeof AdminTagsRoute
+  '/admin/templates': typeof AdminTemplatesRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/works': typeof AdminWorksRoute
   '/chat/$id': typeof ChatIdRoute
   '/tags/$slug': typeof TagsSlugRoute
+  '/templates/new': typeof TemplatesNewRoute
   '/admin': typeof AdminIndexRoute
   '/chat': typeof ChatIndexRoute
   '/tags': typeof TagsIndexRoute
+  '/templates': typeof TemplatesIndexRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
   '/templates/$id': typeof TemplatesIdIndexRoute
@@ -273,13 +296,16 @@ export interface FileRoutesById {
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/tags': typeof AdminTagsRoute
+  '/admin/templates': typeof AdminTemplatesRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/works': typeof AdminWorksRoute
   '/chat/$id': typeof ChatIdRoute
   '/tags/$slug': typeof TagsSlugRoute
+  '/templates/new': typeof TemplatesNewRoute
   '/admin/': typeof AdminIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/tags/': typeof TagsIndexRoute
+  '/templates/': typeof TemplatesIndexRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
   '/templates/$id/': typeof TemplatesIdIndexRoute
@@ -307,13 +333,16 @@ export interface FileRouteTypes {
     | '/admin/messages'
     | '/admin/reports'
     | '/admin/tags'
+    | '/admin/templates'
     | '/admin/users'
     | '/admin/works'
     | '/chat/$id'
     | '/tags/$slug'
+    | '/templates/new'
     | '/admin/'
     | '/chat/'
     | '/tags/'
+    | '/templates/'
     | '/work/$id/edit'
     | '/work/new/edit'
     | '/templates/$id/'
@@ -331,19 +360,21 @@ export interface FileRouteTypes {
     | '/messages'
     | '/reset-password'
     | '/settings'
-    | '/templates'
     | '/admin/achievements'
     | '/admin/comments'
     | '/admin/messages'
     | '/admin/reports'
     | '/admin/tags'
+    | '/admin/templates'
     | '/admin/users'
     | '/admin/works'
     | '/chat/$id'
     | '/tags/$slug'
+    | '/templates/new'
     | '/admin'
     | '/chat'
     | '/tags'
+    | '/templates'
     | '/work/$id/edit'
     | '/work/new/edit'
     | '/templates/$id'
@@ -369,13 +400,16 @@ export interface FileRouteTypes {
     | '/admin/messages'
     | '/admin/reports'
     | '/admin/tags'
+    | '/admin/templates'
     | '/admin/users'
     | '/admin/works'
     | '/chat/$id'
     | '/tags/$slug'
+    | '/templates/new'
     | '/admin/'
     | '/chat/'
     | '/tags/'
+    | '/templates/'
     | '/work/$id/edit'
     | '/work/new/edit'
     | '/templates/$id/'
@@ -540,6 +574,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminTagsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/templates': {
+      id: '/admin/templates'
+      path: '/templates'
+      fullPath: '/admin/templates'
+      preLoaderRoute: typeof AdminTemplatesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/users'
@@ -581,6 +622,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/tags/$slug'
       preLoaderRoute: typeof TagsSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/templates/': {
+      id: '/templates/'
+      path: '/'
+      fullPath: '/templates/'
+      preLoaderRoute: typeof TemplatesIndexRouteImport
+      parentRoute: typeof TemplatesRoute
+    }
+    '/templates/new': {
+      id: '/templates/new'
+      path: '/new'
+      fullPath: '/templates/new'
+      preLoaderRoute: typeof TemplatesNewRouteImport
+      parentRoute: typeof TemplatesRoute
     }
     '/templates/$id/': {
       id: '/templates/$id/'
@@ -626,6 +681,7 @@ interface AdminRouteChildren {
   AdminMessagesRoute: typeof AdminMessagesRoute
   AdminReportsRoute: typeof AdminReportsRoute
   AdminTagsRoute: typeof AdminTagsRoute
+  AdminTemplatesRoute: typeof AdminTemplatesRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminWorksRoute: typeof AdminWorksRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -637,6 +693,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminMessagesRoute: AdminMessagesRoute,
   AdminReportsRoute: AdminReportsRoute,
   AdminTagsRoute: AdminTagsRoute,
+  AdminTemplatesRoute: AdminTemplatesRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminWorksRoute: AdminWorksRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -657,10 +714,14 @@ const ChatRouteChildren: ChatRouteChildren = {
 const ChatRouteWithChildren = ChatRoute._addFileChildren(ChatRouteChildren)
 
 interface TemplatesRouteChildren {
+  TemplatesNewRoute: typeof TemplatesNewRoute
+  TemplatesIndexRoute: typeof TemplatesIndexRoute
   TemplatesIdIndexRoute: typeof TemplatesIdIndexRoute
 }
 
 const TemplatesRouteChildren: TemplatesRouteChildren = {
+  TemplatesNewRoute: TemplatesNewRoute,
+  TemplatesIndexRoute: TemplatesIndexRoute,
   TemplatesIdIndexRoute: TemplatesIdIndexRoute,
 }
 

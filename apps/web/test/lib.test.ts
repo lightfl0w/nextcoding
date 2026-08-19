@@ -602,15 +602,55 @@ describe("pyscript", () => {
     });
 
     describe("detectBusyGameLoop", () => {
-        it("纯 while 循环（无 await）判定为忙循环", () => {
+        it("顶层 while 循环（worker 会自动注入 sleep）判定为非忙循环", () => {
             expect(
                 detectBusyGameLoop(
                     "import pygame\nwhile True:\n    pygame.display.flip()",
                 ),
+            ).toBe(false);
+        });
+
+        it("模块级函数内的 while 循环（worker 会转 async 注入）判定为非忙循环", () => {
+            expect(
+                detectBusyGameLoop(
+                    "import pygame\ndef main():\n    while True:\n        pygame.display.flip()",
+                ),
+            ).toBe(false);
+        });
+
+        it("嵌套模块级函数内的 while 循环判定为非忙循环", () => {
+            expect(
+                detectBusyGameLoop(
+                    "def outer():\n    def inner():\n        while True:\n            pass",
+                ),
+            ).toBe(false);
+        });
+
+        it("类方法内的纯 while 循环判定为忙循环", () => {
+            expect(
+                detectBusyGameLoop(
+                    "import pygame\nclass Game:\n    def run(self):\n        while True:\n            pygame.display.flip()",
+                ),
             ).toBe(true);
         });
 
-        it("循环内使用 asyncio.sleep 判定为非忙循环", () => {
+        it("类方法 async def 的 while 循环判定为非忙循环", () => {
+            expect(
+                detectBusyGameLoop(
+                    "import asyncio\nclass Game:\n    async def run(self):\n        while True:\n            await asyncio.sleep(0)",
+                ),
+            ).toBe(false);
+        });
+
+        it("类定义结束后的顶层 while 不误判为类内", () => {
+            expect(
+                detectBusyGameLoop(
+                    "class Game:\n    pass\nwhile True:\n    pygame.display.flip()",
+                ),
+            ).toBe(false);
+        });
+
+        it("顶层 while 循环内使用 asyncio.sleep 判定为非忙循环", () => {
             expect(
                 detectBusyGameLoop(
                     "import asyncio\nwhile True:\n    pygame.display.flip()\n    await asyncio.sleep(1 / 60)",
@@ -618,10 +658,10 @@ describe("pyscript", () => {
             ).toBe(false);
         });
 
-        it("循环内使用其他 await 判定为非忙循环", () => {
+        it("async def 内的循环判定为非忙循环（worker 同样会注入）", () => {
             expect(
                 detectBusyGameLoop(
-                    "async def tick():\n    while True:\n        await some_task()",
+                    "import asyncio\nasync def tick():\n    while True:\n        await some_task()",
                 ),
             ).toBe(false);
         });
@@ -632,10 +672,14 @@ describe("pyscript", () => {
             );
         });
 
-        it("注释里的 while 不计入（仅 while 在注释中）", () => {
+        it("注释里的 while 不计入", () => {
             expect(
                 detectBusyGameLoop("# while True: 死循环示例\nprint(1)"),
             ).toBe(false);
+        });
+
+        it("字符串里的 while 不计入（仅行首 while）", () => {
+            expect(detectBusyGameLoop('print("while True")')).toBe(false);
         });
 
         it("空代码与空白行不误判", () => {

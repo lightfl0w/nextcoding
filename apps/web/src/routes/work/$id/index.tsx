@@ -1,4 +1,4 @@
-import { Card, Chip, useOverlayState } from "@heroui/react";
+import { Card, Chip } from "@heroui/react";
 import {
     createFileRoute,
     Link,
@@ -21,9 +21,9 @@ import {
     WorkDetailSkeleton,
     WorkNotFound,
 } from "~/components/workDetail/WorkDetailSkeleton";
-import { WorkTemplatePanel } from "~/components/workDetail/WorkTemplatePanel";
 import { useAuth } from "~/hooks/useAuth";
 import { useComments } from "~/hooks/useComments";
+import { postComment } from "~/lib/api";
 import { useFocusedComment } from "~/hooks/useFocusedComment";
 import { useFollowAuthor } from "~/hooks/useFollowAuthor";
 import { useTemplate } from "~/hooks/useTemplate";
@@ -33,7 +33,6 @@ import { useWorkDetailActions } from "~/hooks/useWorkDetailActions";
 import { useWorkRemixes, useWorkSource } from "~/hooks/useWorkRemixes";
 import { useWorkRunner } from "~/hooks/useWorkRunner";
 import { useWorkSpark } from "~/hooks/useWorkSpark";
-import { useWorkTemplateCreator } from "~/hooks/useWorkTemplateCreator";
 import { detectRuntime } from "~/lib/run";
 
 export const Route = createFileRoute("/work/$id/")({
@@ -83,8 +82,6 @@ function WorkDetailRoute() {
         navigate,
     });
     const follow = useFollowAuthor(work);
-    const templateCreator = useWorkTemplateCreator(work);
-    const templateState = useOverlayState();
     const { template: basedOnTemplate } = useTemplate(work?.templateId ?? null);
 
     if (isLoading) {
@@ -138,13 +135,9 @@ function WorkDetailRoute() {
                     isOwner={isOwner}
                     isRunning={runner.running}
                     sparked={spark.sparked}
-                    isTemplate={work.isTemplate}
-                    templateUseCount={work.templateUseCount}
-                    isUsingTemplate={templateCreator.pending}
                     onRun={() => runner.runCurrent(work.files)}
                     onSpark={handleSpark}
                     onRemix={handleRemix}
-                    onUseTemplate={templateCreator.handleUse}
                 />
 
                 {tags.length > 0 && (
@@ -188,10 +181,12 @@ function WorkDetailRoute() {
                         </div>
 
                         <CommentsSection
-                            workId={workId}
                             comments={comments}
                             isLoading={commentsLoading}
                             mutate={mutateComments}
+                            submitComment={(content, parentId) =>
+                                postComment(workId, content, parentId)
+                            }
                             focusCommentId={focusedCommentId}
                         />
                     </div>
@@ -216,16 +211,6 @@ function WorkDetailRoute() {
                             <CreationTree source={source} remixes={remixes} />
                         </SectionCard>
 
-                        {isOwner && (
-                            <SectionCard title="模板设置" icon={Sparkles}>
-                                <WorkTemplatePanel
-                                    work={work}
-                                    state={templateState}
-                                    isOwner={isOwner}
-                                />
-                            </SectionCard>
-                        )}
-
                         <SectionCard title="版本历史" icon={Hash}>
                             <VersionTimeline
                                 versions={versions}
@@ -245,7 +230,7 @@ function WorkDetailRoute() {
 
 const LikedCard = memo(function LikedCard() {
     return (
-        <Card className="w-full p-0 shadow-none rounded-2xl border border-default-200 bg-gradient-to-br from-primary/10 to-secondary/5">
+        <Card className="w-full p-0 shadow-none rounded-2xl border border-default-200 bg-linear-to-br from-primary/10 to-secondary/5">
             <Card.Content className="p-5 flex flex-col gap-2">
                 <div className="flex items-center gap-2 text-foreground/80">
                     <Sparkles className="size-4 text-primary" />

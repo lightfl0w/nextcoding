@@ -110,7 +110,7 @@ function WorksPage() {
                             value={search.status ?? "all"}
                             options={[
                                 { value: "all", label: "全部" },
-                                { value: "published", label: "已发布" },
+                                { value: "published", label: "发布" },
                                 { value: "draft", label: "草稿" },
                             ]}
                             onChange={(status) =>

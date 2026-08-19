@@ -3,29 +3,32 @@ import { MessageCircle } from "lucide-react";
 import { memo, useCallback, useState } from "react";
 import type { KeyedMutator } from "swr";
 import { useAuth } from "~/hooks/useAuth";
-import { useCommentComposer } from "~/hooks/useCommentComposer";
+import {
+    type SubmitComment,
+    useCommentComposer,
+} from "~/hooks/useCommentComposer";
 import { type CommentNode, useCommentThreads } from "~/hooks/useCommentThreads";
 import type { Comment } from "~/lib/api";
 import { CommentComposer, SignInPrompt } from "./CommentComposer";
 import { CommentRow } from "./CommentRow";
 
 interface CommentsSectionProps {
-    workId: string;
     comments: Comment[] | undefined;
     isLoading: boolean;
     mutate: KeyedMutator<Comment[]>;
+    submitComment: SubmitComment;
     focusCommentId?: string | null;
 }
 
 export const CommentsSection = memo(function CommentsSection({
-    workId,
     comments,
     isLoading,
     mutate,
+    submitComment,
     focusCommentId,
 }: CommentsSectionProps) {
     const { isLoggedIn } = useAuth();
-    const composer = useCommentComposer(workId, mutate);
+    const composer = useCommentComposer(submitComment, mutate);
     const threads = useCommentThreads(comments);
 
     return (
@@ -58,7 +61,7 @@ export const CommentsSection = memo(function CommentsSection({
                                 replies={thread.children}
                                 depth={0}
                                 canReply={isLoggedIn}
-                                workId={workId}
+                                submitComment={submitComment}
                                 focusCommentId={focusCommentId}
                                 onReload={mutate}
                             />
@@ -110,7 +113,7 @@ function CommentBranch({
     depth,
     replyToName,
     canReply,
-    workId,
+    submitComment,
     focusCommentId,
     onReload,
 }: {
@@ -119,7 +122,7 @@ function CommentBranch({
     depth: number;
     replyToName?: string;
     canReply: boolean;
-    workId: string;
+    submitComment: SubmitComment;
     focusCommentId?: string | null;
     onReload: () => Promise<unknown>;
 }) {
@@ -131,7 +134,7 @@ function CommentBranch({
     );
 
     const { draft, setDraft, isPosting, submit } = useCommentComposer(
-        workId,
+        submitComment,
         onReload,
         comment.id,
     );
@@ -195,7 +198,7 @@ function CommentBranch({
                             depth={depth + 1}
                             replyToName={authorName}
                             canReply={canReply}
-                            workId={workId}
+                            submitComment={submitComment}
                             focusCommentId={focusCommentId}
                             onReload={onReload}
                         />

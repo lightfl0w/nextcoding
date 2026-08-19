@@ -1,10 +1,13 @@
-import { getJson, mutateJson } from "./http";
+import { getJson, HttpError, mutateJson, postForm } from "./http";
+import type { Comment } from "./types";
 
 export interface TemplateAuthor {
     id: string | null;
     name: string | null;
     image: string | null;
 }
+
+export type TemplateStatus = "pending" | "published" | "rejected";
 
 export interface Template {
     id: string;
@@ -13,6 +16,7 @@ export interface Template {
     category: string | null;
     tags: string[];
     coverUrl: string | null;
+    status: TemplateStatus;
     fileCount: number;
     useCount: number;
     rating: number;
@@ -106,8 +110,8 @@ export function templateLeaderboardPath(limit?: number) {
     return `/api/templates/leaderboard${qs}`;
 }
 
-export function workTemplatePath(workId: string) {
-    return `/api/works/${workId}/template`;
+export function templateCommentsPath(id: string) {
+    return `/api/templates/${id}/comments`;
 }
 
 export async function fetchTemplates(path: string): Promise<Template[]> {
@@ -133,7 +137,60 @@ export async function fetchTemplateStats(
 export async function fetchTemplateLeaderboard(
     path: string,
 ): Promise<Template[]> {
-    return getJson(path);
+    return getJson<Template[]>(path);
+}
+
+export function fetchTemplateComments(
+    path: string,
+): Promise<Comment[]> {
+    return getJson<Comment[]>(path);
+}
+
+/**
+ * 发表模板评论。
+ * @param id - 模板 ID。
+ * @param content - 评论内容。
+ * @param parentId - 父评论 ID；顶级评论传 `null`。
+ */
+export function postTemplateComment(
+    id: string,
+    content: string,
+    parentId: string | null,
+): Promise<Comment> {
+    return mutateJson<Comment>(
+        templateCommentsPath(id),
+        "POST",
+        { content, parentId },
+    );
+}
+
+export interface UploadedTemplateCover {
+    key: string;
+    url: string;
+}
+
+/**
+ * 上传模板封面（裁剪后的图片）。
+ * @param file - 裁剪后的封面图片文件。
+ * @throws {@link HttpError} 请求失败时抛出。
+ */
+export async function uploadTemplateCover(
+    file: File,
+): Promise<UploadedTemplateCover> {
+    const form = new FormData();
+    form.append("file", file);
+    const response = await postForm("/api/templates/cover", form);
+    if (!response.ok) {
+        let message = "封面上传失败";
+        try {
+            const body = (await response.json()) as { error?: string };
+            if (body.error) {
+                message = body.error;
+            }
+        } catch {}
+        throw new HttpError(response.status, message);
+    }
+    return (await response.json()) as UploadedTemplateCover;
 }
 
 export async function applyTemplate(id: string): Promise<{ id: string }> {
@@ -147,29 +204,24 @@ export async function rateTemplate(
     return mutateJson(`/api/templates/${id}/rate`, "POST", { score });
 }
 
-/**
- * 开启作品为模板。
- * @param workId - 作品 ID。
- * @param meta - 模板元信息（标题/描述/分类/封面，缺省取作品）。
- */
-export async function enableWorkTemplate(
-    workId: string,
-    meta?: {
-        title?: string;
-        description?: string;
-        category?: string;
-        coverUrl?: string;
-    },
-): Promise<{ ok: boolean }> {
-    return mutateJson(workTemplatePath(workId), "POST", meta ?? {});
+export interface TemplateFileInput {
+    name: string;
+    contentType?: string;
+    content: string;
+    isBase64?: boolean;
 }
 
 /**
- * 关闭作品模板状态。
- * @param workId - 作品 ID。
+ * 创建全新模板：提交元信息与文件内容，进入待审核状态。
+ * @param values - 模板标题/描述/分类/标签/封面与文件列表。
  */
-export async function disableWorkTemplate(
-    workId: string,
-): Promise<{ ok: boolean }> {
-    return mutateJson(workTemplatePath(workId), "DELETE");
+export async function createTemplate(values: {
+    title: string;
+    description?: string;
+    category?: string;
+    tags?: string[];
+    coverUrl?: string;
+    files: TemplateFileInput[];
+}): Promise<{ ok: boolean; template: { id: string; status: TemplateStatus } }> {
+    return mutateJson("/api/templates", "POST", values);
 }

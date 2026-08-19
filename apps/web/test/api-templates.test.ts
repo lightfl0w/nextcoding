@@ -1,5 +1,12 @@
-import { describe, expect, it } from "vitest";
-import { templatePath, templatesPath } from "../src/lib/api/templates";
+import { describe, expect, it, vi } from "vitest";
+import {
+    createTemplate,
+    templatePath,
+    templatesPath,
+} from "../src/lib/api/templates";
+import { jsonResponse, setupFetchStub } from "./helpers";
+
+setupFetchStub();
 
 describe("api/templates", () => {
     describe("templatesPath", () => {
@@ -42,6 +49,49 @@ describe("api/templates", () => {
 
         it("不同 id 返回不同路径", () => {
             expect(templatePath("abc")).toBe("/api/templates/abc");
+        });
+    });
+
+    describe("createTemplate", () => {
+        it("POST 到 /api/templates 并返回待审核模板", async () => {
+            vi.mocked(fetch).mockResolvedValue(
+                jsonResponse(
+                    { ok: true, template: { id: "t1", status: "pending" } },
+                    201,
+                ),
+            );
+            const result = await createTemplate({
+                title: "Python 小游戏",
+                category: "game",
+                tags: ["pygame"],
+                files: [{ name: "main.py", content: "print(1)" }],
+            });
+            expect(result).toEqual({
+                ok: true,
+                template: { id: "t1", status: "pending" },
+            });
+            expect(fetch).toHaveBeenCalledWith(
+                "/api/templates",
+                expect.objectContaining({
+                    method: "POST",
+                    headers: expect.any(Object),
+                    body: JSON.stringify({
+                        title: "Python 小游戏",
+                        category: "game",
+                        tags: ["pygame"],
+                        files: [{ name: "main.py", content: "print(1)" }],
+                    }),
+                }),
+            );
+        });
+
+        it("失败时抛出服务端错误", async () => {
+            vi.mocked(fetch).mockResolvedValue(
+                jsonResponse({ error: "请至少添加一个模板文件" }, 400),
+            );
+            await expect(
+                createTemplate({ title: "x", files: [] }),
+            ).rejects.toThrow("请至少添加一个模板文件");
         });
     });
 });

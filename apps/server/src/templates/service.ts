@@ -6,7 +6,6 @@ import { insertWork, insertWorkFiles } from "../works/repository.js";
 import { insertNotification } from "../works/socialRepository.js";
 import {
     bumpTemplateUseCount,
-    bumpWorkTemplateUseCount,
     findTemplate,
     insertTemplateUse,
 } from "./repository.js";
@@ -30,6 +29,9 @@ export async function useTemplateForUser(
 ): Promise<TemplateUseResult> {
     const tpl = await findTemplate(templateId);
     if (!tpl) {
+        throw new Error("模板不存在");
+    }
+    if (tpl.status !== "published") {
         throw new Error("模板不存在");
     }
 
@@ -101,9 +103,6 @@ export async function useTemplateForUser(
 
     await insertTemplateUse({ templateId, workId, userId });
     await bumpTemplateUseCount(templateId);
-    if (tpl.workId) {
-        await bumpWorkTemplateUseCount(tpl.workId);
-    }
     await insertActivity({
         userId,
         type: "template",

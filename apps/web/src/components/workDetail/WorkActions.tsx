@@ -3,7 +3,6 @@ import {
     Code2,
     Eye,
     GitFork,
-    LayoutTemplate,
     MessageSquare,
     Play,
     Sparkles,
@@ -23,13 +22,9 @@ interface WorkActionsProps {
     isOwner: boolean;
     isRunning: boolean;
     sparked: boolean;
-    isTemplate: boolean;
-    templateUseCount: number;
-    isUsingTemplate: boolean;
     onRun: () => void;
     onSpark: () => void;
     onRemix: () => void;
-    onUseTemplate: () => void;
 }
 
 /**
@@ -41,14 +36,10 @@ interface WorkActionsProps {
  * @param props.isOwner - 是否本人作品。
  * @param props.isRunning - 是否运行中。
  * @param props.sparked - 是否已送火花。
- * @param props.isTemplate - 是否开放为模板。
- * @param props.templateUseCount - 被用作模板次数。
- * @param props.isUsingTemplate - 使用模板请求进行中。
  * @param props.onRun - 运行作品。
  * @param props.onSpark - 送火花。
  * @param props.onRemix - 二创。
- * @param props.onUseTemplate - 使用此模板创作。
- * @remarks 提供 运行 / 送火花 / 二创 / 使用模板 操作。
+ * @remarks 提供 运行 / 送火花 / 二创 操作。
  */
 export function WorkActions({
     workId,
@@ -59,13 +50,9 @@ export function WorkActions({
     isOwner,
     isRunning,
     sparked,
-    isTemplate,
-    templateUseCount,
-    isUsingTemplate,
     onRun,
     onSpark,
     onRemix,
-    onUseTemplate,
 }: WorkActionsProps) {
     return (
         <div className="flex flex-col gap-4 px-1">
@@ -85,13 +72,6 @@ export function WorkActions({
                     value={formatCount(commentCount)}
                     label="条评论"
                 />
-                {isTemplate && (
-                    <StatBadge
-                        icon={LayoutTemplate}
-                        value={formatCount(templateUseCount)}
-                        label="次被用作模板"
-                    />
-                )}
                 {runtime && (
                     <Chip size="sm" variant="soft" className="gap-1">
                         <Code2 className="size-3" />
@@ -134,21 +114,6 @@ export function WorkActions({
                     <GitFork className="size-4" />
                     二创
                 </Button>
-                {isTemplate && !isOwner && (
-                    <Button
-                        variant="secondary"
-                        className="gap-2 shrink-0"
-                        isDisabled={isUsingTemplate}
-                        onPress={onUseTemplate}
-                    >
-                        {isUsingTemplate ? (
-                            <Spinner size="sm" color="current" />
-                        ) : (
-                            <LayoutTemplate className="size-4" />
-                        )}
-                        使用此模板创作
-                    </Button>
-                )}
                 <BookmarkButton workId={workId} />
                 <ReportButton workId={workId} />
             </div>

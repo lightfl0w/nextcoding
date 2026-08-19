@@ -1,37 +1,21 @@
-import { Avatar, Card } from "@heroui/react";
+import { Avatar } from "@heroui/react";
 import { Link } from "@tanstack/react-router";
-import {
-    Award,
-    Boxes,
-    Heart,
-    Loader2,
-    MessageSquare,
-    Sparkles,
-} from "lucide-react";
+import { Boxes, Heart, Loader2, MessageSquare, Sparkles } from "lucide-react";
 import { memo } from "react";
-import { AchievementBadge } from "~/components/achievements/AchievementBadge";
 import { useTemplateStats } from "~/hooks/useTemplateStats";
-import { useUserAchievements } from "~/hooks/useUserAchievements";
 import { formatCount, formatDate } from "~/lib/format";
 
 /**
  * 模板使用数据面板（模板作者专属）。
  * @param props.templateId - 模板 ID。
- * @param props.authorId - 模板作者 ID。
- * @remarks 展示使用记录、派生作品互动汇总与模板成就徽章。
+ * @remarks 展示使用记录与派生作品互动汇总。
  */
 export const TemplateStatsPanel = memo(function TemplateStatsPanel({
     templateId,
-    authorId,
 }: {
     templateId: string;
-    authorId: string;
 }) {
     const { stats, isLoading } = useTemplateStats(templateId);
-    const { achievements } = useUserAchievements(authorId);
-    const templateAchievements = achievements.filter(
-        (achievement) => achievement.category === "template",
-    );
 
     if (isLoading) {
         return (
@@ -75,24 +59,6 @@ export const TemplateStatsPanel = memo(function TemplateStatsPanel({
                     </div>
                 ))}
             </div>
-
-            {templateAchievements.length > 0 && (
-                <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-                        <Award className="size-4 text-primary" />
-                        已解锁成就
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                        {templateAchievements.map((achievement) => (
-                            <AchievementBadge
-                                key={achievement.id}
-                                achievement={achievement}
-                                unlocked
-                            />
-                        ))}
-                    </div>
-                </div>
-            )}
 
             <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
@@ -155,18 +121,6 @@ export const TemplateStatsPanel = memo(function TemplateStatsPanel({
                     </div>
                 )}
             </div>
-
-            <Card className="p-0 shadow-none rounded-2xl border border-primary/25 bg-primary/5">
-                <Card.Content className="p-4 flex items-start gap-2">
-                    <Award className="size-4 text-primary mt-0.5 shrink-0" />
-                    <p className="text-xs text-foreground/60 leading-relaxed">
-                        使用次数达标可解锁专属成就：发布第 1
-                        个模板解锁「模板先锋」； 单个模板被使用 100
-                        次解锁「万人师表」； 拥有 5 个模板且总使用量超 1000
-                        次解锁「模板大师」。
-                    </p>
-                </Card.Content>
-            </Card>
         </div>
     );
 });

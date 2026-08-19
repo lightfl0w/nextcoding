@@ -22,10 +22,7 @@ interface WorkSummaryRow extends AuthoredRow {
 interface WorkDetailRow extends WorkSummaryRow {
     userId: string;
     status: "draft" | "published";
-    isTemplate: boolean;
-    templateUseCount: number;
     templateId: string | null;
-    templateKey: string | null;
     updatedAt: Date;
     followerCount: number | null;
     isFollowing: number | null;
@@ -116,10 +113,7 @@ export function toWorkDetail<TFile>(row: WorkDetailRow, files: TFile[]) {
         ...summary,
         userId: row.userId,
         status: row.status,
-        isTemplate: row.isTemplate,
-        templateUseCount: row.templateUseCount,
         templateId: row.templateId,
-        templateKey: row.templateKey,
         updatedAt: row.updatedAt,
         files,
         author: {

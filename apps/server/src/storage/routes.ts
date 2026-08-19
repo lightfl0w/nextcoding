@@ -33,14 +33,14 @@ function contentTypeOf(key: string): string {
 /**
  * 判断某个存储对象是否可被当前请求读取。
  *
- * 头像为公开资源；作品相关对象（文件、快照、blob）仅在作品已发布或请求者
- * 为作者本人时可读，否则统一拒绝。
+ * 头像与模板封面为公开资源；作品相关对象（文件、快照、blob）仅在作品已发布
+ * 或请求者为作者本人时可读，否则统一拒绝。
  */
 async function canReadStorageKey(
     key: string,
     session: Awaited<ReturnType<typeof readSession>>,
 ): Promise<boolean> {
-    if (key.startsWith("avatars/")) {
+    if (key.startsWith("avatars/") || key.startsWith("template-covers/")) {
         return true;
     }
     const match = key.match(/^works\/([^/]+)\//);

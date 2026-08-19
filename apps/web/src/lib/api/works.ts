@@ -1,22 +1,6 @@
 import { getJson, HttpError, mutateJson, postForm } from "./http";
 import type { OwnedWork, Work, WorkDetail, WorkSort } from "./types";
 
-/**
- * 基于作品的模板创建草稿。
- * @param workId - 开放为模板的作品 ID。
- * @returns 新草稿信息。
- */
-export async function applyWorkTemplate(
-    workId: string,
-): Promise<{ id: string; title: string; files: number }> {
-    return mutateJson(
-        `/api/works/${workId}/use-template`,
-        "POST",
-        undefined,
-        "使用模板失败",
-    );
-}
-
 export function worksPath(
     sort: WorkSort,
     limit: number,

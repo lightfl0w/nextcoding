@@ -67,14 +67,14 @@ export function useMonacoDrafts({
     }, [monaco, editor, activeKey]);
 
     useEffect(() => {
-        if (!monaco || !activeKey || activeContent === undefined) {
+        if (!monaco || !editor || !activeKey || activeContent === undefined) {
             return;
         }
         const model = modelsRef.current.get(activeKey);
         if (model) {
             fillEmptyModel(monaco, model, activeContent);
         }
-    }, [activeKey, activeContent, monaco]);
+    }, [activeKey, activeContent, monaco, editor]);
 
     const readDraft = useCallback(
         (key: string) => modelsRef.current.get(key)?.getValue() ?? null,

@@ -11,7 +11,7 @@ import {
 } from "@heroui/react";
 import { Camera } from "lucide-react";
 import { useRef, useState } from "react";
-import { AvatarCropModal } from "~/components/AvatarCropModal";
+import { ImageCropModal } from "~/components/ImageCropModal";
 import { uploadAvatar } from "~/lib/api";
 
 const AVATAR_ACCEPT = "image/png,image/jpeg,image/webp,image/gif";
@@ -201,8 +201,10 @@ function AvatarField({
                 </p>
             </div>
 
-            <AvatarCropModal
+            <ImageCropModal
                 file={pendingCropFile}
+                title="裁剪头像"
+                fileName="avatar.png"
                 onCrop={handleCropped}
                 onCancel={handleCropCancel}
             />

@@ -230,7 +230,12 @@ export function useCodeRunner() {
         const cleanup: Array<() => void> = [];
         let lastMoveAt = 0;
         const send = (events: PygameInputEvent[]) => {
-            pygameWorkerRef.current?.postMessage({ type: "input", events });
+            const rect = target.getBoundingClientRect();
+            pygameWorkerRef.current?.postMessage({
+                type: "input",
+                events,
+                rect: { width: rect.width, height: rect.height },
+            });
         };
         const onKey = (event: KeyboardEvent) => {
             event.preventDefault();
@@ -302,6 +307,10 @@ export function useCodeRunner() {
                 }
             } else if (data.type === "ready" || data.type === "running") {
                 setLoadStage(null);
+            } else if (data.type === "stdout") {
+                append("stdout", data.text);
+            } else if (data.type === "stderr") {
+                append("stderr", data.text);
             } else if (data.type === "exited") {
                 const startedAt = pygameStartedAtRef.current;
                 if (data.reason === "error") {
@@ -327,7 +336,7 @@ export function useCodeRunner() {
                 setLoopHint(false);
             }
         },
-        [detachInputListeners],
+        [append, detachInputListeners],
     );
 
     const teardownPygameWorker = useCallback(() => {
