@@ -9,6 +9,7 @@ import type {
     LeaderboardWork,
 } from "~/lib/api/leaderboard";
 import { formatCount } from "~/lib/format";
+import { LeaderboardPodium, type PodiumEntry } from "./LeaderboardPodium";
 
 interface LeaderboardTableProps {
     items: LeaderboardWork[] | LeaderboardContributor[];
@@ -35,23 +36,70 @@ export function LeaderboardTable({
         );
     }
 
+    const top3 = items.slice(0, 3).map((item) => toPodiumEntry(item, type));
+    const rest = items.slice(3);
+
     return (
-        <div className="flex flex-col gap-2">
-            {items.map((item) =>
-                type === "works" ? (
-                    <WorkRow
-                        key={(item as LeaderboardWork).work.id}
-                        item={item as LeaderboardWork}
-                    />
-                ) : (
-                    <ContributorRow
-                        key={(item as LeaderboardContributor).author.id}
-                        item={item as LeaderboardContributor}
-                    />
-                ),
+        <div className="flex flex-col gap-6">
+            <LeaderboardPodium items={top3} />
+            {rest.length > 0 && (
+                <div className="flex flex-col gap-2">
+                    <div className="text-sm font-semibold text-foreground/60 px-1">
+                        其余排名
+                    </div>
+                    {rest.map((item) =>
+                        type === "works" ? (
+                            <WorkRow
+                                key={(item as LeaderboardWork).work.id}
+                                item={item as LeaderboardWork}
+                            />
+                        ) : (
+                            <ContributorRow
+                                key={(item as LeaderboardContributor).author.id}
+                                item={item as LeaderboardContributor}
+                            />
+                        ),
+                    )}
+                </div>
             )}
         </div>
     );
+}
+
+function toPodiumEntry(
+    item: LeaderboardWork | LeaderboardContributor,
+    type: "works" | "contributors",
+): PodiumEntry {
+    if (type === "works") {
+        const work = item as LeaderboardWork;
+        return {
+            id: work.work.id,
+            rank: work.position,
+            title: work.work.title,
+            subtitle: work.work.author?.name ?? null,
+            avatarUrl: null,
+            avatarFallback: (work.work.title ?? "作").charAt(0).toUpperCase(),
+            value: work.sparks,
+            valueLabel: "火花",
+            to: "/work/$id",
+            params: { id: work.work.id },
+        };
+    }
+    const contributor = item as LeaderboardContributor;
+    return {
+        id: contributor.author.id ?? "",
+        rank: contributor.position,
+        title: contributor.author.name ?? "未命名用户",
+        subtitle: null,
+        avatarUrl: contributor.author.image ?? null,
+        avatarFallback: (contributor.author.name ?? "用")
+            .charAt(0)
+            .toUpperCase(),
+        value: contributor.totalSparks,
+        valueLabel: "火花",
+        to: "/user/$id",
+        params: { id: contributor.author.id ?? "" },
+    };
 }
 
 function getRankStyle(position: number) {

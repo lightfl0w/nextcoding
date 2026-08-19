@@ -43,14 +43,14 @@ export const TemplateStatsPanel = memo(function TemplateStatsPanel({
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2.5">
                 {statCards.map((item) => (
                     <div
                         key={item.label}
-                        className="rounded-xl border border-default-200/70 p-3 flex flex-col gap-1"
+                        className="rounded-xl border border-default-200/70 p-3.5 flex flex-col gap-1.5"
                     >
-                        <span className="flex items-center gap-1.5 text-xs text-foreground/45">
-                            <item.icon className="size-3.5" />
+                        <span className="flex items-center gap-1.5 text-xs text-foreground/45 whitespace-nowrap">
+                            <item.icon className="size-3.5 shrink-0" />
                             {item.label}
                         </span>
                         <span className="text-lg font-semibold text-foreground">

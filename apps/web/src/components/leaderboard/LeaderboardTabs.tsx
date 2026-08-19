@@ -1,4 +1,5 @@
 import { Tabs } from "@heroui/react";
+import { Award, Flame, LayoutTemplate } from "lucide-react";
 import type { LeaderboardPeriod, LeaderboardType } from "~/lib/api/leaderboard";
 
 interface LeaderboardTabsProps {
@@ -14,10 +15,14 @@ const PERIOD_TABS: Array<{ id: LeaderboardPeriod; label: string }> = [
     { id: "all", label: "全部" },
 ];
 
-const TYPE_TABS: Array<{ id: LeaderboardType; label: string }> = [
-    { id: "works", label: "作品" },
-    { id: "contributors", label: "作者" },
-    { id: "templates", label: "模板" },
+const TYPE_TABS: Array<{
+    id: LeaderboardType;
+    label: string;
+    icon: typeof Flame;
+}> = [
+    { id: "works", label: "作品", icon: Flame },
+    { id: "contributors", label: "作者", icon: Award },
+    { id: "templates", label: "模板", icon: LayoutTemplate },
 ];
 
 export function LeaderboardTabs({
@@ -58,6 +63,7 @@ export function LeaderboardTabs({
                     <Tabs.List>
                         {TYPE_TABS.map((tab) => (
                             <Tabs.Tab key={tab.id} id={tab.id}>
+                                <tab.icon className="size-4" />
                                 {tab.label}
                                 <Tabs.Indicator />
                             </Tabs.Tab>

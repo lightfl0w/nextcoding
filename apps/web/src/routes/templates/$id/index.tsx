@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { StarRating } from "~/components/templates/StarRating";
-import { TemplateLeaderboard } from "~/components/templates/TemplateLeaderboard";
 import { TemplateStatsPanel } from "~/components/templates/TemplateStatsPanel";
 import { TemplateUseTree } from "~/components/templates/TemplateUseTree";
 import { EmptyState } from "~/components/ui/EmptyState";
@@ -153,30 +152,6 @@ function TemplateDetailPage() {
             </header>
 
             <main className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-20 flex flex-col gap-8">
-                <div className="relative overflow-hidden">
-                    <div className="flex items-start justify-between gap-4">
-                        <h1 className="flex-1 min-w-0 text-2xl sm:text-4xl font-bold tracking-tight leading-[1.15] text-foreground text-balance">
-                            {template.title}
-                        </h1>
-                    </div>
-                </div>
-
-                <TemplateDetailActions
-                    template={{
-                        useCount: template.useCount,
-                        rating: template.rating,
-                        ratingCount: template.ratingCount,
-                        fileCount: template.fileCount,
-                    }}
-                    isPublished={isPublished}
-                    isAuthor={isAuthor}
-                    commentCount={commentCount}
-                    score={score}
-                    using={using}
-                    onUse={handleUse}
-                    onRate={handleRate}
-                />
-
                 <div className="relative rounded-2xl overflow-hidden border border-default-200/70 ring-1 ring-inset ring-default-200/60">
                     <div className="relative h-56 sm:h-72">
                         {template.coverUrl ? (
@@ -216,21 +191,29 @@ function TemplateDetailPage() {
                     </div>
                 </div>
 
-                {Array.isArray(template.tags) && template.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 -mt-2">
-                        {template.tags.map((tag) => (
-                            <Chip
-                                key={tag}
-                                size="sm"
-                                variant="soft"
-                                className="gap-1"
-                            >
-                                <Hash className="size-3 opacity-60" />
-                                <Chip.Label>{tag}</Chip.Label>
-                            </Chip>
-                        ))}
+                <div className="relative overflow-hidden">
+                    <div className="flex items-start justify-between gap-4">
+                        <h1 className="flex-1 min-w-0 text-2xl sm:text-4xl font-bold tracking-tight leading-[1.15] text-foreground text-balance">
+                            {template.title}
+                        </h1>
                     </div>
-                )}
+                </div>
+
+                <TemplateDetailActions
+                    template={{
+                        useCount: template.useCount,
+                        rating: template.rating,
+                        ratingCount: template.ratingCount,
+                        fileCount: template.fileCount,
+                    }}
+                    isPublished={isPublished}
+                    isAuthor={isAuthor}
+                    commentCount={commentCount}
+                    score={score}
+                    using={using}
+                    onUse={handleUse}
+                    onRate={handleRate}
+                />
 
                 {isPublished ? (
                     <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
@@ -251,11 +234,33 @@ function TemplateDetailPage() {
                                 <TemplateAuthorBlock template={template} />
                             </SectionCard>
 
-                            {template.description && (
+                            {(template.description ||
+                                (Array.isArray(template.tags) &&
+                                    template.tags.length > 0)) && (
                                 <SectionCard title="模板简介" icon={FileText}>
-                                    <p className="text-[15px] leading-relaxed text-foreground/80 whitespace-pre-wrap">
-                                        {template.description}
-                                    </p>
+                                    {template.description && (
+                                        <p className="text-[15px] leading-relaxed text-foreground/80 whitespace-pre-wrap">
+                                            {template.description}
+                                        </p>
+                                    )}
+                                    {Array.isArray(template.tags) &&
+                                        template.tags.length > 0 && (
+                                            <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-default-200/60 first:mt-0 first:pt-0 first:border-t-0">
+                                                {template.tags.map((tag) => (
+                                                    <Chip
+                                                        key={tag}
+                                                        size="sm"
+                                                        variant="soft"
+                                                        className="gap-1"
+                                                    >
+                                                        <Hash className="size-3 opacity-60" />
+                                                        <Chip.Label>
+                                                            {tag}
+                                                        </Chip.Label>
+                                                    </Chip>
+                                                ))}
+                                            </div>
+                                        )}
                                 </SectionCard>
                             )}
 
@@ -273,8 +278,6 @@ function TemplateDetailPage() {
                                     />
                                 </SectionCard>
                             )}
-
-                            <TemplateLeaderboard />
                         </aside>
                     </div>
                 ) : (

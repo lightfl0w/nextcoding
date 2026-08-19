@@ -6,6 +6,7 @@ import { EmptyState } from "~/components/ui/EmptyState";
 import { LoadingState } from "~/components/ui/LoadingState";
 import { useTemplateLeaderboard } from "~/hooks/useTemplateLeaderboard";
 import { formatCount } from "~/lib/format";
+import { LeaderboardPodium, type PodiumEntry } from "../leaderboard/LeaderboardPodium";
 import { StarRating } from "./StarRating";
 
 /**
@@ -33,18 +34,56 @@ export const TemplateLeaderboardList = memo(function TemplateLeaderboardList({
         );
     }
 
+    const top3 = templates
+        .slice(0, 3)
+        .map((template, index) => toPodiumEntry(template, index + 1));
+    const rest = templates.slice(3);
+
     return (
-        <div className="flex flex-col gap-2">
-            {templates.map((template, index) => (
-                <TemplateRow
-                    key={template.id}
-                    position={index + 1}
-                    template={template}
-                />
-            ))}
+        <div className="flex flex-col gap-6">
+            <LeaderboardPodium items={top3} />
+            {rest.length > 0 && (
+                <div className="flex flex-col gap-2">
+                    <div className="text-sm font-semibold text-foreground/60 px-1">
+                        其余排名
+                    </div>
+                    {rest.map((template, index) => (
+                        <TemplateRow
+                            key={template.id}
+                            position={index + 4}
+                            template={template}
+                        />
+                    ))}
+                </div>
+            )}
         </div>
     );
 });
+
+function toPodiumEntry(
+    template: {
+        id: string;
+        title: string;
+        authorName: string | null;
+        authorImage: string | null;
+        useCount: number;
+        rating: number;
+    },
+    rank: number,
+): PodiumEntry {
+    return {
+        id: template.id,
+        rank,
+        title: template.title,
+        subtitle: template.authorName ?? null,
+        avatarUrl: template.authorImage ?? null,
+        avatarFallback: (template.title ?? "模").charAt(0).toUpperCase(),
+        value: template.useCount,
+        valueLabel: "次使用",
+        to: "/templates/$id",
+        params: { id: template.id },
+    };
+}
 
 function getRankStyle(position: number) {
     if (position === 1) {

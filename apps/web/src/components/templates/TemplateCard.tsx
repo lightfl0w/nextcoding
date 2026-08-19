@@ -64,16 +64,6 @@ export const TemplateCard = memo(function TemplateCard({
                             {template.description}
                         </p>
                     )}
-                    {Array.isArray(template.tags) &&
-                        template.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                                {template.tags.map((tag) => (
-                                    <Chip key={tag} size="sm" variant="soft">
-                                        {tag}
-                                    </Chip>
-                                ))}
-                            </div>
-                        )}
                 </Link>
 
                 <div className="flex items-center justify-between gap-2 text-xs text-foreground/50">
