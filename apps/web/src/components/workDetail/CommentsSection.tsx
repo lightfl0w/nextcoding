@@ -1,8 +1,9 @@
-import { Card, Skeleton, Tabs } from "@heroui/react";
+import { Card, Skeleton, Tabs, useOverlayState } from "@heroui/react";
 import { Clock, Flame, MessageCircle } from "lucide-react";
 import { memo, useCallback, useState } from "react";
 import type { KeyedMutator } from "swr";
 import { useAuth } from "~/hooks/useAuth";
+import { ConfirmDialog } from "~/components/ui/ConfirmDialog";
 import {
     type SubmitComment,
     useCommentComposer,
@@ -86,13 +87,24 @@ export const CommentsSection = memo(function CommentsSection({
     const composer = useCommentComposer(submitComment, mutate);
     const threads = useCommentThreads(comments);
 
+    const deleteState = useOverlayState();
+    const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+
     const handleDelete = useCallback(
-        async (commentId: string) => {
-            await onDeleteComment(commentId);
-            await mutate();
+        (commentId: string) => {
+            setDeleteTargetId(commentId);
+            deleteState.open();
         },
-        [onDeleteComment, mutate],
+        [deleteState],
     );
+
+    const confirmDelete = useCallback(async () => {
+        if (!deleteTargetId) {
+            return;
+        }
+        await onDeleteComment(deleteTargetId);
+        await mutate();
+    }, [deleteTargetId, onDeleteComment, mutate]);
     const handlePin = useCallback(
         async (commentId: string, pinned: boolean) => {
             await onPinComment(commentId, pinned);
@@ -121,77 +133,87 @@ export const CommentsSection = memo(function CommentsSection({
     };
 
     return (
-        <Card>
-            <Tabs
-                selectedKey={sort}
-                onSelectionChange={(key) => onSortChange(key as CommentSort)}
-                className="w-full"
-                aria-label="评论排序"
-            >
-                <Card.Header className="flex flex-row w-full items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                        <Card.Title>评论</Card.Title>
-                        {comments && comments.length > 0 && (
-                            <span className="rounded-full bg-default-100 px-2 py-0.5 text-xs font-medium text-foreground/55">
-                                {comments.length}
-                            </span>
-                        )}
-                    </div>
-
-                    <Tabs.ListContainer>
-                        <Tabs.List className="w-full">
-                            <Tabs.Tab id="time" className="flex gap-1">
-                                <Clock className="size-3.5" />
-                                按时间
-                                <Tabs.Indicator />
-                            </Tabs.Tab>
-                            <Tabs.Tab
-                                id="popular"
-                                className="flex gap-1 whitespace-nowrap"
-                            >
-                                <Flame className="size-3.5" />
-                                受欢迎度
-                                <Tabs.Indicator />
-                            </Tabs.Tab>
-                        </Tabs.List>
-                    </Tabs.ListContainer>
-                </Card.Header>
-
-                <Card.Content className="pt-0">
-                    <div className="flex flex-col gap-5">
-                        {isLoggedIn ? (
-                            <CommentComposer
-                                draft={composer.draft}
-                                isPosting={composer.isPosting}
-                                onDraftChange={composer.setDraft}
-                                onSubmit={composer.submit}
-                            />
-                        ) : (
-                            <SignInPrompt />
-                        )}
-
-                        <Tabs.Panel className="pt-4" id="time">
-                            {isLoading ? (
-                                <CommentsSkeleton />
-                            ) : threads.length === 0 ? (
-                                <EmptyComments />
-                            ) : (
-                                renderThreads(threads, threadContext)
+        <>
+            <Card>
+                <Tabs
+                    selectedKey={sort}
+                    onSelectionChange={(key) => onSortChange(key as CommentSort)}
+                    className="w-full"
+                    aria-label="评论排序"
+                >
+                    <Card.Header className="flex flex-row w-full items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                            <Card.Title>评论</Card.Title>
+                            {comments && comments.length > 0 && (
+                                <span className="rounded-full bg-default-100 px-2 py-0.5 text-xs font-medium text-foreground/55">
+                                    {comments.length}
+                                </span>
                             )}
-                        </Tabs.Panel>
-                        <Tabs.Panel className="pt-4" id="popular">
-                            {isLoading ? (
-                                <CommentsSkeleton />
-                            ) : threads.length === 0 ? (
-                                <EmptyComments />
+                        </div>
+
+                        <Tabs.ListContainer>
+                            <Tabs.List className="w-full">
+                                <Tabs.Tab id="time" className="flex gap-1">
+                                    <Clock className="size-3.5" />
+                                    按时间
+                                    <Tabs.Indicator />
+                                </Tabs.Tab>
+                                <Tabs.Tab
+                                    id="popular"
+                                    className="flex gap-1 whitespace-nowrap"
+                                >
+                                    <Flame className="size-3.5" />
+                                    受欢迎度
+                                    <Tabs.Indicator />
+                                </Tabs.Tab>
+                            </Tabs.List>
+                        </Tabs.ListContainer>
+                    </Card.Header>
+
+                    <Card.Content className="pt-0">
+                        <div className="flex flex-col gap-5">
+                            {isLoggedIn ? (
+                                <CommentComposer
+                                    draft={composer.draft}
+                                    isPosting={composer.isPosting}
+                                    onDraftChange={composer.setDraft}
+                                    onSubmit={composer.submit}
+                                />
                             ) : (
-                                renderThreads(threads, threadContext)
+                                <SignInPrompt />
                             )}
-                        </Tabs.Panel>
-                    </div>
-                </Card.Content>
-            </Tabs>
-        </Card>
+
+                            <Tabs.Panel className="pt-4" id="time">
+                                {isLoading ? (
+                                    <CommentsSkeleton />
+                                ) : threads.length === 0 ? (
+                                    <EmptyComments />
+                                ) : (
+                                    renderThreads(threads, threadContext)
+                                )}
+                            </Tabs.Panel>
+                            <Tabs.Panel className="pt-4" id="popular">
+                                {isLoading ? (
+                                    <CommentsSkeleton />
+                                ) : threads.length === 0 ? (
+                                    <EmptyComments />
+                                ) : (
+                                    renderThreads(threads, threadContext)
+                                )}
+                            </Tabs.Panel>
+                        </div>
+                    </Card.Content>
+                </Tabs>
+            </Card>
+
+            <ConfirmDialog
+                state={deleteState}
+                heading="删除评论"
+                description="确定删除这条评论吗？其回复将一并删除，此操作不可恢复。"
+                confirmLabel="删除评论"
+                onConfirm={confirmDelete}
+            />
+        </>
     );
 });
 

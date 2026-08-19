@@ -24,6 +24,7 @@ import {
 } from "@nextcoding/db";
 import { and, count, desc, eq, gte, inArray, like, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
+import { detachAndRecomputeWorkTags } from "../tags/repository.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TREND_DAYS = 7;
@@ -513,6 +514,7 @@ export async function deleteWorkRows(workIds: string[]) {
 }
 
 export async function deleteWork(id: string) {
+    await detachAndRecomputeWorkTags(id);
     await deleteWorkRows([id]);
 }
 

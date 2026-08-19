@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { db, work } from "@nextcoding/db";
+import { eq } from "drizzle-orm";
 import { checkAndUnlockAchievements } from "../../achievements/checker.js";
 import { insertActivity } from "../../activities/repository.js";
 import {
@@ -27,6 +29,8 @@ import {
     updateWorkTitle,
     type WorkSort,
 } from "../repository.js";
+import { syncWorkTags } from "../../tags/repository.js";
+import { parseTags } from "../tags.js";
 import { toOwnedWork, toWorkDetail, toWorkSummary } from "../serializers.js";
 
 export const catalogRoutes = new Hono<AuthenticatedEnv>();
@@ -127,6 +131,15 @@ catalogRoutes.post("/:id/publish", requireWorkAuthor, async (c) => {
     }
     await publishWork(workId);
     const userId = c.get("userId");
+
+    const [workRow] = await db
+        .select({ tags: work.tags })
+        .from(work)
+        .where(eq(work.id, workId))
+        .limit(1);
+    if (workRow) {
+        await syncWorkTags(workId, parseTags(workRow.tags));
+    }
     await insertActivity({
         userId,
         type: "publish",

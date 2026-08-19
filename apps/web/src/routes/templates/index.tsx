@@ -27,6 +27,8 @@ function TemplatesPage() {
     const { isLoggedIn } = useAuth();
     const navigate = useNavigate();
 
+    const visibleTemplates = templates;
+
     const handleUseTemplate = async (templateId: string) => {
         if (!isLoggedIn) {
             navigate({
@@ -85,7 +87,9 @@ function TemplatesPage() {
                             variant={
                                 category === undefined ? "primary" : "ghost"
                             }
-                            onPress={() => setCategory(undefined)}
+                            onPress={() => {
+                                setCategory(undefined);
+                            }}
                         >
                             全部
                         </Button>
@@ -96,7 +100,9 @@ function TemplatesPage() {
                                 variant={
                                     category === item.id ? "primary" : "ghost"
                                 }
-                                onPress={() => setCategory(item.id)}
+                                onPress={() => {
+                                    setCategory(item.id);
+                                }}
                             >
                                 #{item.label}
                             </Button>
@@ -131,11 +137,11 @@ function TemplatesPage() {
                             />
                         ))}
                     </div>
-                ) : templates.length === 0 ? (
+                ) : visibleTemplates.length === 0 ? (
                     <EmptyState
                         icon={LayoutTemplate}
                         title="该分类下暂无模板"
-                        hint="换个分类看看，或创建你自己的模板"
+                        hint="换个分类或标签看看，或创建你自己的模板"
                         action={
                             <Button
                                 variant="primary"
@@ -151,7 +157,7 @@ function TemplatesPage() {
                     />
                 ) : (
                     <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
-                        {templates.map((template) => (
+                        {visibleTemplates.map((template) => (
                             <TemplateCard
                                 key={template.id}
                                 template={template}

@@ -16,13 +16,13 @@ export const WorkCard = memo(function WorkCard({ work }: { work: Work }) {
 
     return (
         <div className="h-full group">
-            <Card className="w-full rounded-2xl border border-default-200/70 bg-surface p-0 shadow-sm transition-[transform,border-color,box-shadow] duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/30 group-hover:shadow-md">
-                <div className="flex h-full flex-col gap-3 p-4 sm:p-5">
-                    <Link
-                        to="/work/$id"
-                        params={{ id: work.id }}
-                        className="flex min-w-0 flex-col gap-2.5"
-                    >
+            <Link
+                to="/work/$id"
+                params={{ id: work.id }}
+                className="flex min-w-0 flex-col gap-2.5"
+            >
+                <Card className="w-full rounded-2xl border border-default-200/70 bg-surface p-0 shadow-sm transition-[transform,border-color,box-shadow] duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/30 group-hover:shadow-md">
+                    <div className="flex h-full flex-col gap-3 p-4 sm:p-5">
                         <Card.Header className="gap-1">
                             <Card.Title className="text-sm font-semibold line-clamp-1">
                                 {work.title}
@@ -41,63 +41,63 @@ export const WorkCard = memo(function WorkCard({ work }: { work: Work }) {
                                 ))}
                             </div>
                         )}
-                    </Link>
 
-                    <Card.Footer className="mt-auto justify-between border-t border-default-200/60 pt-3">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                            <Avatar size="sm">
-                                <Avatar.Image
-                                    src={work.author.image ?? ""}
-                                    alt={(work.author.name ?? "?")
-                                        .charAt(0)
-                                        .toUpperCase()}
-                                />
-                                <Avatar.Fallback>
-                                    {(work.author.name ?? "?")
-                                        .charAt(0)
-                                        .toUpperCase()}
-                                </Avatar.Fallback>
-                            </Avatar>
-                            <span className="text-xs truncate">
-                                {work.author.name ?? "匿名"}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-2.5 text-xs text-foreground/60 tabular-nums">
-                            <button
-                                type="button"
-                                title={sparked ? "已经送过火花" : "火花"}
-                                onClick={handleSparkClick}
-                                className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 transition-colors ${
-                                    sparked
-                                        ? "text-primary bg-primary/10"
-                                        : "hover:text-foreground/80 hover:bg-hover"
-                                }`}
-                            >
-                                <Sparkles
-                                    className="size-3"
-                                    fill={sparked ? "currentColor" : "none"}
-                                />
-                                {formatCount(count)}
-                            </button>
-                            <span
-                                className="flex items-center gap-0.5"
-                                title={`${work.views} 次浏览`}
-                            >
-                                <Eye className="size-3" />
-                                {formatCount(work.views)}
-                            </span>
-                            <span
-                                className="flex items-center gap-0.5"
-                                title={new Date(
-                                    work.createdAt,
-                                ).toLocaleString()}
-                            >
-                                {formatDate(work.createdAt)}
-                            </span>
-                        </div>
-                    </Card.Footer>
-                </div>
-            </Card>
+                        <Card.Footer className="mt-auto justify-between pt-3">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                <Avatar size="sm">
+                                    <Avatar.Image
+                                        src={work.author.image ?? ""}
+                                        alt={(work.author.name ?? "?")
+                                            .charAt(0)
+                                            .toUpperCase()}
+                                    />
+                                    <Avatar.Fallback>
+                                        {(work.author.name ?? "?")
+                                            .charAt(0)
+                                            .toUpperCase()}
+                                    </Avatar.Fallback>
+                                </Avatar>
+                                <span className="text-xs truncate">
+                                    {work.author.name ?? "匿名"}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2.5 text-xs text-foreground/60 tabular-nums">
+                                <button
+                                    type="button"
+                                    title={sparked ? "已经送过火花" : "火花"}
+                                    onClick={handleSparkClick}
+                                    className={`flex items-center gap-0.5 rounded-full px-1.5 py-0.5 transition-colors ${
+                                        sparked
+                                            ? "text-primary bg-primary/10"
+                                            : "hover:text-foreground/80 hover:bg-hover"
+                                    }`}
+                                >
+                                    <Sparkles
+                                        className="size-3"
+                                        fill={sparked ? "currentColor" : "none"}
+                                    />
+                                    {formatCount(count)}
+                                </button>
+                                <span
+                                    className="flex items-center gap-0.5"
+                                    title={`${work.views} 次浏览`}
+                                >
+                                    <Eye className="size-3" />
+                                    {formatCount(work.views)}
+                                </span>
+                                <span
+                                    className="flex items-center gap-0.5"
+                                    title={new Date(
+                                        work.createdAt,
+                                    ).toLocaleString()}
+                                >
+                                    {formatDate(work.createdAt)}
+                                </span>
+                            </div>
+                        </Card.Footer>
+                    </div>
+                </Card>
+            </Link>
         </div>
     );
 });

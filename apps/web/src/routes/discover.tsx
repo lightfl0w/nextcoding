@@ -37,76 +37,96 @@ function DiscoverPage() {
                 description="浏览社区里大家发布的编程作品，找到感兴趣的灵感"
             />
 
-            <div className="flex flex-col gap-4 border-b border-default-200/70 pb-5 lg:flex-row lg:items-center lg:justify-between">
-                <div className="relative w-full lg:max-w-md">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-primary/60" />
-                    <Input
-                        value={keyword}
-                        onChange={(event) => setKeyword(event.target.value)}
-                        placeholder="搜索作品标题、标签、简介…"
-                        aria-label="搜索作品"
-                        className="w-full pl-10 pr-9"
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+                <div className="min-w-0 flex-1">
+                    <WorksGrid
+                        works={works}
+                        isLoading={isLoading}
+                        error={error}
+                        placeholderCount={PLACEHOLDER_COUNT}
+                        emptyText={
+                            searchTerm
+                                ? "没有找到相关作品，换个关键词试试"
+                                : undefined
+                        }
                     />
-                    {keyword && (
-                        <button
-                            type="button"
-                            onClick={() => setKeyword("")}
-                            aria-label="清除搜索"
-                            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-foreground/40 transition-colors hover:bg-hover hover:text-foreground"
-                        >
-                            <X className="size-4" />
-                        </button>
-                    )}
                 </div>
 
-                <Tabs
-                    selectedKey={sort}
-                    onSelectionChange={(key) => setSort(key as WorkSort)}
-                    className="w-full lg:w-auto"
-                >
-                    <Tabs.ListContainer className="w-full rounded-xl bg-default-100/70 p-1 lg:w-auto">
-                        <Tabs.List aria-label="作品排序" className="w-full">
-                            <Tabs.Tab
-                                id="weekly"
-                                className="flex items-center justify-center gap-1.5 text-sm"
-                            >
-                                <Crown className="size-4" />
-                                本周热榜
-                                <Tabs.Indicator />
-                            </Tabs.Tab>
-                            <Tabs.Tab
-                                id="latest"
-                                className="flex items-center justify-center gap-1.5 text-sm"
-                            >
-                                <Clock className="size-4" />
-                                最新发布
-                                <Tabs.Indicator />
-                            </Tabs.Tab>
-                            <Tabs.Tab
-                                id="popular"
-                                className="flex items-center justify-center gap-1.5 text-sm"
-                            >
-                                <Flame className="size-4" />
-                                最受欢迎
-                                <Tabs.Indicator />
-                            </Tabs.Tab>
-                        </Tabs.List>
-                    </Tabs.ListContainer>
-                </Tabs>
-            </div>
+                <aside className="flex w-full flex-col gap-6 lg:sticky lg:top-20 lg:w-64 lg:shrink-0">
+                    <div className="flex flex-col gap-2">
+                        <span className="text-sm font-medium text-foreground/80">
+                            搜索
+                        </span>
+                        <div className="relative w-full">
+                            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-primary/60" />
+                            <Input
+                                value={keyword}
+                                onChange={(event) =>
+                                    setKeyword(event.target.value)
+                                }
+                                placeholder="搜索作品标题、标签、简介…"
+                                aria-label="搜索作品"
+                                className="w-full pl-10 pr-9"
+                            />
+                            {keyword && (
+                                <button
+                                    type="button"
+                                    onClick={() => setKeyword("")}
+                                    aria-label="清除搜索"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-foreground/40 transition-colors hover:bg-hover hover:text-foreground"
+                                >
+                                    <X className="size-4" />
+                                </button>
+                            )}
+                        </div>
+                    </div>
 
-            <div>
-                <WorksGrid
-                    works={works}
-                    isLoading={isLoading}
-                    error={error}
-                    placeholderCount={PLACEHOLDER_COUNT}
-                    emptyText={
-                        searchTerm
-                            ? "没有找到相关作品，换个关键词试试"
-                            : undefined
-                    }
-                />
+                    <div className="flex flex-col gap-2">
+                        <span className="text-sm font-medium text-foreground/80">
+                            排序
+                        </span>
+                        <Tabs
+                            selectedKey={sort}
+                            onSelectionChange={(key) =>
+                                setSort(key as WorkSort)
+                            }
+                            orientation="vertical"
+                            className="w-full"
+                        >
+                            <Tabs.ListContainer className="w-full rounded-xl bg-default-100/70 p-1">
+                                <Tabs.List
+                                    aria-label="作品排序"
+                                    className="flex w-full flex-col gap-1"
+                                >
+                                    <Tabs.Tab
+                                        id="weekly"
+                                        className="flex w-full items-center justify-start gap-2 rounded-lg px-3 py-2 text-sm data-[selected=true]:bg-surface data-[selected=true]:text-primary data-[selected=true]:shadow-sm"
+                                    >
+                                        <Crown className="size-4" />
+                                        本周热榜
+                                        <Tabs.Indicator />
+                                    </Tabs.Tab>
+                                    <Tabs.Tab
+                                        id="latest"
+                                        className="flex w-full items-center justify-start gap-2 rounded-lg px-3 py-2 text-sm data-[selected=true]:bg-surface data-[selected=true]:text-primary data-[selected=true]:shadow-sm"
+                                    >
+                                        <Clock className="size-4" />
+                                        最新发布
+                                        <Tabs.Indicator />
+                                    </Tabs.Tab>
+                                    <Tabs.Tab
+                                        id="popular"
+                                        className="flex w-full items-center justify-start gap-2 rounded-lg px-3 py-2 text-sm data-[selected=true]:bg-surface data-[selected=true]:text-primary data-[selected=true]:shadow-sm"
+                                    >
+                                        <Flame className="size-4" />
+                                        最受欢迎
+                                        <Tabs.Indicator />
+                                    </Tabs.Tab>
+                                </Tabs.List>
+                            </Tabs.ListContainer>
+                        </Tabs>
+                    </div>
+                </aside>
             </div>
         </div>
     );

@@ -1,11 +1,12 @@
-import { Skeleton } from "@heroui/react";
+import { Skeleton, Tag, TagGroup } from "@heroui/react";
 import { memo } from "react";
-import type { Tag } from "~/lib/api";
-import { TagChip } from "./TagChip";
+import type { Tag as TagInfo } from "~/lib/api";
 
 interface TagCloudProps {
-    tags: Tag[];
+    tags: TagInfo[];
     isLoading?: boolean;
+    selectedSlug?: string | null;
+    onSelect?: (slug: string | null) => void;
 }
 
 const SKELETON_KEYS = Array.from(
@@ -14,13 +15,18 @@ const SKELETON_KEYS = Array.from(
 );
 
 /**
- * 标签云：根据作品数量展示不同大小的标签。
+ * 标签云
+ * 点击某个标签会把其 slug 通过 onSelect 回调上抛，由父页面在下方展示作品。
  * @param props.tags - 标签列表。
  * @param props.isLoading - 是否加载中。
+ * @param props.selectedSlug - 当前选中的标签 slug。
+ * @param props.onSelect - 选中变化回调（取消选中时传 null）。
  */
 export const TagCloud = memo(function TagCloud({
     tags,
     isLoading,
+    selectedSlug,
+    onSelect,
 }: TagCloudProps) {
     if (isLoading) {
         return (
@@ -36,32 +42,26 @@ export const TagCloud = memo(function TagCloud({
         return null;
     }
 
-    const maxCount = Math.max(...tags.map((t) => t.workCount), 1);
-
     return (
-        <div className="flex flex-wrap gap-2 items-center">
-            {tags.map((tag) => {
-                const ratio = tag.workCount / maxCount;
-                const sizeClass =
-                    ratio > 0.7
-                        ? "text-2xl"
-                        : ratio > 0.4
-                          ? "text-lg"
-                          : ratio > 0.2
-                            ? "text-base"
-                            : "text-sm";
-
-                return (
-                    <span key={tag.id} className={sizeClass}>
-                        <TagChip
-                            name={tag.name}
-                            slug={tag.slug}
-                            color={tag.color ?? undefined}
-                            size={sizeClass === "text-2xl" ? "md" : "sm"}
-                        />
-                    </span>
-                );
-            })}
-        </div>
+        <TagGroup
+            aria-label="标签"
+            selectionMode="single"
+            selectedKeys={selectedSlug ? [selectedSlug] : []}
+            onSelectionChange={(keys) => {
+                const next =
+                    keys === "all"
+                        ? null
+                        : ((Array.from(keys)[0] as string | undefined) ?? null);
+                onSelect?.(next);
+            }}
+        >
+            <TagGroup.List items={tags}>
+                {(tag) => (
+                    <Tag id={tag.slug} textValue={tag.name}>
+                        {tag.name}
+                    </Tag>
+                )}
+            </TagGroup.List>
+        </TagGroup>
     );
 });

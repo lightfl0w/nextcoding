@@ -20,6 +20,7 @@ import { Route as DraftsRouteImport } from './routes/drafts'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SearchRouteImport } from './routes/search'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TemplatesRouteImport } from './routes/templates'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
@@ -96,6 +97,11 @@ const MessagesRoute = MessagesRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -221,6 +227,7 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof LeaderboardRoute
   '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/templates': typeof TemplatesRouteWithChildren
   '/admin/achievements': typeof AdminAchievementsRoute
@@ -254,6 +261,7 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof LeaderboardRoute
   '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/admin/achievements': typeof AdminAchievementsRoute
   '/admin/comments': typeof AdminCommentsRoute
@@ -289,6 +297,7 @@ export interface FileRoutesById {
   '/leaderboard': typeof LeaderboardRoute
   '/messages': typeof MessagesRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/templates': typeof TemplatesRouteWithChildren
   '/admin/achievements': typeof AdminAchievementsRoute
@@ -326,6 +335,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/messages'
     | '/reset-password'
+    | '/search'
     | '/settings'
     | '/templates'
     | '/admin/achievements'
@@ -359,6 +369,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/messages'
     | '/reset-password'
+    | '/search'
     | '/settings'
     | '/admin/achievements'
     | '/admin/comments'
@@ -393,6 +404,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/messages'
     | '/reset-password'
+    | '/search'
     | '/settings'
     | '/templates'
     | '/admin/achievements'
@@ -429,6 +441,7 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute
   MessagesRoute: typeof MessagesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
   TemplatesRoute: typeof TemplatesRouteWithChildren
   TagsSlugRoute: typeof TagsSlugRoute
@@ -516,6 +529,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -741,6 +761,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   MessagesRoute: MessagesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
   TemplatesRoute: TemplatesRouteWithChildren,
   TagsSlugRoute: TagsSlugRoute,
