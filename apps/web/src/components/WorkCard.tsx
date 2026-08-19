@@ -16,8 +16,8 @@ export const WorkCard = memo(function WorkCard({ work }: { work: Work }) {
 
     return (
         <div className="h-full group">
-            <Card className="w-full p-0 shadow-none rounded-2xl overflow-hidden h-full border border-default-200/70 transition-[transform,border-color] duration-200 group-hover:border-default-300 group-hover:-translate-y-0.5">
-                <div className="p-4 flex flex-col gap-2.5 h-full">
+            <Card className="w-full rounded-2xl border border-default-200/70 bg-surface p-0 shadow-sm transition-[transform,border-color,box-shadow] duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/30 group-hover:shadow-md">
+                <div className="flex h-full flex-col gap-3 p-4 sm:p-5">
                     <Link
                         to="/work/$id"
                         params={{ id: work.id }}
@@ -43,7 +43,7 @@ export const WorkCard = memo(function WorkCard({ work }: { work: Work }) {
                         )}
                     </Link>
 
-                    <Card.Footer className="justify-between mt-auto">
+                    <Card.Footer className="mt-auto justify-between border-t border-default-200/60 pt-3">
                         <div className="flex items-center gap-1.5 min-w-0">
                             <Avatar size="sm">
                                 <Avatar.Image

@@ -26,6 +26,7 @@ import type { TemplateSort } from "./repository.js";
 import {
     countTemplateUses,
     createTemplate,
+    deleteTemplateComment,
     findTemplate,
     findTemplateComment,
     findTemplateDetail,
@@ -35,7 +36,9 @@ import {
     listTemplates,
     listTemplateUses,
     rateTemplate,
+    setTemplateCommentPinned,
     sumTemplateDerivedStats,
+    toggleTemplateCommentLike,
 } from "./repository.js";
 import { useTemplateForUser } from "./service.js";
 
@@ -284,16 +287,21 @@ templateRoutes.get("/:id/comments", async (c) => {
     if (tpl.status !== "published" && !(await canReviewTemplate(c, tpl))) {
         return jsonError(c, "模板不存在", 404);
     }
-    const rows = await listTemplateComments(id, COMMENT_PAGE_SIZE);
+    const sort = c.req.query("sort") === "popular" ? "popular" : "time";
+    const session = await readSession(c);
+    const viewerId = session?.user?.id ?? null;
+    const rows = await listTemplateComments(
+        id,
+        COMMENT_PAGE_SIZE,
+        sort,
+        viewerId,
+    );
     return c.json(rows.map(toComment));
 });
 
 templateRoutes.post("/:id/comments", requireSession, async (c) => {
     const id = c.req.param("id");
-    const [body, tpl] = await Promise.all([
-        readJsonBody(c),
-        findTemplate(id),
-    ]);
+    const [body, tpl] = await Promise.all([readJsonBody(c), findTemplate(id)]);
     if (!tpl) {
         return jsonError(c, "模板不存在", 404);
     }
@@ -310,7 +318,9 @@ templateRoutes.post("/:id/comments", requireSession, async (c) => {
     }
 
     const parentId =
-        typeof body.parentId === "string" && body.parentId ? body.parentId : null;
+        typeof body.parentId === "string" && body.parentId
+            ? body.parentId
+            : null;
     if (parentId) {
         const parent = await findTemplateComment(parentId);
         if (!parent || parent.templateId !== id) {
@@ -337,6 +347,70 @@ templateRoutes.post("/:id/comments", requireSession, async (c) => {
         201,
     );
 });
+
+templateRoutes.delete("/:id/comments/:commentId", requireSession, async (c) => {
+    const id = c.req.param("id");
+    const commentId = c.req.param("commentId");
+    const comment = await findTemplateComment(commentId);
+    if (!comment || comment.templateId !== id) {
+        return jsonError(c, "评论不存在", 404);
+    }
+
+    const userId = c.get("userId");
+    const isCommentAuthor = comment.userId === userId;
+    const tpl = await findTemplate(id);
+    const isTemplateAuthor = !!tpl && tpl.authorId === userId;
+    if (!isCommentAuthor && !isTemplateAuthor) {
+        return jsonError(c, "无权删除该评论", 403);
+    }
+
+    await deleteTemplateComment(commentId);
+    return c.json({ ok: true, id: commentId });
+});
+
+templateRoutes.patch(
+    "/:id/comments/:commentId/pin",
+    requireSession,
+    async (c) => {
+        const id = c.req.param("id");
+        const commentId = c.req.param("commentId");
+        const tpl = await findTemplate(id);
+        if (!tpl) {
+            return jsonError(c, "模板不存在", 404);
+        }
+        const comment = await findTemplateComment(commentId);
+        if (!comment || comment.templateId !== id) {
+            return jsonError(c, "评论不存在", 404);
+        }
+        if (tpl.authorId !== c.get("userId")) {
+            return jsonError(c, "只有作者可以置顶评论", 403);
+        }
+
+        const body = await readJsonBody(c);
+        const pinned = body?.pinned === true;
+        await setTemplateCommentPinned(commentId, pinned);
+        return c.json({ ok: true, id: commentId, pinned });
+    },
+);
+
+templateRoutes.post(
+    "/:id/comments/:commentId/like",
+    requireSession,
+    async (c) => {
+        const id = c.req.param("id");
+        const commentId = c.req.param("commentId");
+        const comment = await findTemplateComment(commentId);
+        if (!comment || comment.templateId !== id) {
+            return jsonError(c, "评论不存在", 404);
+        }
+
+        const result = await toggleTemplateCommentLike(
+            commentId,
+            c.get("userId"),
+        );
+        return c.json({ ok: true, id: commentId, ...result });
+    },
+);
 
 templateRoutes.get("/:id/uses", async (c) => {
     const id = c.req.param("id");

@@ -48,7 +48,7 @@ function TemplatesPage() {
     };
 
     return (
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-6">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
             <PageHeader
                 title="模板市场"
                 description="从优秀模板一键起步，快速产出你的作品"
@@ -64,54 +64,66 @@ function TemplatesPage() {
                 }
             />
 
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap gap-2">
-                    <Button
-                        size="sm"
-                        variant={category === undefined ? "primary" : "ghost"}
-                        onPress={() => setCategory(undefined)}
-                    >
-                        全部
-                    </Button>
-                    {TEMPLATE_CATEGORIES.map((item) => (
-                        <Button
-                            key={item.id}
-                            size="sm"
-                            variant={category === item.id ? "primary" : "ghost"}
-                            onPress={() => setCategory(item.id)}
-                        >
-                            #{item.label}
-                        </Button>
-                    ))}
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <Button
-                        size="sm"
-                        variant={sort === "hot" ? "primary" : "ghost"}
-                        onPress={() => setSort("hot")}
-                    >
-                        热度优先
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant={sort === "latest" ? "primary" : "ghost"}
-                        onPress={() => setSort("latest")}
-                    >
-                        最新发布
-                    </Button>
+            <div className="flex flex-col gap-4 border-b border-default-200/70 pb-5">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                        <LayoutTemplate className="size-4 text-primary" />
+                        <span className="text-sm font-semibold">浏览模板</span>
+                    </div>
                     <Link
                         to="/leaderboard"
                         search={{ type: "templates" }}
-                        className="text-sm text-primary hover:underline ml-1"
+                        className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
                     >
-                        查看模板热度榜 →
+                        查看热度榜 <span aria-hidden="true">→</span>
                     </Link>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap gap-2">
+                        <Button
+                            size="sm"
+                            variant={
+                                category === undefined ? "primary" : "ghost"
+                            }
+                            onPress={() => setCategory(undefined)}
+                        >
+                            全部
+                        </Button>
+                        {TEMPLATE_CATEGORIES.map((item) => (
+                            <Button
+                                key={item.id}
+                                size="sm"
+                                variant={
+                                    category === item.id ? "primary" : "ghost"
+                                }
+                                onPress={() => setCategory(item.id)}
+                            >
+                                #{item.label}
+                            </Button>
+                        ))}
+                    </div>
+                    <div className="flex items-center gap-1.5 rounded-xl bg-default-100/70 p-1">
+                        <Button
+                            size="sm"
+                            variant={sort === "hot" ? "primary" : "ghost"}
+                            onPress={() => setSort("hot")}
+                        >
+                            热度优先
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant={sort === "latest" ? "primary" : "ghost"}
+                            onPress={() => setSort("latest")}
+                        >
+                            最新发布
+                        </Button>
+                    </div>
                 </div>
             </div>
 
-            <div className="flex flex-col gap-4 min-w-0">
+            <div className="flex min-w-0 flex-col gap-4">
                 {isLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
                         {SKELETON_KEYS.map((key) => (
                             <div
                                 key={key}
@@ -138,7 +150,7 @@ function TemplatesPage() {
                         }
                     />
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
                         {templates.map((template) => (
                             <TemplateCard
                                 key={template.id}

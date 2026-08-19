@@ -6,7 +6,7 @@ import {
     useParams,
 } from "@tanstack/react-router";
 import { GitFork, Hash, Sparkles } from "lucide-react";
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 
 import { RunPanel } from "~/components/editor/RunPanel";
@@ -23,7 +23,6 @@ import {
 } from "~/components/workDetail/WorkDetailSkeleton";
 import { useAuth } from "~/hooks/useAuth";
 import { useComments } from "~/hooks/useComments";
-import { postComment } from "~/lib/api";
 import { useFocusedComment } from "~/hooks/useFocusedComment";
 import { useFollowAuthor } from "~/hooks/useFollowAuthor";
 import { useTemplate } from "~/hooks/useTemplate";
@@ -33,6 +32,13 @@ import { useWorkDetailActions } from "~/hooks/useWorkDetailActions";
 import { useWorkRemixes, useWorkSource } from "~/hooks/useWorkRemixes";
 import { useWorkRunner } from "~/hooks/useWorkRunner";
 import { useWorkSpark } from "~/hooks/useWorkSpark";
+import {
+    type CommentSort,
+    deleteWorkComment,
+    likeWorkComment,
+    pinWorkComment,
+    postComment,
+} from "~/lib/api";
 import { detectRuntime } from "~/lib/run";
 
 export const Route = createFileRoute("/work/$id/")({
@@ -51,11 +57,12 @@ function WorkDetailRoute() {
     const navigate = useNavigate();
     const { user, isLoggedIn } = useAuth();
     const { data: work, isLoading, error } = useWork(workId);
+    const [commentSort, setCommentSort] = useState<CommentSort>("time");
     const {
         data: comments,
         isLoading: commentsLoading,
         mutate: mutateComments,
-    } = useComments(workId);
+    } = useComments(workId, commentSort);
     const versions = useVersionHistory(workId).versions;
     const runtimeInfo = useMemo(
         () =>
@@ -103,7 +110,7 @@ function WorkDetailRoute() {
                 canEdit={isOwner}
             />
 
-            <main className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-20 flex flex-col gap-8">
+            <main className="mx-auto flex w-full max-w-7xl flex-col gap-7 rounded-4xl px-4 pb-20 pt-6 sm:px-6 lg:gap-8 lg:px-8 lg:pt-10">
                 <div className="relative overflow-hidden">
                     <div className="flex items-start justify-between gap-4">
                         <h1 className="flex-1 min-w-0 text-2xl sm:text-4xl font-bold tracking-tight leading-[1.15] text-foreground text-balance">
@@ -165,7 +172,7 @@ function WorkDetailRoute() {
                                 output={runner.output}
                                 result={runner.result}
                                 label={runner.label}
-                                className="rounded-2xl border border-default-200/70 overflow-hidden"
+                                className="rounded-2xl overflow-hidden"
                                 awaitingInput={runner.awaitingInput}
                                 onSubmitInput={runner.submitInput}
                                 onCancelInput={runner.cancelInput}
@@ -188,6 +195,19 @@ function WorkDetailRoute() {
                                 postComment(workId, content, parentId)
                             }
                             focusCommentId={focusedCommentId}
+                            sort={commentSort}
+                            onSortChange={setCommentSort}
+                            isOwner={isOwner}
+                            currentUserId={user?.id}
+                            onDeleteComment={(commentId) =>
+                                deleteWorkComment(workId, commentId)
+                            }
+                            onPinComment={(commentId, pinned) =>
+                                pinWorkComment(workId, commentId, pinned)
+                            }
+                            onLikeComment={(commentId) =>
+                                likeWorkComment(workId, commentId)
+                            }
                         />
                     </div>
 

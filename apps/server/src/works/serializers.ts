@@ -32,6 +32,9 @@ interface CommentRow extends AuthoredRow {
     id: string;
     content: string;
     parentId: string | null;
+    pinned: boolean;
+    likeCount: number;
+    likedByMe: boolean;
     createdAt: Date;
 }
 
@@ -129,6 +132,9 @@ export function toComment(row: CommentRow) {
         id: row.id,
         content: row.content,
         parentId: row.parentId,
+        pinned: Boolean(row.pinned),
+        likeCount: row.likeCount,
+        likedByMe: Boolean(row.likedByMe),
         createdAt: row.createdAt,
         author: toAuthor(row),
     };

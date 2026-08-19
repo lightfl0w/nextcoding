@@ -1,7 +1,7 @@
 import { Avatar } from "@heroui/react";
-import { MessageCircle } from "lucide-react";
+import { Heart, MessageCircle, Pin, Trash2 } from "lucide-react";
 import type { Comment } from "~/lib/api";
-import { formatDate } from "~/lib/format";
+import { formatCount, formatDate } from "~/lib/format";
 
 const ANONYMOUS_NAME = "匿名";
 
@@ -12,6 +12,11 @@ interface CommentRowProps {
     focus?: boolean;
     replyToName?: string | null;
     onReply?: (name: string) => void;
+    currentUserId?: string | null;
+    canModerate?: boolean;
+    onDelete?: () => void;
+    onPin?: (pinned: boolean) => void;
+    onLike?: () => void;
 }
 
 export function CommentRow({
@@ -21,9 +26,18 @@ export function CommentRow({
     focus = false,
     replyToName,
     onReply,
+    currentUserId,
+    canModerate = false,
+    onDelete,
+    onPin,
+    onLike,
 }: CommentRowProps) {
     const authorName = comment.author.name ?? ANONYMOUS_NAME;
     const targetName = replyToName ?? ANONYMOUS_NAME;
+    const isOwn = !!currentUserId && currentUserId === comment.author.id;
+    const canDelete = canModerate || isOwn;
+    const likeCount = comment.likeCount ?? 0;
+    const likedByMe = comment.likedByMe ?? false;
 
     return (
         <div
@@ -46,6 +60,12 @@ export function CommentRow({
                     <span className="text-sm font-semibold text-foreground/90">
                         {authorName}
                     </span>
+                    {comment.pinned && (
+                        <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-warning">
+                            <Pin className="size-3" />
+                            置顶
+                        </span>
+                    )}
                     {isReply && (
                         <span className="text-xs text-foreground/40">
                             回复{" "}
@@ -61,18 +81,57 @@ export function CommentRow({
                 <p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap wrap-break-word">
                     {comment.content}
                 </p>
-                {canReply && onReply && (
+                <div className="flex items-center gap-1 -ml-1 mt-0.5">
                     <button
                         type="button"
-                        onClick={() => onReply(authorName)}
-                        className={`flex items-center gap-1 text-xs text-foreground/50 hover:text-primary w-fit transition-colors focus-visible:text-primary focus-visible:opacity-100 ${
-                            isReply ? "" : "opacity-0 group-hover:opacity-100"
-                        }`}
+                        onClick={onLike}
+                        className={`flex items-center gap-1 text-xs px-1.5 py-1 rounded-md transition-colors ${
+                            likedByMe
+                                ? "text-danger hover:text-danger/80"
+                                : "text-foreground/50 hover:text-danger"
+                        } focus-visible:text-danger`}
                     >
-                        <MessageCircle className="size-3.5" />
-                        回复
+                        <Heart
+                            className="size-3.5"
+                            fill={likedByMe ? "currentColor" : "none"}
+                        />
+                        {likeCount > 0 && <span>{formatCount(likeCount)}</span>}
                     </button>
-                )}
+                    {canReply && onReply && (
+                        <button
+                            type="button"
+                            onClick={() => onReply(authorName)}
+                            className={`flex items-center gap-1 text-xs text-foreground/50 hover:text-primary px-1.5 py-1 rounded-md transition-colors focus-visible:text-primary ${
+                                isReply
+                                    ? ""
+                                    : "opacity-0 group-hover:opacity-100"
+                            }`}
+                        >
+                            <MessageCircle className="size-3.5" />
+                            回复
+                        </button>
+                    )}
+                    {canModerate && !isReply && onPin && (
+                        <button
+                            type="button"
+                            onClick={() => onPin(!comment.pinned)}
+                            className="flex items-center gap-1 text-xs text-foreground/50 hover:text-warning px-1.5 py-1 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                        >
+                            <Pin className="size-3.5" />
+                            {comment.pinned ? "取消置顶" : "置顶"}
+                        </button>
+                    )}
+                    {canDelete && onDelete && (
+                        <button
+                            type="button"
+                            onClick={onDelete}
+                            className="flex items-center gap-1 text-xs text-foreground/50 hover:text-danger px-1.5 py-1 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                        >
+                            <Trash2 className="size-3.5" />
+                            删除
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );

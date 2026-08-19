@@ -6,7 +6,7 @@ import { ADMIN_NAV_ITEMS } from "./adminNavItems";
 
 /**
  * 管理后台侧边栏：品牌区 + 垂直导航 + 返回网站 + 用户信息。
- * 仅桌面端（md+）显示，移动端使用顶部的 AdminNav 横向导航。
+ * 仅桌面端显示，移动端使用顶部的 AdminNav 横向导航。
  */
 export function AdminSidebar() {
     const pathname = useRouterState({
@@ -16,7 +16,7 @@ export function AdminSidebar() {
         href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
 
     return (
-        <aside className="sticky top-0 h-screen hidden md:flex md:w-60 text-foreground shrink-0 flex-col border-r border-default-100 bg-background-secondary/30">
+        <aside className="sticky top-0 h-screen hidden md:flex md:w-60 text-foreground shrink-0 flex-col  bg-surface-secondary">
             <div className="w-full p-5 flex flex-col gap-8 overflow-y-auto flex-1 min-h-0">
                 <Link
                     to="/admin"

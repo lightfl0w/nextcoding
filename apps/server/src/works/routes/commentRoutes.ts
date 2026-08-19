@@ -12,9 +12,13 @@ import { authorizeWorkRead } from "../guards.js";
 import { COMMENT_MAX_LENGTH, COMMENT_PAGE_SIZE } from "../limits.js";
 import { publishNewNotification } from "../notificationBus.js";
 import {
+    deleteComment,
     findComment,
+    findWorkOwnerId,
     insertComment,
     listComments,
+    setCommentPinned,
+    toggleCommentLike,
     workExists,
 } from "../repository.js";
 import { toComment } from "../serializers.js";
@@ -29,9 +33,75 @@ commentRoutes.get("/:id/comments", async (c) => {
         return jsonError(c, "作品不存在", 404);
     }
 
-    const rows = await listComments(workId, COMMENT_PAGE_SIZE);
+    const sort = c.req.query("sort") === "popular" ? "popular" : "time";
+    const rows = await listComments(
+        workId,
+        COMMENT_PAGE_SIZE,
+        sort,
+        access.viewerId,
+    );
     return c.json(rows.map(toComment));
 });
+
+commentRoutes.delete("/:id/comments/:commentId", requireSession, async (c) => {
+    const workId = c.req.param("id");
+    const commentId = c.req.param("commentId");
+    const comment = await findComment(commentId);
+    if (!comment || comment.workId !== workId) {
+        return jsonError(c, "评论不存在", 404);
+    }
+
+    const userId = c.get("userId");
+    const isCommentAuthor = comment.userId === userId;
+    const isWorkOwner = (await findWorkOwnerId(workId)) === userId;
+    if (!isCommentAuthor && !isWorkOwner) {
+        return jsonError(c, "无权删除该评论", 403);
+    }
+
+    await deleteComment(commentId);
+    return c.json({ ok: true, id: commentId });
+});
+
+commentRoutes.patch(
+    "/:id/comments/:commentId/pin",
+    requireSession,
+    async (c) => {
+        const workId = c.req.param("id");
+        const commentId = c.req.param("commentId");
+        const ownerId = await findWorkOwnerId(workId);
+        if (!ownerId) {
+            return jsonError(c, "作品不存在", 404);
+        }
+        const comment = await findComment(commentId);
+        if (!comment || comment.workId !== workId) {
+            return jsonError(c, "评论不存在", 404);
+        }
+        if (ownerId !== c.get("userId")) {
+            return jsonError(c, "只有作者可以置顶评论", 403);
+        }
+
+        const body = await readJsonBody(c);
+        const pinned = body?.pinned === true;
+        await setCommentPinned(commentId, pinned);
+        return c.json({ ok: true, id: commentId, pinned });
+    },
+);
+
+commentRoutes.post(
+    "/:id/comments/:commentId/like",
+    requireSession,
+    async (c) => {
+        const workId = c.req.param("id");
+        const commentId = c.req.param("commentId");
+        const comment = await findComment(commentId);
+        if (!comment || comment.workId !== workId) {
+            return jsonError(c, "评论不存在", 404);
+        }
+
+        const result = await toggleCommentLike(commentId, c.get("userId"));
+        return c.json({ ok: true, id: commentId, ...result });
+    },
+);
 
 commentRoutes.post("/:id/comments", requireSession, async (c) => {
     const workId = c.req.param("id");

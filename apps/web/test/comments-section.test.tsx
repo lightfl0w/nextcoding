@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { createContext, type ReactNode, useContext } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { CommentsSection } from "../src/components/workDetail/CommentsSection";
@@ -17,9 +17,51 @@ vi.mock("@heroui/react", () => {
     Card.Content = function CardContent({ children }: { children: ReactNode }) {
         return <div>{children}</div>;
     };
+
+    const tabContext = createContext("time");
+    function Tabs({
+        selectedKey = "time",
+        children,
+    }: {
+        selectedKey?: string;
+        children: ReactNode;
+    }) {
+        return (
+            <tabContext.Provider value={selectedKey}>
+                {children}
+            </tabContext.Provider>
+        );
+    }
+    Tabs.ListContainer = function ListContainer({
+        children,
+    }: {
+        children: ReactNode;
+    }) {
+        return <div>{children}</div>;
+    };
+    Tabs.List = function List({ children }: { children: ReactNode }) {
+        return <div>{children}</div>;
+    };
+    Tabs.Tab = function Tab({ children }: { children: ReactNode }) {
+        return <div>{children}</div>;
+    };
+    Tabs.Indicator = function Indicator() {
+        return null;
+    };
+    Tabs.Panel = function Panel({
+        id,
+        children,
+    }: {
+        id: string;
+        children: ReactNode;
+    }) {
+        return useContext(tabContext) === id ? <div>{children}</div> : null;
+    };
+
     return {
         Card,
         Skeleton: () => null,
+        Tabs,
         toast: { danger: () => {} },
     };
 });
@@ -74,6 +116,13 @@ describe("CommentsSection 折叠行为", () => {
                 isLoading={false}
                 mutate={async () => []}
                 submitComment={async () => {}}
+                sort="time"
+                onSortChange={() => {}}
+                isOwner={false}
+                currentUserId={null}
+                onDeleteComment={async () => {}}
+                onPinComment={async () => {}}
+                onLikeComment={async () => {}}
             />,
         );
     }

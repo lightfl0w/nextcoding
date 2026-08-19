@@ -81,7 +81,12 @@ export interface Comment {
     parentId: string | null;
     createdAt: string;
     author: Author;
+    pinned?: boolean;
+    likeCount?: number;
+    likedByMe?: boolean;
 }
+
+export type CommentSort = "time" | "popular";
 
 export interface WorkSource {
     id: string;

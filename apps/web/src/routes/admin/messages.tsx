@@ -150,7 +150,7 @@ function AdminMessagesPage() {
                     <div
                         className={`${
                             search.conversation ? "hidden md:flex" : "flex"
-                        } flex-col w-full md:w-80 shrink-0 border-r border-default-100`}
+                        } flex-col w-full md:w-80 shrink-0 `}
                     >
                         <div className="p-3 border-b border-default-100">
                             <div className="relative">

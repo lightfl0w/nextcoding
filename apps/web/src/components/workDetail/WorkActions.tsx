@@ -55,7 +55,7 @@ export function WorkActions({
     onRemix,
 }: WorkActionsProps) {
     return (
-        <div className="flex flex-col gap-4 px-1">
+        <div className="flex flex-col gap-4">
             <div className="flex items-center gap-5 sm:gap-6 text-sm text-foreground/60 flex-wrap">
                 <StatBadge
                     icon={Eye}

@@ -33,8 +33,12 @@ import { useFocusedComment } from "~/hooks/useFocusedComment";
 import { useTemplate } from "~/hooks/useTemplate";
 import { useTemplateComments } from "~/hooks/useTemplateComments";
 import { useTemplateTree } from "~/hooks/useTemplateTree";
+import type { CommentSort } from "~/lib/api";
 import {
     applyTemplate,
+    deleteTemplateComment,
+    likeTemplateComment,
+    pinTemplateComment,
     postTemplateComment,
     rateTemplate,
 } from "~/lib/api/templates";
@@ -58,11 +62,12 @@ function TemplateDetailPage() {
     const { user } = useAuth();
     const { template, isLoading, error, mutate } = useTemplate(id);
     const { tree, isLoading: treeLoading } = useTemplateTree(id);
+    const [commentSort, setCommentSort] = useState<CommentSort>("time");
     const {
         data: comments,
         isLoading: commentsLoading,
         mutate: mutateComments,
-    } = useTemplateComments(id);
+    } = useTemplateComments(id, commentSort);
     const [score, setScore] = useState(0);
     const [using, setUsing] = useState(false);
 
@@ -137,7 +142,7 @@ function TemplateDetailPage() {
 
     return (
         <div className="w-full flex flex-col">
-            <header className="sticky top-0 z-30 px-4 sm:px-6 lg:px-10 py-3 border-b border-default-200 bg-background-secondary/30 backdrop-blur-xl flex items-center gap-3 min-w-0">
+            <header className="sticky top-0 z-30 flex min-w-0 items-center gap-3 border-b border-default-200/70 bg-surface-secondary/90 px-4 py-3 backdrop-blur-xl sm:px-6 lg:px-10">
                 <Link
                     to="/templates"
                     title="返回模板市场"
@@ -151,9 +156,9 @@ function TemplateDetailPage() {
                 <div className="flex-1" />
             </header>
 
-            <main className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-20 flex flex-col gap-8">
-                <div className="relative rounded-2xl overflow-hidden border border-default-200/70 ring-1 ring-inset ring-default-200/60">
-                    <div className="relative h-56 sm:h-72">
+            <main className="mx-auto flex w-full max-w-6xl flex-col gap-7 px-4 pb-20 pt-6 sm:px-6 lg:gap-8 lg:px-8 lg:pt-10">
+                <div className="relative overflow-hidden rounded-3xl border border-default-200/70 bg-surface shadow-sm ring-1 ring-inset ring-default-200/40">
+                    <div className="relative aspect-[2.2/1] min-h-52 sm:aspect-[3/1] sm:min-h-64">
                         {template.coverUrl ? (
                             <img
                                 src={template.coverUrl}
@@ -226,6 +231,19 @@ function TemplateDetailPage() {
                                     postTemplateComment(id, content, parentId)
                                 }
                                 focusCommentId={focusedCommentId}
+                                sort={commentSort}
+                                onSortChange={setCommentSort}
+                                isOwner={isAuthor}
+                                currentUserId={user?.id}
+                                onDeleteComment={(commentId) =>
+                                    deleteTemplateComment(id, commentId)
+                                }
+                                onPinComment={(commentId, pinned) =>
+                                    pinTemplateComment(id, commentId, pinned)
+                                }
+                                onLikeComment={(commentId) =>
+                                    likeTemplateComment(id, commentId)
+                                }
                             />
                         </div>
 
@@ -329,7 +347,7 @@ function TemplateDetailActions({
     onRate,
 }: TemplateDetailActionsProps) {
     return (
-        <div className="flex flex-col gap-4 px-1">
+        <div className="flex flex-col gap-4">
             <div className="flex items-center gap-5 sm:gap-6 text-sm text-foreground/60 flex-wrap">
                 <StatBadge
                     icon={Eye}

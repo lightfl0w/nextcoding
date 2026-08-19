@@ -4,6 +4,7 @@ import {
     user,
     work,
     workComment,
+    workCommentLike,
     workFile,
     workVersion,
 } from "@nextcoding/db";
@@ -41,6 +42,7 @@ const commentColumns = {
     id: workComment.id,
     content: workComment.content,
     parentId: workComment.parentId,
+    pinned: workComment.pinned,
     createdAt: workComment.createdAt,
     authorId: user.id,
     authorName: user.name,
@@ -462,14 +464,87 @@ export async function findWorkUpdatedAt(workId: string) {
     return row?.updatedAt ?? null;
 }
 
-export function listComments(workId: string, limit: number) {
+export function listComments(
+    workId: string,
+    limit: number,
+    sort: "time" | "popular",
+    userId?: string | null,
+) {
+    const likeCountCol = sql<number>`(
+        select count(*) from work_comment_like
+        where work_comment_like.comment_id = ${workComment.id}
+    )`;
+    const likedByMeCol = userId
+        ? sql<boolean>`exists(
+            select 1 from work_comment_like
+            where work_comment_like.comment_id = ${workComment.id}
+              and work_comment_like.user_id = ${userId}
+        )`
+        : sql<boolean>`0`;
+    const orderBy =
+        sort === "popular"
+            ? [
+                  desc(workComment.pinned),
+                  desc(likeCountCol),
+                  desc(workComment.createdAt),
+              ]
+            : [desc(workComment.pinned), desc(workComment.createdAt)];
+
     return db
-        .select(commentColumns)
+        .select({
+            ...commentColumns,
+            likeCount: likeCountCol,
+            likedByMe: likedByMeCol,
+        })
         .from(workComment)
         .innerJoin(user, eq(workComment.userId, user.id))
         .where(eq(workComment.workId, workId))
-        .orderBy(desc(workComment.createdAt))
+        .orderBy(...orderBy)
         .limit(limit);
+}
+
+export async function deleteComment(commentId: string) {
+    await db.delete(workComment).where(eq(workComment.id, commentId));
+}
+
+export async function setCommentPinned(commentId: string, pinned: boolean) {
+    await db
+        .update(workComment)
+        .set({ pinned })
+        .where(eq(workComment.id, commentId));
+}
+
+export async function toggleCommentLike(commentId: string, userId: string) {
+    const [existing] = await db
+        .select({ commentId: workCommentLike.commentId })
+        .from(workCommentLike)
+        .where(
+            and(
+                eq(workCommentLike.commentId, commentId),
+                eq(workCommentLike.userId, userId),
+            ),
+        )
+        .limit(1);
+
+    if (existing) {
+        await db
+            .delete(workCommentLike)
+            .where(
+                and(
+                    eq(workCommentLike.commentId, commentId),
+                    eq(workCommentLike.userId, userId),
+                ),
+            );
+    } else {
+        await db.insert(workCommentLike).values({ commentId, userId });
+    }
+
+    const [{ count }] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(workCommentLike)
+        .where(eq(workCommentLike.commentId, commentId));
+
+    return { liked: !existing, likeCount: count };
 }
 
 export async function findComment(commentId: string) {

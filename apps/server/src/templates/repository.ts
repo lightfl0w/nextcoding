@@ -2,6 +2,7 @@ import {
     db,
     template,
     templateComment,
+    templateCommentLike,
     templateUse,
     user,
     work,
@@ -325,6 +326,7 @@ const templateCommentColumns = {
     id: templateComment.id,
     content: templateComment.content,
     parentId: templateComment.parentId,
+    pinned: templateComment.pinned,
     createdAt: templateComment.createdAt,
     authorId: user.id,
     authorName: user.name,
@@ -337,14 +339,93 @@ const templateCommentColumns = {
  * @param templateId - 模板 ID。
  * @param limit - 返回数量上限。
  */
-export function listTemplateComments(templateId: string, limit: number) {
+export function listTemplateComments(
+    templateId: string,
+    limit: number,
+    sort: "time" | "popular",
+    userId?: string | null,
+) {
+    const likeCountCol = sql<number>`(
+        select count(*) from template_comment_like
+        where template_comment_like.comment_id = ${templateComment.id}
+    )`;
+    const likedByMeCol = userId
+        ? sql<boolean>`exists(
+            select 1 from template_comment_like
+            where template_comment_like.comment_id = ${templateComment.id}
+              and template_comment_like.user_id = ${userId}
+        )`
+        : sql<boolean>`0`;
+    const orderBy =
+        sort === "popular"
+            ? [
+                  desc(templateComment.pinned),
+                  desc(likeCountCol),
+                  desc(templateComment.createdAt),
+              ]
+            : [desc(templateComment.pinned), desc(templateComment.createdAt)];
+
     return db
-        .select(templateCommentColumns)
+        .select({
+            ...templateCommentColumns,
+            likeCount: likeCountCol,
+            likedByMe: likedByMeCol,
+        })
         .from(templateComment)
         .innerJoin(user, eq(templateComment.userId, user.id))
         .where(eq(templateComment.templateId, templateId))
-        .orderBy(desc(templateComment.createdAt))
+        .orderBy(...orderBy)
         .limit(limit);
+}
+
+export async function deleteTemplateComment(commentId: string) {
+    await db.delete(templateComment).where(eq(templateComment.id, commentId));
+}
+
+export async function setTemplateCommentPinned(
+    commentId: string,
+    pinned: boolean,
+) {
+    await db
+        .update(templateComment)
+        .set({ pinned })
+        .where(eq(templateComment.id, commentId));
+}
+
+export async function toggleTemplateCommentLike(
+    commentId: string,
+    userId: string,
+) {
+    const [existing] = await db
+        .select({ commentId: templateCommentLike.commentId })
+        .from(templateCommentLike)
+        .where(
+            and(
+                eq(templateCommentLike.commentId, commentId),
+                eq(templateCommentLike.userId, userId),
+            ),
+        )
+        .limit(1);
+
+    if (existing) {
+        await db
+            .delete(templateCommentLike)
+            .where(
+                and(
+                    eq(templateCommentLike.commentId, commentId),
+                    eq(templateCommentLike.userId, userId),
+                ),
+            );
+    } else {
+        await db.insert(templateCommentLike).values({ commentId, userId });
+    }
+
+    const [{ count }] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(templateCommentLike)
+        .where(eq(templateCommentLike.commentId, commentId));
+
+    return { liked: !existing, likeCount: count };
 }
 
 export async function findTemplateComment(commentId: string) {

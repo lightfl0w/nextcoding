@@ -140,9 +140,7 @@ export async function fetchTemplateLeaderboard(
     return getJson<Template[]>(path);
 }
 
-export function fetchTemplateComments(
-    path: string,
-): Promise<Comment[]> {
+export function fetchTemplateComments(path: string): Promise<Comment[]> {
     return getJson<Comment[]>(path);
 }
 
@@ -157,10 +155,61 @@ export function postTemplateComment(
     content: string,
     parentId: string | null,
 ): Promise<Comment> {
-    return mutateJson<Comment>(
-        templateCommentsPath(id),
+    return mutateJson<Comment>(templateCommentsPath(id), "POST", {
+        content,
+        parentId,
+    });
+}
+
+/**
+ * 删除模板评论（级联删除其回复）。
+ * @param id - 模板 ID。
+ * @param commentId - 评论 ID。
+ */
+export function deleteTemplateComment(id: string, commentId: string) {
+    return mutateJson<{ ok: true; id: string }>(
+        `${templateCommentsPath(id)}/${commentId}`,
+        "DELETE",
+        undefined,
+        "删除评论失败",
+    );
+}
+
+/**
+ * 置顶 / 取消置顶模板评论（仅作者可用）。
+ * @param id - 模板 ID。
+ * @param commentId - 评论 ID。
+ * @param pinned - 是否置顶。
+ */
+export function pinTemplateComment(
+    id: string,
+    commentId: string,
+    pinned: boolean,
+) {
+    return mutateJson<{ ok: true; id: string; pinned: boolean }>(
+        `${templateCommentsPath(id)}/${commentId}/pin`,
+        "PATCH",
+        { pinned },
+        "操作失败",
+    );
+}
+
+/**
+ * 点赞 / 取消点赞模板评论。
+ * @param id - 模板 ID。
+ * @param commentId - 评论 ID。
+ */
+export function likeTemplateComment(id: string, commentId: string) {
+    return mutateJson<{
+        ok: true;
+        id: string;
+        liked: boolean;
+        likeCount: number;
+    }>(
+        `${templateCommentsPath(id)}/${commentId}/like`,
         "POST",
-        { content, parentId },
+        undefined,
+        "操作失败",
     );
 }
 

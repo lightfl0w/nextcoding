@@ -27,7 +27,7 @@ function ChatLayout() {
             <aside
                 className={`${
                     listOnly ? "flex w-full md:w-80" : "hidden md:flex w-80"
-                } shrink-0 flex-col border-r border-default-100 bg-background-secondary/30`}
+                } shrink-0 flex-col  bg-surface-secondary`}
             >
                 <div className="flex h-full min-h-0 flex-col">
                     <div className="px-5 pt-5 pb-3 shrink-0">

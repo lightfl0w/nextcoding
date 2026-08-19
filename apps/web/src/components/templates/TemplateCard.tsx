@@ -22,11 +22,11 @@ export const TemplateCard = memo(function TemplateCard({
     onUse,
 }: TemplateCardProps) {
     return (
-        <div className="group rounded-2xl border border-default-200/70 overflow-hidden hover:border-default-300 hover:-translate-y-0.5 transition-[transform,border-color] duration-200 bg-background flex flex-col">
+        <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-default-200/70 bg-surface shadow-sm transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
             <Link
                 to="/templates/$id"
                 params={{ id: template.id }}
-                className="block relative h-32 overflow-hidden bg-default-100/60 ring-1 ring-inset ring-default-200/60"
+                className="relative block h-40 overflow-hidden bg-default-100/60 ring-1 ring-inset ring-default-200/60 sm:h-44"
             >
                 {template.coverUrl ? (
                     <img
@@ -50,7 +50,7 @@ export const TemplateCard = memo(function TemplateCard({
                 )}
             </Link>
 
-            <div className="p-4 flex flex-col gap-3 flex-1">
+            <div className="flex flex-1 flex-col gap-3.5 p-4 sm:p-5">
                 <Link
                     to="/templates/$id"
                     params={{ id: template.id }}
@@ -66,7 +66,7 @@ export const TemplateCard = memo(function TemplateCard({
                     )}
                 </Link>
 
-                <div className="flex items-center justify-between gap-2 text-xs text-foreground/50">
+                <div className="flex items-center justify-between gap-2 border-t border-default-200/60 pt-3 text-xs text-foreground/50">
                     <span className="flex items-center gap-1.5 min-w-0">
                         {template.authorImage ? (
                             <Avatar size="sm" className="shrink-0">

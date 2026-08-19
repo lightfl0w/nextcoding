@@ -1,5 +1,5 @@
-import { Card, Skeleton } from "@heroui/react";
-import { MessageCircle } from "lucide-react";
+import { Card, Skeleton, Tabs } from "@heroui/react";
+import { Clock, Flame, MessageCircle } from "lucide-react";
 import { memo, useCallback, useState } from "react";
 import type { KeyedMutator } from "swr";
 import { useAuth } from "~/hooks/useAuth";
@@ -7,8 +7,12 @@ import {
     type SubmitComment,
     useCommentComposer,
 } from "~/hooks/useCommentComposer";
-import { type CommentNode, useCommentThreads } from "~/hooks/useCommentThreads";
-import type { Comment } from "~/lib/api";
+import {
+    type CommentNode,
+    type CommentThread,
+    useCommentThreads,
+} from "~/hooks/useCommentThreads";
+import type { Comment, CommentSort } from "~/lib/api";
 import { CommentComposer, SignInPrompt } from "./CommentComposer";
 import { CommentRow } from "./CommentRow";
 
@@ -18,6 +22,50 @@ interface CommentsSectionProps {
     mutate: KeyedMutator<Comment[]>;
     submitComment: SubmitComment;
     focusCommentId?: string | null;
+    sort: CommentSort;
+    onSortChange: (sort: CommentSort) => void;
+    isOwner: boolean;
+    currentUserId?: string | null;
+    onDeleteComment: (commentId: string) => Promise<unknown>;
+    onPinComment: (commentId: string, pinned: boolean) => Promise<unknown>;
+    onLikeComment: (commentId: string) => Promise<unknown>;
+}
+
+function renderThreads(
+    threads: CommentThread[],
+    context: {
+        isLoggedIn: boolean;
+        currentUserId?: string | null;
+        isOwner: boolean;
+        submitComment: SubmitComment;
+        focusCommentId?: string | null;
+        mutate: () => Promise<unknown>;
+        handleDelete: (commentId: string) => void;
+        handlePin: (commentId: string, pinned: boolean) => void;
+        handleLike: (commentId: string) => void;
+    },
+) {
+    return (
+        <div className="flex flex-col gap-1">
+            {threads.map((thread) => (
+                <CommentBranch
+                    key={thread.root.id}
+                    comment={thread.root}
+                    replies={thread.children}
+                    depth={0}
+                    canReply={context.isLoggedIn}
+                    currentUserId={context.currentUserId}
+                    canModerate={context.isOwner}
+                    submitComment={context.submitComment}
+                    focusCommentId={context.focusCommentId}
+                    onReload={context.mutate}
+                    onDelete={context.handleDelete}
+                    onPin={context.handlePin}
+                    onLike={context.handleLike}
+                />
+            ))}
+        </div>
+    );
 }
 
 export const CommentsSection = memo(function CommentsSection({
@@ -26,49 +74,123 @@ export const CommentsSection = memo(function CommentsSection({
     mutate,
     submitComment,
     focusCommentId,
+    sort,
+    onSortChange,
+    isOwner,
+    currentUserId,
+    onDeleteComment,
+    onPinComment,
+    onLikeComment,
 }: CommentsSectionProps) {
     const { isLoggedIn } = useAuth();
     const composer = useCommentComposer(submitComment, mutate);
     const threads = useCommentThreads(comments);
 
+    const handleDelete = useCallback(
+        async (commentId: string) => {
+            await onDeleteComment(commentId);
+            await mutate();
+        },
+        [onDeleteComment, mutate],
+    );
+    const handlePin = useCallback(
+        async (commentId: string, pinned: boolean) => {
+            await onPinComment(commentId, pinned);
+            await mutate();
+        },
+        [onPinComment, mutate],
+    );
+    const handleLike = useCallback(
+        async (commentId: string) => {
+            await onLikeComment(commentId);
+            await mutate();
+        },
+        [onLikeComment, mutate],
+    );
+
+    const threadContext = {
+        isLoggedIn,
+        currentUserId,
+        isOwner,
+        submitComment,
+        focusCommentId,
+        mutate,
+        handleDelete,
+        handlePin,
+        handleLike,
+    };
+
     return (
-        <Card className="shadow-none rounded-2xl border border-default-200/70">
-            <Card.Header>
-                <Card.Title>评论</Card.Title>
-            </Card.Header>
-
-            <Card.Content>
-                <div className="flex flex-col gap-5">
-                    {isLoggedIn ? (
-                        <CommentComposer
-                            draft={composer.draft}
-                            isPosting={composer.isPosting}
-                            onDraftChange={composer.setDraft}
-                            onSubmit={composer.submit}
-                        />
-                    ) : (
-                        <SignInPrompt />
-                    )}
-
-                    {isLoading && <CommentsSkeleton />}
-                    {!isLoading && threads.length === 0 && <EmptyComments />}
-
-                    <div className="flex flex-col gap-1">
-                        {threads.map((thread) => (
-                            <CommentBranch
-                                key={thread.root.id}
-                                comment={thread.root}
-                                replies={thread.children}
-                                depth={0}
-                                canReply={isLoggedIn}
-                                submitComment={submitComment}
-                                focusCommentId={focusCommentId}
-                                onReload={mutate}
-                            />
-                        ))}
+        <Card>
+            <Tabs
+                selectedKey={sort}
+                onSelectionChange={(key) => onSortChange(key as CommentSort)}
+                className="w-full"
+                aria-label="评论排序"
+            >
+                <Card.Header className="flex flex-row w-full items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                        <Card.Title>评论</Card.Title>
+                        {comments && comments.length > 0 && (
+                            <span className="rounded-full bg-default-100 px-2 py-0.5 text-xs font-medium text-foreground/55">
+                                {comments.length}
+                            </span>
+                        )}
                     </div>
-                </div>
-            </Card.Content>
+
+                    <Tabs.ListContainer>
+                        <Tabs.List className="w-full">
+                            <Tabs.Tab id="time" className="flex gap-1">
+                                <Clock className="size-3.5" />
+                                按时间
+                                <Tabs.Indicator />
+                            </Tabs.Tab>
+                            <Tabs.Tab
+                                id="popular"
+                                className="flex gap-1 whitespace-nowrap"
+                            >
+                                <Flame className="size-3.5" />
+                                受欢迎度
+                                <Tabs.Indicator />
+                            </Tabs.Tab>
+                        </Tabs.List>
+                    </Tabs.ListContainer>
+                </Card.Header>
+
+                <Card.Content className="pt-0">
+                    <div className="flex flex-col gap-5">
+                        {isLoggedIn ? (
+                            <CommentComposer
+                                draft={composer.draft}
+                                isPosting={composer.isPosting}
+                                onDraftChange={composer.setDraft}
+                                onSubmit={composer.submit}
+                            />
+                        ) : (
+                            <SignInPrompt />
+                        )}
+
+                        <Tabs.Panel className="pt-4" id="time">
+                            {isLoading ? (
+                                <CommentsSkeleton />
+                            ) : threads.length === 0 ? (
+                                <EmptyComments />
+                            ) : (
+                                renderThreads(threads, threadContext)
+                            )}
+                        </Tabs.Panel>
+                        <Tabs.Panel className="pt-4" id="popular">
+                            {isLoading ? (
+                                <CommentsSkeleton />
+                            ) : threads.length === 0 ? (
+                                <EmptyComments />
+                            ) : (
+                                renderThreads(threads, threadContext)
+                            )}
+                        </Tabs.Panel>
+                    </div>
+                </Card.Content>
+            </Tabs>
         </Card>
     );
 });
@@ -113,18 +235,28 @@ function CommentBranch({
     depth,
     replyToName,
     canReply,
+    currentUserId,
+    canModerate,
     submitComment,
     focusCommentId,
     onReload,
+    onDelete,
+    onPin,
+    onLike,
 }: {
     comment: Comment;
     replies: CommentNode[];
     depth: number;
     replyToName?: string;
     canReply: boolean;
+    currentUserId?: string | null;
+    canModerate: boolean;
     submitComment: SubmitComment;
     focusCommentId?: string | null;
     onReload: () => Promise<unknown>;
+    onDelete: (commentId: string) => void;
+    onPin: (commentId: string, pinned: boolean) => void;
+    onLike: (commentId: string) => void;
 }) {
     const [isReplying, setIsReplying] = useState(false);
     const [isExpanded, setIsExpanded] = useState(
@@ -169,6 +301,11 @@ function CommentBranch({
                 focus={focusCommentId === comment.id}
                 replyToName={replyToName}
                 onReply={() => setIsReplying(true)}
+                currentUserId={currentUserId}
+                canModerate={canModerate}
+                onDelete={() => onDelete(comment.id)}
+                onPin={(pinned) => onPin(comment.id, pinned)}
+                onLike={() => onLike(comment.id)}
             />
             {isReplying && (
                 <div className={isReply ? "pt-1 pb-2" : "ml-12 mt-1 mb-2 pl-4"}>
@@ -198,9 +335,14 @@ function CommentBranch({
                             depth={depth + 1}
                             replyToName={authorName}
                             canReply={canReply}
+                            currentUserId={currentUserId}
+                            canModerate={canModerate}
                             submitComment={submitComment}
                             focusCommentId={focusCommentId}
                             onReload={onReload}
+                            onDelete={onDelete}
+                            onPin={onPin}
+                            onLike={onLike}
                         />
                     ))}
                     {hasMoreReplies && (

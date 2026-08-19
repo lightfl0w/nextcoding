@@ -31,69 +31,71 @@ function DiscoverPage() {
     } = useWorks(sort, DISCOVER_PAGE_SIZE, searchTerm || undefined);
 
     return (
-        <div className="mx-auto w-full max-w-7xl p-8 flex flex-col gap-6">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
             <PageHeader
                 title="发现作品"
                 description="浏览社区里大家发布的编程作品，找到感兴趣的灵感"
             />
 
-            <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-foreground/40 pointer-events-none" />
-                <Input
-                    value={keyword}
-                    onChange={(event) => setKeyword(event.target.value)}
-                    placeholder="搜索作品标题、标签、简介…"
-                    aria-label="搜索作品"
-                    className="w-full pl-10 pr-9"
-                />
-                {keyword && (
-                    <button
-                        type="button"
-                        onClick={() => setKeyword("")}
-                        aria-label="清除搜索"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-hover text-foreground/40 hover:text-foreground transition-colors"
-                    >
-                        <X className="size-4" />
-                    </button>
-                )}
+            <div className="flex flex-col gap-4 border-b border-default-200/70 pb-5 lg:flex-row lg:items-center lg:justify-between">
+                <div className="relative w-full lg:max-w-md">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-primary/60" />
+                    <Input
+                        value={keyword}
+                        onChange={(event) => setKeyword(event.target.value)}
+                        placeholder="搜索作品标题、标签、简介…"
+                        aria-label="搜索作品"
+                        className="w-full pl-10 pr-9"
+                    />
+                    {keyword && (
+                        <button
+                            type="button"
+                            onClick={() => setKeyword("")}
+                            aria-label="清除搜索"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-foreground/40 transition-colors hover:bg-hover hover:text-foreground"
+                        >
+                            <X className="size-4" />
+                        </button>
+                    )}
+                </div>
+
+                <Tabs
+                    selectedKey={sort}
+                    onSelectionChange={(key) => setSort(key as WorkSort)}
+                    className="w-full lg:w-auto"
+                >
+                    <Tabs.ListContainer className="w-full rounded-xl bg-default-100/70 p-1 lg:w-auto">
+                        <Tabs.List aria-label="作品排序" className="w-full">
+                            <Tabs.Tab
+                                id="weekly"
+                                className="flex items-center justify-center gap-1.5 text-sm"
+                            >
+                                <Crown className="size-4" />
+                                本周热榜
+                                <Tabs.Indicator />
+                            </Tabs.Tab>
+                            <Tabs.Tab
+                                id="latest"
+                                className="flex items-center justify-center gap-1.5 text-sm"
+                            >
+                                <Clock className="size-4" />
+                                最新发布
+                                <Tabs.Indicator />
+                            </Tabs.Tab>
+                            <Tabs.Tab
+                                id="popular"
+                                className="flex items-center justify-center gap-1.5 text-sm"
+                            >
+                                <Flame className="size-4" />
+                                最受欢迎
+                                <Tabs.Indicator />
+                            </Tabs.Tab>
+                        </Tabs.List>
+                    </Tabs.ListContainer>
+                </Tabs>
             </div>
 
-            <Tabs
-                selectedKey={sort}
-                onSelectionChange={(key) => setSort(key as WorkSort)}
-                className="w-full"
-            >
-                <Tabs.ListContainer>
-                    <Tabs.List aria-label="作品排序">
-                        <Tabs.Tab
-                            id="weekly"
-                            className="flex items-center gap-1.5"
-                        >
-                            <Crown className="size-4" />
-                            本周热榜
-                            <Tabs.Indicator />
-                        </Tabs.Tab>
-                        <Tabs.Tab
-                            id="latest"
-                            className="flex items-center gap-1.5"
-                        >
-                            <Clock className="size-4" />
-                            最新发布
-                            <Tabs.Indicator />
-                        </Tabs.Tab>
-                        <Tabs.Tab
-                            id="popular"
-                            className="flex items-center gap-1.5"
-                        >
-                            <Flame className="size-4" />
-                            最受欢迎
-                            <Tabs.Indicator />
-                        </Tabs.Tab>
-                    </Tabs.List>
-                </Tabs.ListContainer>
-            </Tabs>
-
-            <div className="pt-2">
+            <div>
                 <WorksGrid
                     works={works}
                     isLoading={isLoading}

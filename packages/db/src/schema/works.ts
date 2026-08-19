@@ -1,6 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { user } from "./auth.js";
 
 export const work = sqliteTable(
@@ -92,6 +92,7 @@ export const workComment = sqliteTable(
             { onDelete: "cascade" },
         ),
         content: text("content").notNull(),
+        pinned: integer("pinned", { mode: "boolean" }).default(false).notNull(),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
             .notNull(),
@@ -99,6 +100,25 @@ export const workComment = sqliteTable(
     (table) => [
         index("work_comment_workId_idx").on(table.workId),
         index("work_comment_parentId_idx").on(table.parentId),
+    ],
+);
+
+export const workCommentLike = sqliteTable(
+    "work_comment_like",
+    {
+        commentId: text("comment_id")
+            .notNull()
+            .references(() => workComment.id, { onDelete: "cascade" }),
+        userId: text("user_id")
+            .notNull()
+            .references(() => user.id, { onDelete: "cascade" }),
+        createdAt: integer("created_at", { mode: "timestamp_ms" })
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+            .notNull(),
+    },
+    (table) => [
+        primaryKey({ columns: [table.commentId, table.userId] }),
+        index("work_comment_like_userId_idx").on(table.userId),
     ],
 );
 
