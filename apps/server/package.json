@@ -5,7 +5,7 @@
     "scripts": {
         "dev": "dotenv -e ../../.env tsx watch src/index.ts",
         "build": "tsc",
-        "start": "dotenv -e ../../.env node dist/index.js",
+        "start": "dotenv -e ../../.env -- node --import tsx dist/index.js",
         "test": "dotenv -e ../../.env vitest run"
     },
     "dependencies": {
@@ -17,12 +17,12 @@
         "fflate": "^0.8.3",
         "hono": "^4.13.0",
         "isomorphic-git": "^1.41.4",
+        "tsx": "^4.23.0",
         "ws": "^8.18.1"
     },
     "devDependencies": {
         "@types/node": "^26.1.1",
         "@types/ws": "^8.18.1",
-        "tsx": "^4.23.0",
         "typescript": "^7.0.2",
         "vitest": "^4.1.10"
     }

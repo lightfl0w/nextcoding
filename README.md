@@ -125,6 +125,45 @@ docker run -d --name nextcoding \
 - 数据卷 `nextcoding-data` 持久化 SQLite（`/data/app.db`）与本地文件（`/data/storage`）。
 - 存储驱动默认 `local`；如需 S3 可追加对应环境变量（见 [.env.example](file:///f:/nextcoding/.env.example)）。
 
+### 非 Docker 部署（裸机 / VPS）
+
+需要 Node.js 22+、pnpm 与 nginx（或 caddy 等任意静态服务器）。
+
+```bash
+# 1. 安装依赖 + 配置环境变量（BACKEND_URL 需设为对外公开域名，用于前端 WebSocket）
+pnpm install --frozen-lockfile
+cp .env.example .env   # 修改 BETTER_AUTH_SECRET 等
+
+# 2. 构建前端与后端
+pnpm --filter nextcoding-web build
+pnpm --filter nextcoding-server build
+
+# 3. 初始化数据库
+cd packages/db && pnpm db:migrate && cd ../..
+
+# 4. 用 nginx 托管前端并反代 API/WebSocket
+#    将仓库根目录的 nginx.conf 放到 /etc/nginx/conf.d/default.conf，
+#    并把其中的 root 改为前端产物路径（如 /path/to/nextcoding/apps/web/dist）后：
+systemctl reload nginx
+
+# 5. 启动后端 API（tsx 加载器已内置，start 脚本可直接使用）
+pnpm --filter nextcoding-server start
+```
+
+进程守护二选一：
+
+```bash
+# pm2
+pm2 start "pnpm --filter nextcoding-server start" --name nextcoding-server --cwd /path/to/nextcoding
+pm2 save && pm2 startup
+
+# systemd（/etc/systemd/system/nextcoding.service）
+# ExecStart=/bin/sh -c 'cd /path/to/nextcoding && pnpm --filter nextcoding-server start'
+# WorkingDirectory=/path/to/nextcoding
+```
+
+> 说明：workspace 包（`@nextcoding/db` 等）以 TS 源码被引用，生产运行依赖 `tsx` 加载器，`start` 脚本已内置（`node --import tsx dist/index.js`），无需额外处理。WebSocket 端口与 API 一致（默认 `3000`），nginx 已按 `/ws` 反代。
+
 ## 测试
 
 项目使用 Vitest 4，前后端各自独立配置。

@@ -48,6 +48,9 @@ importers:
       isomorphic-git:
         specifier: ^1.41.4
         version: 1.41.4
+      tsx:
+        specifier: ^4.23.0
+        version: 4.23.12
       ws:
         specifier: ^8.18.1
         version: 8.21.3
@@ -58,9 +61,6 @@ importers:
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1
-      tsx:
-        specifier: ^4.23.0
-        version: 4.23.12
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
