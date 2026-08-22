@@ -2,6 +2,7 @@ import { Badge, Button } from "@heroui/react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
     Bell,
+    BookOpen,
     Compass,
     Crown,
     FilePenLine,
@@ -37,6 +38,7 @@ export function Nav() {
         { label: "发现", href: "/discover", icon: Compass },
         { label: "标签", href: "/tags", icon: Tags },
         { label: "模板", href: "/templates", icon: Layout },
+        { label: "小说", href: "/novels", icon: BookOpen },
         { label: "排行榜", href: "/leaderboard", icon: Crown },
         { label: "草稿", href: "/drafts", icon: FilePenLine },
         { label: "消息", href: "/messages", icon: Bell, badge: count },

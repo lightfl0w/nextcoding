@@ -13,6 +13,7 @@ export default {
         "./src/schema/achievements.ts",
         "./src/schema/reports.ts",
         "./src/schema/settings.ts",
+        "./src/schema/novels.ts",
     ],
     out: "./src/migrations",
     dialect: "sqlite",

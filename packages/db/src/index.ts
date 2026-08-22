@@ -14,3 +14,4 @@ export * from "./schema/social.js";
 export * from "./schema/tags.js";
 export * from "./schema/templates.js";
 export * from "./schema/works.js";
+export * from "./schema/novels.js";

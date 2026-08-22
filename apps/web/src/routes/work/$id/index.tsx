@@ -133,6 +133,16 @@ function WorkDetailRoute() {
                     )}
                 </div>
 
+                {work.coverUrl && (
+                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-default-200/70 bg-default-100">
+                        <img
+                            src={work.coverUrl}
+                            alt={`${work.title} 封面`}
+                            className="h-full w-full object-cover"
+                        />
+                    </div>
+                )}
+
                 <WorkActions
                     workId={workId}
                     views={work.views}

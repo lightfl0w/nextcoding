@@ -34,10 +34,13 @@ import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminWorksRouteImport } from './routes/admin/works'
 import { Route as ChatIndexRouteImport } from './routes/chat/index'
 import { Route as ChatIdRouteImport } from './routes/chat/$id'
+import { Route as NovelsIndexRouteImport } from './routes/novels/index'
 import { Route as TagsIndexRouteImport } from './routes/tags/index'
 import { Route as TagsSlugRouteImport } from './routes/tags/$slug'
 import { Route as TemplatesIndexRouteImport } from './routes/templates/index'
 import { Route as TemplatesNewRouteImport } from './routes/templates/new'
+import { Route as NovelsIdIndexRouteImport } from './routes/novels/$id/index'
+import { Route as NovelsIdEditRouteImport } from './routes/novels/$id/edit'
 import { Route as TemplatesIdIndexRouteImport } from './routes/templates/$id/index'
 import { Route as UserIdIndexRouteImport } from './routes/user/$id/index'
 import { Route as WorkIdIndexRouteImport } from './routes/work/$id/index'
@@ -169,6 +172,11 @@ const ChatIdRoute = ChatIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => ChatRoute,
 } as any)
+const NovelsIndexRoute = NovelsIndexRouteImport.update({
+  id: '/novels/',
+  path: '/novels/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TagsIndexRoute = TagsIndexRouteImport.update({
   id: '/tags/',
   path: '/tags/',
@@ -188,6 +196,16 @@ const TemplatesNewRoute = TemplatesNewRouteImport.update({
   id: '/new',
   path: '/new',
   getParentRoute: () => TemplatesRoute,
+} as any)
+const NovelsIdIndexRoute = NovelsIdIndexRouteImport.update({
+  id: '/novels/$id/',
+  path: '/novels/$id/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NovelsIdEditRoute = NovelsIdEditRouteImport.update({
+  id: '/novels/$id/edit',
+  path: '/novels/$id/edit',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const TemplatesIdIndexRoute = TemplatesIdIndexRouteImport.update({
   id: '/$id/',
@@ -243,10 +261,13 @@ export interface FileRoutesByFullPath {
   '/templates/new': typeof TemplatesNewRoute
   '/admin/': typeof AdminIndexRoute
   '/chat/': typeof ChatIndexRoute
+  '/novels/': typeof NovelsIndexRoute
   '/tags/': typeof TagsIndexRoute
   '/templates/': typeof TemplatesIndexRoute
+  '/novels/$id/edit': typeof NovelsIdEditRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
+  '/novels/$id/': typeof NovelsIdIndexRoute
   '/templates/$id/': typeof TemplatesIdIndexRoute
   '/user/$id/': typeof UserIdIndexRoute
   '/work/$id/': typeof WorkIdIndexRoute
@@ -276,10 +297,13 @@ export interface FileRoutesByTo {
   '/templates/new': typeof TemplatesNewRoute
   '/admin': typeof AdminIndexRoute
   '/chat': typeof ChatIndexRoute
+  '/novels': typeof NovelsIndexRoute
   '/tags': typeof TagsIndexRoute
   '/templates': typeof TemplatesIndexRoute
+  '/novels/$id/edit': typeof NovelsIdEditRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
+  '/novels/$id': typeof NovelsIdIndexRoute
   '/templates/$id': typeof TemplatesIdIndexRoute
   '/user/$id': typeof UserIdIndexRoute
   '/work/$id': typeof WorkIdIndexRoute
@@ -313,10 +337,13 @@ export interface FileRoutesById {
   '/templates/new': typeof TemplatesNewRoute
   '/admin/': typeof AdminIndexRoute
   '/chat/': typeof ChatIndexRoute
+  '/novels/': typeof NovelsIndexRoute
   '/tags/': typeof TagsIndexRoute
   '/templates/': typeof TemplatesIndexRoute
+  '/novels/$id/edit': typeof NovelsIdEditRoute
   '/work/$id/edit': typeof WorkIdEditRoute
   '/work/new/edit': typeof WorkNewEditRoute
+  '/novels/$id/': typeof NovelsIdIndexRoute
   '/templates/$id/': typeof TemplatesIdIndexRoute
   '/user/$id/': typeof UserIdIndexRoute
   '/work/$id/': typeof WorkIdIndexRoute
@@ -351,10 +378,13 @@ export interface FileRouteTypes {
     | '/templates/new'
     | '/admin/'
     | '/chat/'
+    | '/novels/'
     | '/tags/'
     | '/templates/'
+    | '/novels/$id/edit'
     | '/work/$id/edit'
     | '/work/new/edit'
+    | '/novels/$id/'
     | '/templates/$id/'
     | '/user/$id/'
     | '/work/$id/'
@@ -384,10 +414,13 @@ export interface FileRouteTypes {
     | '/templates/new'
     | '/admin'
     | '/chat'
+    | '/novels'
     | '/tags'
     | '/templates'
+    | '/novels/$id/edit'
     | '/work/$id/edit'
     | '/work/new/edit'
+    | '/novels/$id'
     | '/templates/$id'
     | '/user/$id'
     | '/work/$id'
@@ -420,10 +453,13 @@ export interface FileRouteTypes {
     | '/templates/new'
     | '/admin/'
     | '/chat/'
+    | '/novels/'
     | '/tags/'
     | '/templates/'
+    | '/novels/$id/edit'
     | '/work/$id/edit'
     | '/work/new/edit'
+    | '/novels/$id/'
     | '/templates/$id/'
     | '/user/$id/'
     | '/work/$id/'
@@ -445,9 +481,12 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   TemplatesRoute: typeof TemplatesRouteWithChildren
   TagsSlugRoute: typeof TagsSlugRoute
+  NovelsIndexRoute: typeof NovelsIndexRoute
   TagsIndexRoute: typeof TagsIndexRoute
+  NovelsIdEditRoute: typeof NovelsIdEditRoute
   WorkIdEditRoute: typeof WorkIdEditRoute
   WorkNewEditRoute: typeof WorkNewEditRoute
+  NovelsIdIndexRoute: typeof NovelsIdIndexRoute
   UserIdIndexRoute: typeof UserIdIndexRoute
   WorkIdIndexRoute: typeof WorkIdIndexRoute
 }
@@ -629,6 +668,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChatIdRouteImport
       parentRoute: typeof ChatRoute
     }
+    '/novels/': {
+      id: '/novels/'
+      path: '/novels'
+      fullPath: '/novels/'
+      preLoaderRoute: typeof NovelsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tags/': {
       id: '/tags/'
       path: '/tags'
@@ -656,6 +702,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/templates/new'
       preLoaderRoute: typeof TemplatesNewRouteImport
       parentRoute: typeof TemplatesRoute
+    }
+    '/novels/$id/': {
+      id: '/novels/$id/'
+      path: '/novels/$id'
+      fullPath: '/novels/$id/'
+      preLoaderRoute: typeof NovelsIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/novels/$id/edit': {
+      id: '/novels/$id/edit'
+      path: '/novels/$id/edit'
+      fullPath: '/novels/$id/edit'
+      preLoaderRoute: typeof NovelsIdEditRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/templates/$id/': {
       id: '/templates/$id/'
@@ -765,9 +825,12 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   TemplatesRoute: TemplatesRouteWithChildren,
   TagsSlugRoute: TagsSlugRoute,
+  NovelsIndexRoute: NovelsIndexRoute,
   TagsIndexRoute: TagsIndexRoute,
+  NovelsIdEditRoute: NovelsIdEditRoute,
   WorkIdEditRoute: WorkIdEditRoute,
   WorkNewEditRoute: WorkNewEditRoute,
+  NovelsIdIndexRoute: NovelsIdIndexRoute,
   UserIdIndexRoute: UserIdIndexRoute,
   WorkIdIndexRoute: WorkIdIndexRoute,
 }

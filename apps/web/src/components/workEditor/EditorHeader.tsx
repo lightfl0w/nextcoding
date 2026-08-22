@@ -1,7 +1,24 @@
-import { Button, Checkbox, Chip, Input, useOverlayState } from "@heroui/react";
+import {
+    Button,
+    Checkbox,
+    Chip,
+    Input,
+    Spinner,
+    useOverlayState,
+} from "@heroui/react";
 import { Link } from "@tanstack/react-router";
-import { Bookmark, GitFork, Play, Rocket, Settings2, X } from "lucide-react";
-import { useState } from "react";
+import {
+    Bookmark,
+    Camera,
+    GitFork,
+    ImagePlus,
+    Play,
+    Rocket,
+    Settings2,
+    Trash2,
+    X,
+} from "lucide-react";
+import { useRef, useState } from "react";
 import {
     EDITOR_FONT_OPTIONS,
     EDITOR_FONT_SIZE_MAX,
@@ -22,6 +39,8 @@ interface EditorHeaderProps {
     fontFamily: string;
     autoSaveDraft: boolean;
     autoSnapshot: boolean;
+    coverUrl: string | null;
+    coverUploading: boolean;
     onTitleChange: (value: string) => void;
     onTitleSave: () => void;
     onExitCompare: () => void;
@@ -32,6 +51,9 @@ interface EditorHeaderProps {
     onFontFamilyChange: (value: string) => void;
     onAutoSaveDraftChange: (value: boolean) => void;
     onAutoSnapshotChange: (value: boolean) => void;
+    onPickCover: (file: File) => void;
+    onCaptureRunCover: () => void;
+    onRemoveCover: () => void;
 }
 
 const SELECT_CLASS =
@@ -49,6 +71,8 @@ export function EditorHeader({
     fontFamily,
     autoSaveDraft,
     autoSnapshot,
+    coverUrl,
+    coverUploading,
     onTitleChange,
     onTitleSave,
     onExitCompare,
@@ -59,6 +83,9 @@ export function EditorHeader({
     onFontFamilyChange,
     onAutoSaveDraftChange,
     onAutoSnapshotChange,
+    onPickCover,
+    onCaptureRunCover,
+    onRemoveCover,
 }: EditorHeaderProps) {
     const draftState = useOverlayState();
     return (
@@ -132,10 +159,15 @@ export function EditorHeader({
                 fontFamily={fontFamily}
                 autoSaveDraft={autoSaveDraft}
                 autoSnapshot={autoSnapshot}
+                coverUrl={coverUrl}
+                coverUploading={coverUploading}
                 onFontSizeChange={onFontSizeChange}
                 onFontFamilyChange={onFontFamilyChange}
                 onAutoSaveDraftChange={onAutoSaveDraftChange}
                 onAutoSnapshotChange={onAutoSnapshotChange}
+                onPickCover={onPickCover}
+                onCaptureRunCover={onCaptureRunCover}
+                onRemoveCover={onRemoveCover}
             />
             <Button
                 size="sm"
@@ -182,10 +214,11 @@ export function EditorHeader({
  * @param props.fontFamily - 当前字体。
  * @param props.autoSaveDraft - 是否自动保存草稿。
  * @param props.autoSnapshot - 是否自动快照。
- * @param props.onFontSizeChange - 修改字号。
- * @param props.onFontFamilyChange - 修改字体。
- * @param props.onAutoSaveDraftChange - 切换自动保存草稿。
- * @param props.onAutoSnapshotChange - 切换自动快照。
+ * @param props.coverUrl - 当前作品封面地址（无封面时为 null）。
+ * @param props.coverUploading - 封面是否正在上传。
+ * @param props.onPickCover - 选择本地封面文件。
+ * @param props.onCaptureRunCover - 截取运行面板生成封面。
+ * @param props.onRemoveCover - 移除封面。
  * @remarks 自持展开状态，点击遮罩关闭。
  */
 function EditorSettingsMenu({
@@ -193,21 +226,32 @@ function EditorSettingsMenu({
     fontFamily,
     autoSaveDraft,
     autoSnapshot,
+    coverUrl,
+    coverUploading,
     onFontSizeChange,
     onFontFamilyChange,
     onAutoSaveDraftChange,
     onAutoSnapshotChange,
+    onPickCover,
+    onCaptureRunCover,
+    onRemoveCover,
 }: {
     fontSize: number;
     fontFamily: string;
     autoSaveDraft: boolean;
     autoSnapshot: boolean;
+    coverUrl: string | null;
+    coverUploading: boolean;
     onFontSizeChange: (value: number) => void;
     onFontFamilyChange: (value: string) => void;
     onAutoSaveDraftChange: (value: boolean) => void;
     onAutoSnapshotChange: (value: boolean) => void;
+    onPickCover: (file: File) => void;
+    onCaptureRunCover: () => void;
+    onRemoveCover: () => void;
 }) {
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const coverInputRef = useRef<HTMLInputElement | null>(null);
     const fontSizes = Array.from(
         { length: EDITOR_FONT_SIZE_MAX - EDITOR_FONT_SIZE_MIN + 1 },
         (_, index) => EDITOR_FONT_SIZE_MIN + index,
@@ -219,7 +263,7 @@ function EditorSettingsMenu({
                 size="sm"
                 variant="ghost"
                 isIconOnly
-                aria-label="编辑器设置"
+                aria-label="作品设置"
                 onPress={() => setSettingsOpen((open) => !open)}
             >
                 <Settings2 className="size-3.5" />
@@ -232,7 +276,7 @@ function EditorSettingsMenu({
                         onClick={() => setSettingsOpen(false)}
                         className="fixed inset-0 z-40 cursor-default"
                     />
-                    <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-default-200 bg-background p-3 flex flex-col gap-3 shadow-sm">
+                    <div className="absolute right-0 top-full mt-1 z-50 w-72 rounded-xl border border-default-200 bg-background p-3 flex flex-col gap-3 shadow-sm">
                         <label className="flex flex-col gap-1 text-xs">
                             字号
                             <select
@@ -297,6 +341,75 @@ function EditorSettingsMenu({
                                 自动快照
                             </Checkbox.Content>
                         </Checkbox>
+
+                        <div className="flex flex-col gap-2 border-t border-default-200 pt-3">
+                            <span className="text-xs font-medium text-foreground/80">
+                                封面
+                            </span>
+                            {coverUploading ? (
+                                <div className="flex h-24 items-center justify-center gap-2 rounded-lg bg-default-100/70 text-xs text-foreground/60">
+                                    <Spinner size="sm" />
+                                    上传中…
+                                </div>
+                            ) : coverUrl ? (
+                                <img
+                                    src={coverUrl}
+                                    alt="作品封面"
+                                    className="aspect-[4/3] w-full rounded-lg border border-default-200 object-cover"
+                                />
+                            ) : (
+                                <div className="flex h-24 items-center justify-center rounded-lg bg-default-100/70 text-xs text-foreground/50">
+                                    尚未设置封面
+                                </div>
+                            )}
+                            <input
+                                ref={coverInputRef}
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp,image/gif"
+                                className="hidden"
+                                onChange={(event) => {
+                                    const file = event.target.files?.[0];
+                                    if (file) {
+                                        onPickCover(file);
+                                    }
+                                    event.target.value = "";
+                                }}
+                            />
+                            <div className="flex flex-col gap-1.5">
+                                <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    className="justify-start gap-1.5"
+                                    onPress={() => coverInputRef.current?.click()}
+                                >
+                                    <ImagePlus className="size-3.5" />
+                                    上传封面
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    className="justify-start gap-1.5"
+                                    onPress={onCaptureRunCover}
+                                >
+                                    <Camera className="size-3.5" />
+                                    从运行截图生成
+                                </Button>
+                                {coverUrl && (
+                                    <Button
+                                        size="sm"
+                                        variant="danger"
+                                        className="justify-start gap-1.5"
+                                        onPress={onRemoveCover}
+                                    >
+                                        <Trash2 className="size-3.5" />
+                                        移除封面
+                                    </Button>
+                                )}
+                            </div>
+                            <p className="text-[11px] leading-relaxed text-foreground/40">
+                                先运行程序，再从运行面板截取画面作为封面
+                            </p>
+                        </div>
                     </div>
                 </>
             )}

@@ -90,7 +90,12 @@ pnpm dev
 | `BETTER_AUTH_URL` | `http://localhost:5173` | 前端地址 |
 | `BACKEND_URL` | `http://localhost:3000` | 后端地址 |
 | `PORT` | `3000` | 后端监听端口 |
-| `CORS_ORIGINS` | `http://localhost:5173,http://localhost:3000` | 允许的前端来源 |
+| `CORS_ORIGINS` | `http://localhost:5173,http://localhost:3000` | 允许的前端来源（同时作为 Better Auth 的 `trustedOrigins`） |
+| `SMTP_HOST` | — | SMTP 服务器（配置后密码重置邮件走真实发送，否则打印日志） |
+| `SMTP_PORT` | `465` | SMTP 端口 |
+| `SMTP_SECURE` | `true` | SMTP 是否使用 SSL/TLS |
+| `SMTP_USER` / `SMTP_PASS` | — | SMTP 账号密码 |
+| `SMTP_FROM` | `SMTP_USER` | 发件人地址 |
 | `STORAGE_DRIVER` | `local` | 存储驱动：`local` / `s3` / `vercel-blob` |
 | `STORAGE_LOCAL_DIR` | `data` | 本地存储写入目录 |
 

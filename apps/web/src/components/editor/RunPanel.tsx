@@ -9,7 +9,7 @@ import {
     X,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { memo } from "react";
+import { memo, type Ref } from "react";
 import "@wterm/dom/css";
 
 import "~/assets/pyscript-xterm.css";
@@ -58,6 +58,7 @@ export const RunPanel = memo(function RunPanel({
     loadStage,
     loopHint,
     placement = "bottom",
+    panelRef,
 }: {
     open: boolean;
     running: boolean;
@@ -77,6 +78,7 @@ export const RunPanel = memo(function RunPanel({
     loadStage: string | null;
     loopHint: boolean;
     placement?: "bottom" | "right";
+    panelRef?: Ref<HTMLDivElement>;
 }) {
     const { resolvedTheme } = useTheme();
     const terminal = useTerminalSession({
@@ -97,7 +99,7 @@ export const RunPanel = memo(function RunPanel({
             : "h-52 shrink-0 border-t border-default-200 flex flex-col bg-surface";
 
     return (
-        <div className={`${panelClassName} ${className ?? ""}`}>
+        <div ref={panelRef} className={`${panelClassName} ${className ?? ""}`}>
             <RunPanelHeader
                 running={running}
                 awaitingInput={awaitingInput}

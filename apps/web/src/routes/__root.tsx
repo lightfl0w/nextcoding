@@ -18,7 +18,10 @@ function RootComponent() {
     const isEditor = /^\/work\/[^/]+\/edit$/.test(pathname);
     const isTemplateEditor = pathname.startsWith("/templates/new");
     const isAdmin = pathname.startsWith("/admin");
-    const fullscreen = isAuthPage || isEditor || isAdmin || isTemplateEditor;
+    // 小说阅读页沉浸式：去掉全局导航栏，仅保留页面内章节面板。
+    const isNovelReader = pathname.startsWith("/novels/");
+    const fullscreen =
+        isAuthPage || isEditor || isAdmin || isTemplateEditor || isNovelReader;
 
     return (
         <div className="min-h-screen">

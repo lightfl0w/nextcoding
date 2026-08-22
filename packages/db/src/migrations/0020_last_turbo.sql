@@ -1,0 +1,1 @@
+ALTER TABLE `novel` ADD `published` integer DEFAULT false NOT NULL;

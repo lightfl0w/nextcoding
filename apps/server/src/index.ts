@@ -17,6 +17,7 @@ import { templateRoutes } from "./templates/routes.js";
 import { userRoutes } from "./users/routes.js";
 import { workRoutes } from "./works/index.js";
 import { notificationRoutes } from "./works/routes/notificationRoutes.js";
+import { novelRoutes } from "./novels/routes.js";
 
 const PORT = Number(process.env.PORT) || 3000;
 
@@ -58,6 +59,7 @@ app.route("/api/works", workRoutes);
 app.route("/api/notifications", notificationRoutes);
 app.route("/api/messages", messageRoutes);
 app.route("/api/storage", storageRoutes);
+app.route("/api/novels", novelRoutes);
 
 app.get("/openapi.json", (c) => c.json(openapiJson));
 

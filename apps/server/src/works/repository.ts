@@ -265,6 +265,27 @@ export function updateWorkTitle(workId: string, title: string) {
     return db.update(work).set({ title }).where(eq(work.id, workId));
 }
 
+export function updateWorkCover(workId: string, coverUrl: string | null) {
+    return db.update(work).set({ coverUrl }).where(eq(work.id, workId));
+}
+
+export function updateWorkDescription(
+    workId: string,
+    description: string | null,
+) {
+    return db
+        .update(work)
+        .set({ description })
+        .where(eq(work.id, workId));
+}
+
+export function updateWorkTags(workId: string, tags: string[]) {
+    return db
+        .update(work)
+        .set({ tags: JSON.stringify(tags) })
+        .where(eq(work.id, workId));
+}
+
 export function listWorkFiles(workId: string) {
     return db.select().from(workFile).where(eq(workFile.workId, workId));
 }

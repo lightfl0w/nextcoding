@@ -25,7 +25,9 @@ import {
     useState,
 } from "react";
 import { useSWRConfig } from "swr";
+import { toBlob } from "html-to-image";
 
+import { ImageCropModal } from "~/components/ImageCropModal";
 import { MonacoWrapper } from "~/components/editor/MonacoWrapper";
 import { RunPanel } from "~/components/editor/RunPanel";
 import { DiffView } from "~/components/workEditor/DiffView";
@@ -33,6 +35,7 @@ import { EditorHeader } from "~/components/workEditor/EditorHeader";
 import { EditorTabs } from "~/components/workEditor/EditorTabs";
 import { FileExplorer } from "~/components/workEditor/FileExplorer";
 import { PushToRemoteDialog } from "~/components/workEditor/PushToRemoteDialog";
+import { PublishWorkDialog } from "~/components/workEditor/PublishWorkDialog";
 import { VersionCompareDialog } from "~/components/workEditor/VersionCompareDialog";
 import { VersionHistoryPanel } from "~/components/workEditor/VersionHistoryPanel";
 import { type DiffPreview, useDiffPreview } from "~/hooks/useDiffPreview";
@@ -52,7 +55,12 @@ import { useVersionHistory } from "~/hooks/useVersionHistory";
 import { useWork } from "~/hooks/useWork";
 import { useWorkFiles } from "~/hooks/useWorkFiles";
 import { useWorkSource } from "~/hooks/useWorkRemixes";
-import { fileContentPath, readFileContent } from "~/lib/api";
+import {
+    fileContentPath,
+    readFileContent,
+    uploadWorkCover,
+    updateWorkCover,
+} from "~/lib/api";
 import { downloadWorkAsGit } from "~/lib/api/git";
 import { languageLabel } from "~/lib/run";
 
@@ -87,6 +95,72 @@ export function WorkEditor({ workId }: { workId: string | null }) {
         workId,
         mutateWork,
     });
+
+    const coverUrl = work?.coverUrl ?? null;
+    const [coverUploading, setCoverUploading] = useState(false);
+    const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(
+        null,
+    );
+    const runPanelRef = useRef<HTMLDivElement | null>(null);
+
+    const saveCover = useCallback(
+        async (url: string | null): Promise<boolean> => {
+            if (workId === null) {
+                return false;
+            }
+            await updateWorkCover(workId, url);
+            await mutateWork(
+                (current) =>
+                    current ? { ...current, coverUrl: url } : current,
+                { revalidate: false },
+            );
+            return true;
+        },
+        [workId, mutateWork],
+    );
+
+    const handlePickCover = useCallback((file: File) => {
+        setPendingCoverFile(file);
+    }, []);
+
+    const handleCropCover = useCallback(
+        async (croppedFile: File) => {
+            if (workId === null) {
+                toast.danger("请先保存草稿以创建作品，再设置封面");
+                setPendingCoverFile(null);
+                return;
+            }
+            setCoverUploading(true);
+            try {
+                const { url } = await uploadWorkCover(croppedFile);
+                await saveCover(url);
+                toast.success("封面已更新");
+            } catch (error) {
+                toast.danger(
+                    (error as Error).message || "封面保存失败",
+                );
+            } finally {
+                setCoverUploading(false);
+                setPendingCoverFile(null);
+            }
+        },
+        [workId, saveCover],
+    );
+
+    const handleRemoveCover = useCallback(async () => {
+        if (workId === null) {
+            return;
+        }
+        setCoverUploading(true);
+        try {
+            await saveCover(null);
+            toast.success("已移除封面");
+        } catch (error) {
+            toast.danger((error as Error).message || "移除封面失败");
+        } finally {
+            setCoverUploading(false);
+        }
+    }, [workId, saveCover]);
 
     const serverFiles = useWorkFiles(workId);
     const files = workId === null ? pending.workFiles : serverFiles.files;
@@ -139,6 +213,28 @@ export function WorkEditor({ workId }: { workId: string | null }) {
             [persistPendingWork],
         ),
     });
+
+    const publishDialogState = useOverlayState();
+    const [publishing, setPublishing] = useState(false);
+
+    const handlePublishConfirm = useCallback(
+        async (values: {
+            title: string;
+            description: string | null;
+            tags: string[];
+        }) => {
+            setPublishing(true);
+            try {
+                const ok = await publishWorkAction(values);
+                if (ok) {
+                    publishDialogState.close();
+                }
+            } finally {
+                setPublishing(false);
+            }
+        },
+        [publishWorkAction, publishDialogState],
+    );
 
     const {
         dirtyKeys,
@@ -194,6 +290,44 @@ export function WorkEditor({ workId }: { workId: string | null }) {
         readDraft,
         loadContent,
     });
+
+    const handleCaptureRunCover = useCallback(async () => {
+        if (workId === null) {
+            toast.danger("请先保存草稿以创建作品，再设置封面");
+            return;
+        }
+        if (!runner.isPanelOpen) {
+            toast.danger("请先运行程序，再截取运行画面");
+            return;
+        }
+        const node = runPanelRef.current;
+        if (!node) {
+            toast.danger("运行面板尚未就绪");
+            return;
+        }
+        setCoverUploading(true);
+        try {
+            const blob = await toBlob(node, {
+                pixelRatio: 2,
+                cacheBust: true,
+                backgroundColor: "#0b0b0c",
+            });
+            if (!blob) {
+                throw new Error("截图失败，请重试");
+            }
+            const file = new File([blob], "run-cover.png", {
+                type: "image/png",
+            });
+            const { url } = await uploadWorkCover(file);
+            await saveCover(url);
+            toast.success("封面已更新");
+        } catch (error) {
+            toast.danger((error as Error).message || "截图失败");
+        } finally {
+            setCoverUploading(false);
+        }
+    }, [workId, runner.isPanelOpen, saveCover]);
+
     const source = useWorkSource(workId);
 
     const runLabel = useMemo(
@@ -384,15 +518,20 @@ export function WorkEditor({ workId }: { workId: string | null }) {
                 onExitCompare={diff.close}
                 onRun={runner.start}
                 onSaveDraft={handleSaveDraft}
-                onPublishWork={publishWorkAction}
+                onPublishWork={publishDialogState.open}
                 fontSize={fontSize}
                 fontFamily={fontFamily}
                 autoSaveDraft={autoSaveDraft}
                 autoSnapshot={autoSnapshot}
+                coverUrl={coverUrl}
+                coverUploading={coverUploading}
                 onFontSizeChange={setFontSize}
                 onFontFamilyChange={setFontFamily}
                 onAutoSaveDraftChange={setAutoSaveDraft}
                 onAutoSnapshotChange={setAutoSnapshot}
+                onPickCover={handlePickCover}
+                onCaptureRunCover={handleCaptureRunCover}
+                onRemoveCover={handleRemoveCover}
             />
 
             <div className="flex-1 flex min-h-0">
@@ -528,6 +667,7 @@ export function WorkEditor({ workId }: { workId: string | null }) {
                     onStop={runner.stop}
                     loadStage={runner.loadStage}
                     loopHint={runner.loopHint}
+                    panelRef={runPanelRef}
                 />
             </div>
 
@@ -552,6 +692,37 @@ export function WorkEditor({ workId }: { workId: string | null }) {
                 onStay={() => blocker.reset?.()}
                 onLeave={() => blocker.proceed?.()}
             />
+
+            <ImageCropModal
+                file={pendingCoverFile}
+                title="裁剪封面"
+                aspect={4 / 3}
+                cropShape="rect"
+                outputWidth={1280}
+                outputHeight={960}
+                fileName="cover.png"
+                onCrop={handleCropCover}
+                onCancel={() => setPendingCoverFile(null)}
+            />
+
+            {publishDialogState.isOpen && (
+                <PublishWorkDialog
+                    open={publishDialogState.isOpen}
+                    submitting={publishing}
+                    initial={{
+                        title: work?.title ?? title,
+                        description: work?.description ?? null,
+                        tags: work?.tags ?? [],
+                        coverUrl: work?.coverUrl ?? null,
+                    }}
+                    coverUploading={coverUploading}
+                    onPickCover={handlePickCover}
+                    onCaptureRunCover={handleCaptureRunCover}
+                    onRemoveCover={handleRemoveCover}
+                    onCancel={publishDialogState.close}
+                    onConfirm={handlePublishConfirm}
+                />
+            )}
         </div>
     );
 }

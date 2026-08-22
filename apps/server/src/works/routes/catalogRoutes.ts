@@ -26,11 +26,14 @@ import {
     listPublishedWorks,
     listWorkFiles,
     publishWork,
+    updateWorkCover,
+    updateWorkDescription,
+    updateWorkTags,
     updateWorkTitle,
     type WorkSort,
 } from "../repository.js";
-import { syncWorkTags } from "../../tags/repository.js";
 import { parseTags } from "../tags.js";
+import { syncWorkTags } from "../../tags/repository.js";
 import { toOwnedWork, toWorkDetail, toWorkSummary } from "../serializers.js";
 
 export const catalogRoutes = new Hono<AuthenticatedEnv>();
@@ -120,6 +123,64 @@ catalogRoutes.post("/", requireSession, async (c) => {
     return c.json({ id: workId, title, files: uploads.length }, 201);
 });
 
+const WORK_COVER_ALLOWED = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+]);
+const WORK_COVER_MAX = 5 * 1024 * 1024;
+const WORK_COVER_EXT: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+};
+
+function workCoverKey(userId: string, ext: string): string {
+    const id = crypto.randomUUID().replace(/-/g, "");
+    return `work-covers/${userId}/${id}.${ext}`;
+}
+
+function workCoverUrl(key: string): string {
+    return `/api/storage/${key.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+/**
+ * 上传作品封面（裁剪后的图片或运行截图），返回公开访问地址。
+ * Body: multipart/form-data，字段 file 为图片文件。
+ */
+catalogRoutes.post("/cover", requireSession, async (c) => {
+    const userId = c.get("userId");
+    let form: FormData;
+    try {
+        form = await c.req.formData();
+    } catch {
+        return jsonError(c, "无效的表单数据", 400);
+    }
+
+    const file = form.get("file");
+    if (!(file instanceof Blob) || file.size === 0) {
+        return jsonError(c, "请选择上传的封面图片", 400);
+    }
+    if (!WORK_COVER_ALLOWED.has(file.type)) {
+        return jsonError(
+            c,
+            "不支持的图片格式，仅允许 JPG、PNG、WebP、GIF",
+            400,
+        );
+    }
+    if (file.size > WORK_COVER_MAX) {
+        return jsonError(c, "封面图片过大，不能超过 5 MB", 400);
+    }
+
+    const ext = WORK_COVER_EXT[file.type];
+    const key = workCoverKey(userId, ext);
+    await getStorage().put(key, file, { contentType: file.type });
+
+    return c.json({ key, url: workCoverUrl(key) }, 201);
+});
+
 catalogRoutes.post("/:id/publish", requireWorkAuthor, async (c) => {
     const workId = c.req.param("id");
     const files = await listWorkFiles(workId);
@@ -152,14 +213,59 @@ catalogRoutes.post("/:id/publish", requireWorkAuthor, async (c) => {
 
 catalogRoutes.patch("/:id", requireWorkAuthor, async (c) => {
     const body = await readJsonBody(c);
-    const title = readTrimmed(body, "title");
-    if (!title) {
-        return jsonError(c, "标题不能为空", 400);
+    const id = c.req.param("id");
+
+    let title: string | undefined;
+    if (body.title !== undefined) {
+        title = readTrimmed(body, "title");
+        if (!title) {
+            return jsonError(c, "标题不能为空", 400);
+        }
+        await updateWorkTitle(id, title);
     }
 
-    await updateWorkTitle(c.req.param("id"), title);
-    return c.json({ id: c.req.param("id"), title });
+    if ("description" in body) {
+        const description =
+            typeof body.description === "string" ? body.description : null;
+        await updateWorkDescription(id, description);
+    }
+
+    if ("tags" in body) {
+        const tags = readTags(body.tags);
+        await updateWorkTags(id, tags);
+        await syncWorkTags(id, tags);
+    }
+
+    if ("coverUrl" in body) {
+        const coverUrl =
+            typeof body.coverUrl === "string" ? body.coverUrl : null;
+        await updateWorkCover(id, coverUrl);
+    }
+
+    return c.json(title !== undefined ? { id, title } : { id });
 });
+
+/**
+ * 规范化标签列表：仅保留合法字符串，去重、去空并截断到 20 个。
+ * @param raw - 原始标签值。
+ */
+function readTags(raw: unknown): string[] {
+    const items = Array.isArray(raw) ? raw : [];
+    const unique = new Set<string>();
+    for (const item of items) {
+        if (typeof item !== "string") {
+            continue;
+        }
+        const tag = item.trim().slice(0, 32);
+        if (tag) {
+            unique.add(tag);
+        }
+        if (unique.size >= 20) {
+            break;
+        }
+    }
+    return [...unique];
+}
 
 function collectUploads(field: unknown): File[] {
     const candidates = Array.isArray(field) ? field : field ? [field] : [];

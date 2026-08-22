@@ -67,6 +67,63 @@ export function updateWorkTitle(
 }
 
 /**
+ * 更新作品元信息（封面）。
+ * @param workId - 作品 ID。
+ * @param values.coverUrl - 封面公开地址；传 `null` 表示移除封面。
+ */
+export function updateWorkCover(
+    workId: string,
+    coverUrl: string | null,
+): Promise<{ id: string }> {
+    return mutateJson(
+        workPath(workId),
+        "PATCH",
+        { coverUrl },
+        "保存封面失败",
+    );
+}
+
+/**
+ * 更新作品信息（标题 / 简介 / 标签）。
+ * @param workId - 作品 ID。
+ * @param values - 需要更新的字段。
+ */
+export function updateWorkMetadata(
+    workId: string,
+    values: {
+        title?: string;
+        description?: string | null;
+        tags?: string[];
+        coverUrl?: string | null;
+    },
+): Promise<{ id: string; title?: string }> {
+    return mutateJson(workPath(workId), "PATCH", values, "保存作品信息失败");
+}
+
+/**
+ * 上传作品封面（裁剪后的图片或运行截图），返回公开访问地址。
+ * @param file - 封面图片文件。
+ */
+export async function uploadWorkCover(
+    file: File,
+): Promise<{ key: string; url: string }> {
+    const form = new FormData();
+    form.append("file", file);
+    const response = await postForm("/api/works/cover", form);
+    if (!response.ok) {
+        let message = "封面上传失败";
+        try {
+            const body = (await response.json()) as { error?: string };
+            if (body.error) {
+                message = body.error;
+            }
+        } catch {}
+        throw new HttpError(response.status, message);
+    }
+    return (await response.json()) as { key: string; url: string };
+}
+
+/**
  * 发布作品为公开状态。
  * @param workId - 作品 ID。
  * @returns 发布结果与作品 ID。

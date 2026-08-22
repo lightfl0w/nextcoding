@@ -14,9 +14,11 @@
     "type": "module",
     "dependencies": {
         "@nextcoding/db": "workspace:*",
-        "better-auth": "^1.6.26"
+        "better-auth": "^1.6.26",
+        "nodemailer": "^6.9.16"
     },
     "devDependencies": {
+        "@types/nodemailer": "^6.4.17",
         "drizzle-kit": "^0.31.10"
     }
 }

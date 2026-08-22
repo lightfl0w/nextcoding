@@ -3,10 +3,17 @@ import type { useNavigate } from "@tanstack/react-router";
 import { useCallback } from "react";
 import type { useSWRConfig } from "swr";
 import type { WorkFile } from "~/lib/api";
-import { publishWork, workPath } from "~/lib/api";
+import { publishWork, updateWorkMetadata, workPath } from "~/lib/api";
 
 type Navigate = ReturnType<typeof useNavigate>;
 type GlobalMutate = ReturnType<typeof useSWRConfig>["mutate"];
+
+/** 发布前可一并保存的作品元信息。 */
+export interface WorkPublishMetadata {
+    title: string;
+    description: string | null;
+    tags: string[];
+}
 
 interface PublishWorkOptions {
     workId: string | null;
@@ -40,7 +47,7 @@ function contentLength(
  * @param options.navigate - 跳转函数。
  * @param options.persistPending - 待创建模式的持久化回调。
  * @returns 发布处理函数。
- * @remarks 无文件或全空时提示并中断，发布成功后跳转详情页。
+ * @remarks 无文件或全空时提示并中断，发布前可选保存标题/简介/标签，发布成功后跳转详情页。
  */
 export function usePublishWork({
     workId,
@@ -50,31 +57,43 @@ export function usePublishWork({
     navigate,
     persistPending,
 }: PublishWorkOptions) {
-    const publishWorkAction = useCallback(async () => {
-        if (files.length === 0) {
-            toast.warning("发布前请先创建文件");
-            return;
-        }
-        const hasContent = files.some(
-            (file) => contentLength(file, readDraft) > 0,
-        );
-        if (!hasContent) {
-            toast.warning("请至少在一个文件里填写内容后再发布");
-            return;
-        }
-        try {
-            const targetId = workId ?? (await persistPending());
-            if (targetId === null) {
-                return;
+    const publishWorkAction = useCallback(
+        async (metadata?: WorkPublishMetadata) => {
+            if (files.length === 0) {
+                toast.warning("发布前请先创建文件");
+                return false;
             }
-            await publishWork(targetId);
-            await mutate(workPath(targetId));
-            toast.success("作品已发布");
-            navigate({ to: "/work/$id", params: { id: targetId } });
-        } catch (error) {
-            toast.danger((error as Error).message);
-        }
-    }, [workId, navigate, files, readDraft, mutate, persistPending]);
+            const hasContent = files.some(
+                (file) => contentLength(file, readDraft) > 0,
+            );
+            if (!hasContent) {
+                toast.warning("请至少在一个文件里填写内容后再发布");
+                return false;
+            }
+            try {
+                const targetId = workId ?? (await persistPending());
+                if (targetId === null) {
+                    return false;
+                }
+                if (metadata) {
+                    await updateWorkMetadata(targetId, {
+                        title: metadata.title,
+                        description: metadata.description,
+                        tags: metadata.tags,
+                    });
+                }
+                await publishWork(targetId);
+                await mutate(workPath(targetId));
+                toast.success("作品已发布");
+                navigate({ to: "/work/$id", params: { id: targetId } });
+                return true;
+            } catch (error) {
+                toast.danger((error as Error).message);
+                return false;
+            }
+        },
+        [workId, navigate, files, readDraft, mutate, persistPending],
+    );
 
     return { publishWorkAction };
 }

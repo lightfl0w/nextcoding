@@ -1,6 +1,6 @@
 import { Avatar, Card, Chip } from "@heroui/react";
 import { Link } from "@tanstack/react-router";
-import { Eye, Sparkles } from "lucide-react";
+import { Boxes, Eye, Sparkles } from "lucide-react";
 import { memo } from "react";
 import { useWorkCardSpark } from "~/hooks/useWorkCardSpark";
 import type { Work } from "~/lib/api";
@@ -16,21 +16,38 @@ export const WorkCard = memo(function WorkCard({ work }: { work: Work }) {
 
     return (
         <div className="h-full group">
-            <Link
-                to="/work/$id"
-                params={{ id: work.id }}
-                className="flex min-w-0 flex-col gap-2.5"
-            >
-                <Card className="w-full rounded-2xl border border-default-200/70 bg-surface p-0 shadow-sm transition-[transform,border-color,box-shadow] duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/30 group-hover:shadow-md">
-                    <div className="flex h-full flex-col gap-3 p-4 sm:p-5">
-                        <Card.Header className="gap-1">
-                            <Card.Title className="text-sm font-semibold line-clamp-1">
+            <Card className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-default-200/70 bg-surface p-0 shadow-sm transition-[transform,border-color,box-shadow] duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/30 group-hover:shadow-md">
+                <Link
+                    to="/work/$id"
+                    params={{ id: work.id }}
+                    className="relative block aspect-[4/3] w-full overflow-hidden bg-default-100/60 ring-1 ring-inset ring-default-200/60"
+                >
+                    {work.coverUrl ? (
+                        <img
+                            src={work.coverUrl}
+                            alt={`${work.title} 封面`}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <Boxes className="size-8 text-primary/40" />
+                        </div>
+                    )}
+                </Link>
+
+                    <div className="flex flex-col gap-3 p-4 sm:p-5">
+                        <Link
+                            to="/work/$id"
+                            params={{ id: work.id }}
+                            className="flex flex-col gap-1 min-w-0"
+                        >
+                            <Card.Title className="text-sm font-semibold line-clamp-1 group-hover:text-accent transition-colors">
                                 {work.title}
                             </Card.Title>
                             <Card.Description className="text-xs leading-relaxed line-clamp-2">
                                 {work.description ?? "暂无简介"}
                             </Card.Description>
-                        </Card.Header>
+                        </Link>
 
                         {Array.isArray(work.tags) && work.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1">
@@ -97,7 +114,6 @@ export const WorkCard = memo(function WorkCard({ work }: { work: Work }) {
                         </Card.Footer>
                     </div>
                 </Card>
-            </Link>
         </div>
     );
 });
