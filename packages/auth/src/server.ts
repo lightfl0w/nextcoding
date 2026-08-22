@@ -54,7 +54,10 @@ function escapeHtml(value: string): string {
  * 默认保留本地开发地址。
  */
 function trustedOriginsFromEnv(): string[] {
-    return (process.env.CORS_ORIGINS ?? "http://localhost:5173,http://localhost:3000")
+    return (
+        process.env.CORS_ORIGINS ??
+        "http://localhost:5173,http://localhost:3000"
+    )
         .split(",")
         .map((origin) => origin.trim())
         .filter(Boolean);

@@ -1,7 +1,7 @@
-import { type FormEvent, useState } from "react";
 import { Input } from "@heroui/react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Search, X } from "lucide-react";
+import { type FormEvent, useState } from "react";
 import { Nav } from "./Sidebar/Nav";
 import { UserInfo } from "./Sidebar/UserInfo";
 
@@ -28,26 +28,28 @@ export function Sidebar() {
                     </span>
                 </Link>
 
-                <form onSubmit={handleSearch} className="relative w-full" role="search">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-primary/60" />
-                    <Input
-                        value={input}
-                        onChange={(event) => setInput(event.target.value)}
-                        placeholder="搜索作品…"
-                        aria-label="搜索作品"
-                        className="w-full pl-10 pr-9"
-                    />
-                    {input && (
-                        <button
-                            type="button"
-                            onClick={() => setInput("")}
-                            aria-label="清除搜索"
-                            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-foreground/40 transition-colors hover:bg-hover hover:text-foreground"
-                        >
-                            <X className="size-4" />
-                        </button>
-                    )}
-                </form>
+                <search className="relative w-full">
+                    <form onSubmit={handleSearch}>
+                        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-primary/60" />
+                        <Input
+                            value={input}
+                            onChange={(event) => setInput(event.target.value)}
+                            placeholder="搜索作品…"
+                            aria-label="搜索作品"
+                            className="w-full pl-10 pr-9"
+                        />
+                        {input && (
+                            <button
+                                type="button"
+                                onClick={() => setInput("")}
+                                aria-label="清除搜索"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-foreground/40 transition-colors hover:bg-hover hover:text-foreground"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        )}
+                    </form>
+                </search>
 
                 <Nav />
             </div>

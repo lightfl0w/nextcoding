@@ -9,7 +9,12 @@ import {
     toast,
     useOverlayState,
 } from "@heroui/react";
-import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
+import {
+    createFileRoute,
+    Link,
+    useNavigate,
+    useParams,
+} from "@tanstack/react-router";
 import {
     ArrowLeft,
     Camera,
@@ -21,9 +26,9 @@ import {
     Trash2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { ConfirmDialog } from "~/components/ui/ConfirmDialog";
 import { ImageCropModal } from "~/components/ImageCropModal";
 import { ChapterEditor } from "~/components/novels/ChapterEditor";
+import { ConfirmDialog } from "~/components/ui/ConfirmDialog";
 import { useAuth } from "~/hooks/useAuth";
 import { useChapter, useChapters, useNovel } from "~/hooks/useNovels";
 import {
@@ -53,8 +58,11 @@ function NovelEditorPage() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { novel, mutate: mutateNovel } = useNovel(id);
-    const { chapters, isLoading: chaptersLoading, mutate: mutateChapters } =
-        useChapters(id);
+    const {
+        chapters,
+        isLoading: chaptersLoading,
+        mutate: mutateChapters,
+    } = useChapters(id);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const { chapter, isLoading: chapterLoading } = useChapter(id, selectedId);
 
@@ -276,9 +284,7 @@ function NovelEditorPage() {
 
     // 删除章节确认
     const deleteChapterState = useOverlayState();
-    const [deleteChapterId, setDeleteChapterId] = useState<string | null>(
-        null,
-    );
+    const [deleteChapterId, setDeleteChapterId] = useState<string | null>(null);
     const askDeleteChapter = (chapterId: string) => {
         setDeleteChapterId(chapterId);
         deleteChapterState.open();
@@ -359,7 +365,9 @@ function NovelEditorPage() {
                         )}
                     </div>
                     <p className="truncate text-xs text-foreground/50">
-                        {novel?.authorName ? `作者：${novel.authorName}` : "加载中…"}
+                        {novel?.authorName
+                            ? `作者：${novel.authorName}`
+                            : "加载中…"}
                         {" · "}
                         {chapters.length} 章
                     </p>
@@ -430,12 +438,14 @@ function NovelEditorPage() {
                     </div>
                     <div className="flex-1 space-y-1 overflow-auto px-2 pb-3">
                         {chaptersLoading ? (
-                            Array.from({ length: 4 }).map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="h-9 animate-pulse rounded-lg bg-default-100/60"
-                                />
-                            ))
+                            Array.from({ length: 4 }, (_, i) => i).map(
+                                (key) => (
+                                    <div
+                                        key={key}
+                                        className="h-9 animate-pulse rounded-lg bg-default-100/60"
+                                    />
+                                ),
+                            )
                         ) : chapters.length === 0 ? (
                             <p className="px-2 py-6 text-center text-xs text-foreground/40">
                                 点击「新增」创建第一章
@@ -493,7 +503,9 @@ function NovelEditorPage() {
                     {!selectedId ? (
                         <div className="flex flex-1 flex-col items-center justify-center gap-2 text-foreground/40">
                             <FileText className="size-10" />
-                            <p className="text-sm">从左侧选择一个章节开始阅读</p>
+                            <p className="text-sm">
+                                从左侧选择一个章节开始阅读
+                            </p>
                         </div>
                     ) : chapterLoading || !chapter ? (
                         <div className="flex flex-1 items-center justify-center">
@@ -640,14 +652,20 @@ function NovelEditorPage() {
                                 </TextField>
                                 <div className="flex flex-col gap-2">
                                     <Label className="text-xs text-foreground/60">
-                                        封面 <span className="text-danger">*</span>（必选）
+                                        封面{" "}
+                                        <span className="text-danger">*</span>
+                                        （必选）
                                     </Label>
                                     <button
                                         type="button"
-                                        onClick={() => coverInputRef.current?.click()}
+                                        onClick={() =>
+                                            coverInputRef.current?.click()
+                                        }
                                         disabled={coverUploading}
                                         aria-label={
-                                            novelCover ? "点击更换封面" : "点击上传封面"
+                                            novelCover
+                                                ? "点击更换封面"
+                                                : "点击上传封面"
                                         }
                                         className="group relative h-40 w-full overflow-hidden rounded-xl border border-default-200/70 bg-default-100/60 transition-colors hover:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 disabled:cursor-not-allowed"
                                     >
@@ -673,7 +691,9 @@ function NovelEditorPage() {
                                             ) : (
                                                 <Camera className="size-3.5" />
                                             )}
-                                            {novelCover ? "更换封面" : "上传封面"}
+                                            {novelCover
+                                                ? "更换封面"
+                                                : "上传封面"}
                                         </span>
                                     </button>
                                     <input
@@ -695,7 +715,10 @@ function NovelEditorPage() {
                                 >
                                     保存草稿
                                 </Button>
-                                <Button variant="primary" onPress={confirmPublish}>
+                                <Button
+                                    variant="primary"
+                                    onPress={confirmPublish}
+                                >
                                     发布
                                 </Button>
                             </Modal.Footer>

@@ -1,10 +1,10 @@
 import { Hono } from "hono";
-import { jsonError, readJsonBody, readTrimmed } from "../http/responses.js";
 import {
+    type AuthenticatedEnv,
     readSession,
     requireSession,
-    type AuthenticatedEnv,
 } from "../http/guards.js";
+import { jsonError, readJsonBody, readTrimmed } from "../http/responses.js";
 import { getStorage } from "../storage/storageClient.js";
 import {
     createChapter,
@@ -238,53 +238,45 @@ novelRoutes.get("/:id/chapters/:chapterId", async (c) => {
     return c.json(row);
 });
 
-novelRoutes.patch(
-    "/:id/chapters/:chapterId",
-    requireSession,
-    async (c) => {
-        const id = c.req.param("id");
-        const chapterId = c.req.param("chapterId");
-        const row = await findNovel(id, c.get("userId"));
-        if (!row) {
-            return jsonError(c, "小说不存在", 404);
-        }
-        if (row.authorId !== c.get("userId")) {
-            return jsonError(c, "无权修改该小说", 403);
-        }
-        const existing = await findChapter(id, chapterId);
-        if (!existing) {
-            return jsonError(c, "章节不存在", 404);
-        }
-        const body = await readJsonBody(c);
-        const title = readTrimmed(body, "title");
-        if (!title) {
-            return jsonError(c, "章节标题不能为空", 400);
-        }
-        const content =
-            typeof body.content === "string" ? body.content : existing.content;
-        await updateChapter(chapterId, { title, content });
-        return c.json({ ok: true });
-    },
-);
+novelRoutes.patch("/:id/chapters/:chapterId", requireSession, async (c) => {
+    const id = c.req.param("id");
+    const chapterId = c.req.param("chapterId");
+    const row = await findNovel(id, c.get("userId"));
+    if (!row) {
+        return jsonError(c, "小说不存在", 404);
+    }
+    if (row.authorId !== c.get("userId")) {
+        return jsonError(c, "无权修改该小说", 403);
+    }
+    const existing = await findChapter(id, chapterId);
+    if (!existing) {
+        return jsonError(c, "章节不存在", 404);
+    }
+    const body = await readJsonBody(c);
+    const title = readTrimmed(body, "title");
+    if (!title) {
+        return jsonError(c, "章节标题不能为空", 400);
+    }
+    const content =
+        typeof body.content === "string" ? body.content : existing.content;
+    await updateChapter(chapterId, { title, content });
+    return c.json({ ok: true });
+});
 
-novelRoutes.delete(
-    "/:id/chapters/:chapterId",
-    requireSession,
-    async (c) => {
-        const id = c.req.param("id");
-        const chapterId = c.req.param("chapterId");
-        const row = await findNovel(id, c.get("userId"));
-        if (!row) {
-            return jsonError(c, "小说不存在", 404);
-        }
-        if (row.authorId !== c.get("userId")) {
-            return jsonError(c, "无权删除该小说", 403);
-        }
-        const existing = await findChapter(id, chapterId);
-        if (!existing) {
-            return jsonError(c, "章节不存在", 404);
-        }
-        await deleteChapter(id, chapterId);
-        return c.json({ ok: true });
-    },
-);
+novelRoutes.delete("/:id/chapters/:chapterId", requireSession, async (c) => {
+    const id = c.req.param("id");
+    const chapterId = c.req.param("chapterId");
+    const row = await findNovel(id, c.get("userId"));
+    if (!row) {
+        return jsonError(c, "小说不存在", 404);
+    }
+    if (row.authorId !== c.get("userId")) {
+        return jsonError(c, "无权删除该小说", 403);
+    }
+    const existing = await findChapter(id, chapterId);
+    if (!existing) {
+        return jsonError(c, "章节不存在", 404);
+    }
+    await deleteChapter(id, chapterId);
+    return c.json({ ok: true });
+});

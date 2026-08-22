@@ -2,8 +2,8 @@ import { Card, Skeleton, Tabs, useOverlayState } from "@heroui/react";
 import { Clock, Flame, MessageCircle } from "lucide-react";
 import { memo, useCallback, useState } from "react";
 import type { KeyedMutator } from "swr";
-import { useAuth } from "~/hooks/useAuth";
 import { ConfirmDialog } from "~/components/ui/ConfirmDialog";
+import { useAuth } from "~/hooks/useAuth";
 import {
     type SubmitComment,
     useCommentComposer,
@@ -137,7 +137,9 @@ export const CommentsSection = memo(function CommentsSection({
             <Card>
                 <Tabs
                     selectedKey={sort}
-                    onSelectionChange={(key) => onSortChange(key as CommentSort)}
+                    onSelectionChange={(key) =>
+                        onSortChange(key as CommentSort)
+                    }
                     className="w-full"
                     aria-label="评论排序"
                 >

@@ -9,7 +9,7 @@ import {
     toast,
 } from "@heroui/react";
 import { Camera, ImagePlus, Rocket, Trash2, X } from "lucide-react";
-import { useRef, useState, type KeyboardEvent } from "react";
+import { type KeyboardEvent, useRef, useState } from "react";
 
 const MAX_TAGS = 20;
 const MAX_TAG_LENGTH = 32;

@@ -8,6 +8,7 @@ import { achievementRoutes } from "./achievements/routes.js";
 import { activityFeedRoutes, activityUserRoutes } from "./activities/routes.js";
 import { adminRoutes } from "./admin/routes.js";
 import { messageRoutes } from "./messages/routes.js";
+import { novelRoutes } from "./novels/routes.js";
 import { openapiJson } from "./openapi/document.js";
 import { registerWsRoutes, wss } from "./realtime/io.js";
 import { settingsRoutes } from "./settings/routes.js";
@@ -17,7 +18,6 @@ import { templateRoutes } from "./templates/routes.js";
 import { userRoutes } from "./users/routes.js";
 import { workRoutes } from "./works/index.js";
 import { notificationRoutes } from "./works/routes/notificationRoutes.js";
-import { novelRoutes } from "./novels/routes.js";
 
 const PORT = Number(process.env.PORT) || 3000;
 

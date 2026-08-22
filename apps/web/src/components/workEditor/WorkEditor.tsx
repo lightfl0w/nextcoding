@@ -6,6 +6,7 @@ import {
     useOverlayState,
 } from "@heroui/react";
 import { useBlocker, useNavigate } from "@tanstack/react-router";
+import { toBlob } from "html-to-image";
 import {
     FileCode,
     Files,
@@ -25,17 +26,15 @@ import {
     useState,
 } from "react";
 import { useSWRConfig } from "swr";
-import { toBlob } from "html-to-image";
-
-import { ImageCropModal } from "~/components/ImageCropModal";
 import { MonacoWrapper } from "~/components/editor/MonacoWrapper";
 import { RunPanel } from "~/components/editor/RunPanel";
+import { ImageCropModal } from "~/components/ImageCropModal";
 import { DiffView } from "~/components/workEditor/DiffView";
 import { EditorHeader } from "~/components/workEditor/EditorHeader";
 import { EditorTabs } from "~/components/workEditor/EditorTabs";
 import { FileExplorer } from "~/components/workEditor/FileExplorer";
-import { PushToRemoteDialog } from "~/components/workEditor/PushToRemoteDialog";
 import { PublishWorkDialog } from "~/components/workEditor/PublishWorkDialog";
+import { PushToRemoteDialog } from "~/components/workEditor/PushToRemoteDialog";
 import { VersionCompareDialog } from "~/components/workEditor/VersionCompareDialog";
 import { VersionHistoryPanel } from "~/components/workEditor/VersionHistoryPanel";
 import { type DiffPreview, useDiffPreview } from "~/hooks/useDiffPreview";
@@ -58,8 +57,8 @@ import { useWorkSource } from "~/hooks/useWorkRemixes";
 import {
     fileContentPath,
     readFileContent,
-    uploadWorkCover,
     updateWorkCover,
+    uploadWorkCover,
 } from "~/lib/api";
 import { downloadWorkAsGit } from "~/lib/api/git";
 import { languageLabel } from "~/lib/run";
@@ -98,9 +97,7 @@ export function WorkEditor({ workId }: { workId: string | null }) {
 
     const coverUrl = work?.coverUrl ?? null;
     const [coverUploading, setCoverUploading] = useState(false);
-    const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(
-        null,
-    );
+    const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
     const runPanelRef = useRef<HTMLDivElement | null>(null);
 
     const saveCover = useCallback(
@@ -136,9 +133,7 @@ export function WorkEditor({ workId }: { workId: string | null }) {
                 await saveCover(url);
                 toast.success("封面已更新");
             } catch (error) {
-                toast.danger(
-                    (error as Error).message || "封面保存失败",
-                );
+                toast.danger((error as Error).message || "封面保存失败");
             } finally {
                 setCoverUploading(false);
                 setPendingCoverFile(null);

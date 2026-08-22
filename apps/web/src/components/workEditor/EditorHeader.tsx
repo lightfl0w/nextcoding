@@ -380,7 +380,9 @@ function EditorSettingsMenu({
                                     size="sm"
                                     variant="secondary"
                                     className="justify-start gap-1.5"
-                                    onPress={() => coverInputRef.current?.click()}
+                                    onPress={() =>
+                                        coverInputRef.current?.click()
+                                    }
                                 >
                                     <ImagePlus className="size-3.5" />
                                     上传封面

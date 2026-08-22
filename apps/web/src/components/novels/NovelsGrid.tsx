@@ -1,6 +1,6 @@
-import { BookOpen, FileText } from "lucide-react";
-import { Link, useNavigate } from "@tanstack/react-router";
 import { Button, Chip } from "@heroui/react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { BookOpen, FileText } from "lucide-react";
 import { useAuth } from "~/hooks/useAuth";
 import type { NovelListItem } from "~/lib/api/novels";
 
@@ -27,12 +27,14 @@ export function NovelsGrid({
     if (isLoading) {
         return (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: placeholderCount }).map((_, i) => (
-                    <div
-                        key={i}
-                        className="h-72 animate-pulse rounded-2xl bg-default-100/60"
-                    />
-                ))}
+                {Array.from({ length: placeholderCount }, (_, i) => i).map(
+                    (key) => (
+                        <div
+                            key={key}
+                            className="h-72 animate-pulse rounded-2xl bg-default-100/60"
+                        />
+                    ),
+                )}
             </div>
         );
     }
@@ -50,9 +52,7 @@ export function NovelsGrid({
             {novels.map((novel) => {
                 const isOwner = novel.authorId === user?.id;
                 // 作者点击卡片/按钮进入编辑器续写，其他人进入阅读页。
-                const targetPath = isOwner
-                    ? "/novels/$id/edit"
-                    : "/novels/$id";
+                const targetPath = isOwner ? "/novels/$id/edit" : "/novels/$id";
                 return (
                     <div
                         key={novel.id}
@@ -112,7 +112,9 @@ export function NovelsGrid({
                                 </span>
                                 <span className="flex shrink-0 items-center gap-1.5">
                                     <span>{novel.chapterCount} 章</span>
-                                    <span className="text-foreground/25">·</span>
+                                    <span className="text-foreground/25">
+                                        ·
+                                    </span>
                                     <span>
                                         {new Date(
                                             novel.updatedAt,

@@ -1,16 +1,16 @@
 import useSWR from "swr";
 import {
-    chaptersPath,
-    chapterPath,
-    fetchChapters,
-    fetchChapter,
-    fetchNovel,
-    fetchNovels,
-    novelsPath,
-    novelPath,
     type ChapterDetail,
     type ChapterSummary,
+    chapterPath,
+    chaptersPath,
+    fetchChapter,
+    fetchChapters,
+    fetchNovel,
+    fetchNovels,
     type NovelListItem,
+    novelPath,
+    novelsPath,
 } from "~/lib/api/novels";
 
 const EMPTY_NOVELS: NovelListItem[] = [];
@@ -50,7 +50,10 @@ export function useChapters(novelId: string | undefined) {
     };
 }
 
-export function useChapter(novelId: string | undefined, chapterId: string | null) {
+export function useChapter(
+    novelId: string | undefined,
+    chapterId: string | null,
+) {
     const { data, isLoading, error } = useSWR<ChapterDetail>(
         novelId && chapterId ? chapterPath(novelId, chapterId) : null,
         fetchChapter,

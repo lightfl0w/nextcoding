@@ -1,6 +1,6 @@
 import { Button, ToggleButton, ToggleButtonGroup } from "@heroui/react";
+import { type Editor, EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { EditorContent, type Editor, useEditor } from "@tiptap/react";
 import type { ReactNode } from "react";
 import { Fragment, useRef } from "react";
 
@@ -161,7 +161,10 @@ export function ChapterEditor({
                                 {tool.groupStart && (
                                     <ToggleButtonGroup.Separator />
                                 )}
-                                <ToggleButton id={tool.id} aria-label={tool.label}>
+                                <ToggleButton
+                                    id={tool.id}
+                                    aria-label={tool.label}
+                                >
                                     {tool.text}
                                 </ToggleButton>
                             </Fragment>

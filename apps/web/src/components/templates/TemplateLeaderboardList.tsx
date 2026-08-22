@@ -6,7 +6,10 @@ import { EmptyState } from "~/components/ui/EmptyState";
 import { LoadingState } from "~/components/ui/LoadingState";
 import { useTemplateLeaderboard } from "~/hooks/useTemplateLeaderboard";
 import { formatCount } from "~/lib/format";
-import { LeaderboardPodium, type PodiumEntry } from "../leaderboard/LeaderboardPodium";
+import {
+    LeaderboardPodium,
+    type PodiumEntry,
+} from "../leaderboard/LeaderboardPodium";
 import { StarRating } from "./StarRating";
 
 /**

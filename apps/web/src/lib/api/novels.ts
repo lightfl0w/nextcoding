@@ -1,4 +1,4 @@
-import { getJson, mutateJson, postForm, HttpError } from "./http";
+import { getJson, HttpError, mutateJson, postForm } from "./http";
 
 export interface NovelListItem {
     id: string;
@@ -79,7 +79,11 @@ export function renameNovel(
 
 export function publishNovel(
     id: string,
-    values: { title: string; description?: string | null; coverUrl?: string | null },
+    values: {
+        title: string;
+        description?: string | null;
+        coverUrl?: string | null;
+    },
 ) {
     return mutateJson<{ ok: true }>(
         `${novelPath(id)}/publish`,
@@ -131,7 +135,12 @@ export async function uploadNovelCover(
 }
 
 export function deleteNovel(id: string) {
-    return mutateJson<{ ok: true }>(novelPath(id), "DELETE", undefined, "删除小说失败");
+    return mutateJson<{ ok: true }>(
+        novelPath(id),
+        "DELETE",
+        undefined,
+        "删除小说失败",
+    );
 }
 
 export function createChapter(novelId: string, title: string) {

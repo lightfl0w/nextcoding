@@ -1,4 +1,4 @@
-import { db, chapter, novel, user } from "@nextcoding/db";
+import { chapter, db, novel, user } from "@nextcoding/db";
 import { and, asc, desc, eq, or, sql } from "drizzle-orm";
 
 export interface NovelListItem {
@@ -197,7 +197,7 @@ export async function createChapter(values: {
         .select({ max: sql<number>`coalesce(max(${chapter.position}), 0)` })
         .from(chapter)
         .where(eq(chapter.novelId, values.novelId));
-    const position = (Number(max?.max ?? 0)) + 1;
+    const position = Number(max?.max ?? 0) + 1;
     const id = crypto.randomUUID();
     const [inserted] = await db
         .insert(chapter)

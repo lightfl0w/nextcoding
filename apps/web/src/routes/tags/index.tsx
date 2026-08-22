@@ -1,8 +1,8 @@
 import { Button } from "@heroui/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { PageHeader } from "~/components/ui/PageHeader";
 import { TagCloud } from "~/components/tags/TagCloud";
+import { PageHeader } from "~/components/ui/PageHeader";
 import { WorksGrid } from "~/components/WorksGrid";
 import { usePopularTags } from "~/hooks/usePopularTags";
 import { useTagWorks } from "~/hooks/useTagWorks";
@@ -14,10 +14,11 @@ export const Route = createFileRoute("/tags/")({
 function TagsPage() {
     const { tags, isLoading } = usePopularTags(100);
     const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
-    const { data, isLoading: worksLoading, error } = useTagWorks(
-        selectedSlug ?? undefined,
-        "popular",
-    );
+    const {
+        data,
+        isLoading: worksLoading,
+        error,
+    } = useTagWorks(selectedSlug ?? undefined, "popular");
 
     return (
         <div className="mx-auto w-full max-w-7xl p-8 flex flex-col gap-6">

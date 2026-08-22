@@ -62,9 +62,20 @@ vi.mock("@heroui/react", () => {
         Card,
         Skeleton: () => null,
         Tabs,
-        toast: { danger: () => {} },
+        useOverlayState: () => ({
+            isOpen: false,
+            setOpen: () => {},
+            open: () => {},
+            close: () => {},
+            toggle: () => {},
+        }),
+        toast: { danger: () => {}, success: () => {} },
     };
 });
+
+vi.mock("~/components/ui/ConfirmDialog", () => ({
+    ConfirmDialog: () => null,
+}));
 
 vi.mock("~/hooks/useAuth", () => ({
     useAuth: () => ({ isLoggedIn: true }),

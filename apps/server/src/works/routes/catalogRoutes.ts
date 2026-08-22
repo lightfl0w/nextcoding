@@ -1,6 +1,6 @@
-import { Hono } from "hono";
 import { db, work } from "@nextcoding/db";
 import { eq } from "drizzle-orm";
+import { Hono } from "hono";
 import { checkAndUnlockAchievements } from "../../achievements/checker.js";
 import { insertActivity } from "../../activities/repository.js";
 import {
@@ -10,6 +10,7 @@ import {
 } from "../../http/guards.js";
 import { jsonError, readJsonBody, readTrimmed } from "../../http/responses.js";
 import { getStorage } from "../../storage/storageClient.js";
+import { syncWorkTags } from "../../tags/repository.js";
 import { authorizeWorkRead, requireWorkAuthor } from "../guards.js";
 import {
     clampLimit,
@@ -32,9 +33,8 @@ import {
     updateWorkTitle,
     type WorkSort,
 } from "../repository.js";
-import { parseTags } from "../tags.js";
-import { syncWorkTags } from "../../tags/repository.js";
 import { toOwnedWork, toWorkDetail, toWorkSummary } from "../serializers.js";
+import { parseTags } from "../tags.js";
 
 export const catalogRoutes = new Hono<AuthenticatedEnv>();
 

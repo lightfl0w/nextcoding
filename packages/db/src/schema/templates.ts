@@ -1,6 +1,12 @@
 import { relations, sql } from "drizzle-orm";
 import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
-import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+    index,
+    integer,
+    primaryKey,
+    sqliteTable,
+    text,
+} from "drizzle-orm/sqlite-core";
 import { user } from "./auth.js";
 import { work } from "./works.js";
 

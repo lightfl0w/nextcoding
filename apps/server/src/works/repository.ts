@@ -273,10 +273,7 @@ export function updateWorkDescription(
     workId: string,
     description: string | null,
 ) {
-    return db
-        .update(work)
-        .set({ description })
-        .where(eq(work.id, workId));
+    return db.update(work).set({ description }).where(eq(work.id, workId));
 }
 
 export function updateWorkTags(workId: string, tags: string[]) {

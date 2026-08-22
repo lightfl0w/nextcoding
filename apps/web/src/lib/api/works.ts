@@ -75,12 +75,7 @@ export function updateWorkCover(
     workId: string,
     coverUrl: string | null,
 ): Promise<{ id: string }> {
-    return mutateJson(
-        workPath(workId),
-        "PATCH",
-        { coverUrl },
-        "保存封面失败",
-    );
+    return mutateJson(workPath(workId), "PATCH", { coverUrl }, "保存封面失败");
 }
 
 /**

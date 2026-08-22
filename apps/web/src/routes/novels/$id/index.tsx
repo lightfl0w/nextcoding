@@ -1,9 +1,20 @@
 import { Button, Chip, toast, useOverlayState } from "@heroui/react";
-import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
-import { ArrowLeft, BookOpen, CalendarDays, FileText, Pencil } from "lucide-react";
+import {
+    createFileRoute,
+    Link,
+    useNavigate,
+    useParams,
+} from "@tanstack/react-router";
+import {
+    ArrowLeft,
+    BookOpen,
+    CalendarDays,
+    FileText,
+    Pencil,
+} from "lucide-react";
 import { useEffect, useState } from "react";
-import { ConfirmDialog } from "~/components/ui/ConfirmDialog";
 import { ChapterEditor } from "~/components/novels/ChapterEditor";
+import { ConfirmDialog } from "~/components/ui/ConfirmDialog";
 import { useAuth } from "~/hooks/useAuth";
 import { useChapter, useChapters, useNovel } from "~/hooks/useNovels";
 import { deleteNovel } from "~/lib/api/novels";
@@ -82,7 +93,9 @@ function ReaderPage() {
                         <div className="h-6 w-40 animate-pulse rounded bg-default-100/60" />
                     )}
                     <p className="truncate text-xs text-foreground/50">
-                        {novel?.authorName ? `作者：${novel.authorName}` : "加载中…"}
+                        {novel?.authorName
+                            ? `作者：${novel.authorName}`
+                            : "加载中…"}
                         {" · "}
                         {chapters.length} 章
                     </p>
@@ -93,7 +106,10 @@ function ReaderPage() {
                             size="sm"
                             variant="primary"
                             onPress={() =>
-                                navigate({ to: "/novels/$id/edit", params: { id } })
+                                navigate({
+                                    to: "/novels/$id/edit",
+                                    params: { id },
+                                })
                             }
                         >
                             <Pencil className="size-3.5" />
@@ -118,12 +134,14 @@ function ReaderPage() {
                     </div>
                     <div className="flex-1 space-y-1 overflow-auto px-2 pb-3">
                         {chaptersLoading ? (
-                            Array.from({ length: 4 }).map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="h-9 animate-pulse rounded-lg bg-default-100/60"
-                                />
-                            ))
+                            Array.from({ length: 4 }, (_, i) => i).map(
+                                (key) => (
+                                    <div
+                                        key={key}
+                                        className="h-9 animate-pulse rounded-lg bg-default-100/60"
+                                    />
+                                ),
+                            )
                         ) : chapters.length === 0 ? (
                             <p className="px-2 py-6 text-center text-xs text-foreground/40">
                                 暂无章节
@@ -153,7 +171,9 @@ function ReaderPage() {
                     {!selectedId ? (
                         <div className="flex flex-1 flex-col items-center justify-center gap-2 text-foreground/40">
                             <FileText className="size-10" />
-                            <p className="text-sm">从左侧选择一个章节开始阅读</p>
+                            <p className="text-sm">
+                                从左侧选择一个章节开始阅读
+                            </p>
                         </div>
                     ) : chapterLoading || !chapter ? (
                         <div className="flex flex-1 items-center justify-center">
@@ -177,10 +197,16 @@ function ReaderPage() {
                                     )}
                                 </div>
                                 <div className="flex min-w-0 flex-col gap-1.5">
-                                    <h2 className="text-xl font-bold">{novel?.title}</h2>
+                                    <h2 className="text-xl font-bold">
+                                        {novel?.title}
+                                    </h2>
                                     <p className="flex items-center gap-2 text-sm text-foreground/60">
-                                        <span>{novel?.authorName ?? "匿名"}</span>
-                                        <span className="text-foreground/25">·</span>
+                                        <span>
+                                            {novel?.authorName ?? "匿名"}
+                                        </span>
+                                        <span className="text-foreground/25">
+                                            ·
+                                        </span>
                                         <span className="flex items-center gap-1">
                                             <CalendarDays className="size-3.5" />
                                             {novel
@@ -189,7 +215,9 @@ function ReaderPage() {
                                                   ).toLocaleDateString()
                                                 : "—"}
                                         </span>
-                                        <span className="text-foreground/25">·</span>
+                                        <span className="text-foreground/25">
+                                            ·
+                                        </span>
                                         <span>{chapters.length} 章</span>
                                     </p>
                                     {novel?.description && (
