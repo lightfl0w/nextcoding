@@ -101,6 +101,30 @@ pnpm dev
 
 S3 和 Vercel Blob 的配置见 [.env.example](file:///f:/nextcoding/.env.example)。
 
+## Docker 部署
+
+单镜像方案：nginx 托管前端静态资源并反向代理 `/api`、`/ws` 到 Node API 服务，SQLite 数据库与本地文件存储挂载在 `/data` 卷。
+
+```bash
+# 1. 构建镜像（BACKEND_URL 为对外公开域名，用于前端 WebSocket 地址）
+docker build -t nextcoding --build-arg BACKEND_URL=https://your-domain.com .
+
+# 2. 运行
+docker run -d --name nextcoding \
+  -p 80:80 \
+  -v nextcoding-data:/data \
+  -e BETTER_AUTH_SECRET='<随机 32 字符>' \
+  -e BETTER_AUTH_URL='https://your-domain.com' \
+  -e CORS_ORIGINS='https://your-domain.com' \
+  -e SMTP_HOST='...' -e SMTP_USER='...' -e SMTP_PASS='...' \
+  nextcoding
+```
+
+- 容器启动时自动执行数据库迁移，随后启动 API 与 nginx。
+- 必须设置 `BETTER_AUTH_SECRET`；生产环境建议配置 SMTP（否则重置邮件仅打印日志）。
+- 数据卷 `nextcoding-data` 持久化 SQLite（`/data/app.db`）与本地文件（`/data/storage`）。
+- 存储驱动默认 `local`；如需 S3 可追加对应环境变量（见 [.env.example](file:///f:/nextcoding/.env.example)）。
+
 ## 测试
 
 项目使用 Vitest 4，前后端各自独立配置。

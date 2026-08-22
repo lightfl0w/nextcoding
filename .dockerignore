@@ -1,0 +1,35 @@
+# 依赖与构建产物
+node_modules/
+.pnpm-store/
+dist/
+build/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# 版本控制
+.git/
+.gitignore
+
+# 环境与数据（.env.example 需要保留）
+.env
+.env.*
+!.env.example
+*.sqlite
+*.db
+data/
+apps/server/data/
+
+# 测试与文档
+apps/server/test/
+apps/web/test/
+test/
+*.md
+
+# 本地开发/系统
+.vscode/
+.idea/
+logs/
+*.log
+.DS_Store
+Thumbs.db
